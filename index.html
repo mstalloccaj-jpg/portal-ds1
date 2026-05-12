@@ -234,27 +234,74 @@ textarea.inp{resize:vertical;min-height:70px;line-height:1.5}
   @page{margin:1.5cm}
 }
 
-/* Responsive sidebar collapse */
+/* ── MOBILE ── */
 @media (max-width:768px) {
   :root{--sidebar-w:0px}
-  .sidebar{position:absolute;z-index:100;left:-210px;transition:left .25s;width:210px}
-  .sidebar.open{left:0;box-shadow:4px 0 20px rgba(0,0,0,.15)}
-  .hamburger{display:flex}
-  .main-content{padding:12px}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .tbl-wrap{overflow:hidden}
+  .portal-layout{flex-direction:column}
+  .sidebar{display:none!important}
+  .main-area{width:100vw;height:100dvh}
+  .main-header{padding:10px 14px;gap:8px}
+  .main-title{font-size:14px}
+  .main-content{padding:10px}
+
+  /* Bottom nav bar */
+  .mob-nav{display:flex!important}
+
+  /* Stats 2 col */
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+  .stat-card{padding:10px}
+  .stat-num{font-size:20px}
+  .stat-icon{font-size:18px;margin-bottom:4px}
+
+  /* Cards instead of table */
+  .tbl-wrap{background:transparent;border:none;box-shadow:none}
   .tbl thead{display:none}
-  .tbl tbody tr{display:block;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;padding:12px;background:var(--bg)}
+  .tbl{display:block}
+  .tbl tbody{display:block}
+  .tbl tbody tr{display:block;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;padding:14px;box-shadow:var(--shadow)}
   .tbl tbody tr:hover td{background:transparent}
-  .tbl td{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border:none;font-size:13px}
-  .tbl td::before{content:attr(data-label);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;margin-right:8px}
-  .tbl td:last-child{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);justify-content:flex-end}
-  .tbl-search{flex-wrap:wrap}
-  .tbl-search input{max-width:100%}
-  .actions-bar{flex-wrap:wrap}
+  .tbl td{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border:none;font-size:13px;gap:8px}
+  .tbl td::before{content:attr(data-label);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;min-width:80px;padding-top:1px}
+  .tbl td[data-label=""]::before{display:none}
+  .tbl td:last-child{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);justify-content:stretch}
+  .tbl td:last-child .btn{width:100%;justify-content:center;padding:10px;font-size:14px}
+  .tbl-search{padding:10px;flex-wrap:wrap;gap:8px}
+  .tbl-search input{max-width:100%!important;width:100%}
+
+  /* Forms */
   .form-row-2,.form-row-3,.form-row-4{grid-template-columns:1fr}
+
+  /* Report detail */
   .rs-grid-2,.rs-grid-3{grid-template-columns:1fr}
+  .report-doc-header{flex-direction:column;gap:8px}
+  .actions-bar{gap:8px}
+  .actions-bar .btn{flex:1;justify-content:center;padding:10px;font-size:14px}
+
+  /* Upload / clients */
+  .card{padding:14px}
 }
+
+/* Bottom nav bar — solo mobile */
+.mob-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--bg);border-top:1px solid var(--border);
+  padding:6px 0 10px;
+  z-index:200;
+  justify-content:space-around;
+  box-shadow:0 -2px 12px rgba(0,0,0,.08);
+}
+.mob-nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10px;font-weight:600;color:var(--text3);
+  cursor:pointer;padding:4px 16px;border-radius:8px;
+  transition:color .15s;
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.mob-nav-item i{font-size:22px}
+.mob-nav-item.active{color:var(--blue)}
+.mob-nav-spacer{height:70px} /* evita que el contenido quede bajo la nav */
+
 .hamburger{display:none;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:var(--bg);color:var(--text2)}
 </style>
 </head>
@@ -1347,6 +1394,23 @@ function App() {
     ),
 
     // Main
+    React.createElement("div",{className:"mob-nav"},
+      navItems.map(n=>React.createElement("div",{
+        key:n.id,
+        className:"mob-nav-item"+(tab===n.id&&!selected?" active":""),
+        onClick:()=>{setTab(n.id);setSelected(null);}
+      },
+        React.createElement("i",{className:"ti "+n.icon}),
+        n.label
+      )),
+      React.createElement("div",{
+        className:"mob-nav-item",
+        onClick:()=>{setUser(null);setSelected(null);setTab("reports");}
+      },
+        React.createElement("i",{className:"ti ti-logout"}),
+        "Salir"
+      )
+    ),
     React.createElement("div",{className:"main-area"},
       React.createElement("div",{className:"main-header"},
         React.createElement("button",{className:"hamburger",onClick:()=>setSidebarOpen(p=>!p),"aria-label":"Menú"},
