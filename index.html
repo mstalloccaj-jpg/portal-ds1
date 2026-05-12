@@ -240,6 +240,20 @@ textarea.inp{resize:vertical;min-height:70px;line-height:1.5}
   .sidebar{position:absolute;z-index:100;left:-210px;transition:left .25s;width:210px}
   .sidebar.open{left:0;box-shadow:4px 0 20px rgba(0,0,0,.15)}
   .hamburger{display:flex}
+  .main-content{padding:12px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .tbl-wrap{overflow:hidden}
+  .tbl thead{display:none}
+  .tbl tbody tr{display:block;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;padding:12px;background:var(--bg)}
+  .tbl tbody tr:hover td{background:transparent}
+  .tbl td{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border:none;font-size:13px}
+  .tbl td::before{content:attr(data-label);font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;margin-right:8px}
+  .tbl td:last-child{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);justify-content:flex-end}
+  .tbl-search{flex-wrap:wrap}
+  .tbl-search input{max-width:100%}
+  .actions-bar{flex-wrap:wrap}
+  .form-row-2,.form-row-3,.form-row-4{grid-template-columns:1fr}
+  .rs-grid-2,.rs-grid-3{grid-template-columns:1fr}
 }
 .hamburger{display:none;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:var(--bg);color:var(--text2)}
 </style>
@@ -737,19 +751,19 @@ function ReportsView({reports, user, users, setSelectedReport}) {
                 ?.map(id=>users.find(u=>u.id===id)?.name)
                 .filter(Boolean).join(", ") || r.company || "—";
               return React.createElement("tr",{key:r.id},
-                React.createElement("td",{style:{fontFamily:"monospace",fontWeight:600,fontSize:12}}, r.reportNo),
-                React.createElement("td",null, fmtDate(r.date)),
-                React.createElement("td",{style:{maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12}}, r.component),
-                user.role==="admin" && React.createElement("td",{style:{fontSize:12}}, clientNames),
-                React.createElement("td",{style:{fontSize:12}}, [r.well,r.rig].filter(Boolean).join(" / ")||"—"),
-                React.createElement("td",null, React.createElement("span",{className:"badge badge-cat"},"Cat "+r.category)),
-                React.createElement("td",null, React.createElement(ResultBadge,{result:r.result})),
-                React.createElement("td",null,
+                React.createElement("td",{"data-label":"N° Reporte",style:{fontFamily:"monospace",fontWeight:600,fontSize:12}}, r.reportNo),
+                React.createElement("td",{"data-label":"Fecha"}, fmtDate(r.date)),
+                React.createElement("td",{"data-label":"Componente",style:{maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12}}, r.component),
+                user.role==="admin" && React.createElement("td",{"data-label":"Cliente",style:{fontSize:12}}, clientNames),
+                React.createElement("td",{"data-label":"Pozo / Rig",style:{fontSize:12}}, [r.well,r.rig].filter(Boolean).join(" / ")||"—"),
+                React.createElement("td",{"data-label":"Cat."}, React.createElement("span",{className:"badge badge-cat"},"Cat "+r.category)),
+                React.createElement("td",{"data-label":"Resultado"}, React.createElement(ResultBadge,{result:r.result})),
+                React.createElement("td",{"data-label":""},
                   React.createElement("button",{
-                    className:"btn btn-sm",
+                    className:"btn btn-primary",style:{width:"100%",justifyContent:"center"},
                     onClick:()=>setSelectedReport(r)
                   },
-                    React.createElement("i",{className:"ti ti-eye"}), " Ver"
+                    React.createElement("i",{className:"ti ti-eye"}), " Ver reporte"
                   )
                 )
               );
