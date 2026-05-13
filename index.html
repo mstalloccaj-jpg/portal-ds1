@@ -3,921 +3,1547 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Formulario DS-1 Vol 3 — Inspección de Sustitutos</title>
+<title>Portal DS-1 — Informes Técnicos de Inspección</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
-:root{
-  --bg:#fff;--bg2:#f7f8fa;--bg3:#eef0f3;
-  --border:#e3e5ea;--border2:#c9cdd6;
-  --text:#111827;--text2:#6b7280;--text3:#9ca3af;
-  --blue:#1d4ed8;--blue-bg:#eff6ff;--blue-text:#1e40af;
-  --green:#15803d;--green-bg:#f0fdf4;--green-text:#166534;
-  --red:#dc2626;--red-bg:#fef2f2;--red-text:#991b1b;
-  --amber:#d97706;--amber-bg:#fffbeb;--amber-text:#92400e;
-  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.07)
+/* =====================================================
+   PORTAL DS-1 — Versión producción v1.0
+   Para personalizar: busca los comentarios [CONFIG]
+   ===================================================== */
+
+:root {
+  --bg: #ffffff;
+  --bg2: #f7f8fa;
+  --bg3: #eef0f3;
+  --border: #e3e5ea;
+  --border2: #c9cdd6;
+  --text: #111827;
+  --text2: #6b7280;
+  --text3: #9ca3af;
+  --blue: #1d4ed8;
+  --blue-bg: #eff6ff;
+  --blue-text: #1e40af;
+  --green: #15803d;
+  --green-bg: #f0fdf4;
+  --green-text: #166534;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --red-text: #991b1b;
+  --amber: #d97706;
+  --amber-bg: #fffbeb;
+  --amber-text: #92400e;
+  --radius: 8px;
+  --radius-sm: 5px;
+  --shadow: 0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --sidebar-w: 210px;
 }
-@media(prefers-color-scheme:dark){
-  :root{--bg:#0f1117;--bg2:#1a1d27;--bg3:#252836;--border:#2a2d3a;--border2:#3a3d4a;--text:#e8eaf0;--text2:#9299ae;--text3:#5a6278;--blue:#3b82f6;--blue-bg:#1e2d4a;--blue-text:#93c5fd;--green:#22c55e;--green-bg:#0f2a1a;--green-text:#86efac;--red:#ef4444;--red-bg:#2a0f0f;--red-text:#fca5a5}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #252836;
+    --border: #2a2d3a;
+    --border2: #3a3d4a;
+    --text: #e8eaf0;
+    --text2: #9299ae;
+    --text3: #5a6278;
+    --blue: #3b82f6;
+    --blue-bg: #1e2d4a;
+    --blue-text: #93c5fd;
+    --green: #22c55e;
+    --green-bg: #0f2a1a;
+    --green-text: #86efac;
+    --red: #ef4444;
+    --red-bg: #2a0f0f;
+    --red-text: #fca5a5;
+    --amber: #f59e0b;
+    --amber-bg: #2a1f0a;
+    --amber-text: #fcd34d;
+  }
 }
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:13px;color:var(--text);background:var(--bg2);padding:16px}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px;color:var(--text);background:var(--bg2);-webkit-font-smoothing:antialiased}
+#root{height:100%}
 button,input,select,textarea{font-family:inherit;font-size:inherit}
-.page{max-width:980px;margin:0 auto}
+button{cursor:pointer}
 
-.hdr{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;box-shadow:var(--shadow)}
-.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
-.logo-area{min-width:150px}
-.logo-img{max-height:68px;max-width:170px;object-fit:contain;display:block}
-.logo-btn{width:150px;height:60px;border:2px dashed var(--border2);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:11px;gap:3px;background:var(--bg2)}
-.logo-btn i{font-size:18px}
-.hdr-title{flex:1;text-align:center}
-.hdr-title h1{font-size:14px;font-weight:700;color:var(--text)}
-.hdr-title p{font-size:10px;color:var(--text3);margin-top:2px}
-.hdr-meta{min-width:155px;display:flex;flex-direction:column;gap:5px}
+/* Layout */
+.portal-layout{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 
-.sec{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
-.sec-hdr{background:var(--bg2);padding:8px 14px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
-.sec-body{padding:12px 14px}
+/* Sidebar */
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.sb-brand-logo{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.sb-brand-icon{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.sb-brand-name{font-size:14px;font-weight:600;color:var(--text);line-height:1.2}
+.sb-brand-tagline{font-size:10px;color:var(--text3);letter-spacing:.3px}
+.sb-user{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.sb-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;background:var(--blue-bg);color:var(--blue-text)}
+.sb-uname{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.sb-ucmp{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.sb-nav{flex:1;padding:10px 0;overflow-y:auto}
+.sb-section-label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.9px;padding:10px 16px 4px}
+.sb-link{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-left:3px solid transparent;transition:all .12s;user-select:none}
+.sb-link:hover{background:var(--bg2);color:var(--text);border-left-color:var(--border2)}
+.sb-link.active{background:var(--bg2);color:var(--blue);border-left-color:var(--blue);font-weight:600}
+.sb-link i{font-size:17px;flex-shrink:0}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:100px;font-size:10px;font-weight:600;margin-left:auto}
+.sb-badge-admin{background:var(--blue-bg);color:var(--blue-text)}
+.sb-badge-client{background:var(--bg3);color:var(--text2)}
 
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}
-.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px}
-.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:6px}
+/* Main header */
+.main-header{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg);min-height:58px;flex-shrink:0}
+.main-header-title{font-size:15px;font-weight:600;color:var(--text)}
+.main-header-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.main-content{flex:1;overflow-y:auto;padding:22px;background:var(--bg2)}
 
-.lbl{display:block;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
-.inp{width:100%;padding:6px 9px;font-size:12px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text)}
-.inp:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(29,78,216,.1)}
-.inp.auto-filled{border-color:var(--blue);background:var(--blue-bg)}
-textarea.inp{resize:vertical;min-height:55px;line-height:1.5}
-
-.vis-tbl{width:100%;border-collapse:collapse;font-size:12px}
-.vis-tbl th{padding:6px 10px;font-size:9px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;background:var(--bg3)}
-.vis-tbl td{padding:5px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
-.vis-tbl tr.v-pass td{background:rgba(21,128,61,.05)}
-.vis-tbl tr.v-fail td{background:rgba(220,38,38,.07)}
-.vis-sel{padding:4px 8px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);cursor:pointer;width:100%}
-.vis-sel.pass{color:var(--green);font-weight:600;border-color:var(--green);background:var(--green-bg)}
-.vis-sel.fail{color:var(--red);font-weight:600;border-color:var(--red);background:var(--red-bg)}
-
-.meas-tbl{width:100%;border-collapse:collapse;font-size:11px}
-.meas-tbl th{padding:5px 7px;font-size:9px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;background:var(--bg3);white-space:nowrap;text-align:center}
-.meas-tbl th:first-child{text-align:left}
-.meas-tbl td{padding:3px 5px;border-bottom:1px solid var(--border);vertical-align:middle;text-align:center}
-.meas-tbl td:first-child{text-align:left;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
-.meas-tbl tr.cat-row td{background:var(--bg3);font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:4px 7px;text-align:left}
-.meas-inp{width:70px;padding:3px 5px;font-size:11px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);text-align:center;font-family:monospace}
-.meas-inp:focus{outline:none;border-color:var(--blue)}
-.meas-inp.auto{border-color:var(--blue);background:var(--blue-bg);color:var(--blue-text);font-weight:600}
-.meas-inp.pass{background:rgba(21,128,61,.15);border-color:var(--green);color:var(--green);font-weight:600}
-.meas-inp.fail{background:rgba(220,38,38,.15);border-color:var(--red);color:var(--red);font-weight:600}
-.avg-cell{font-family:monospace;font-size:11px;font-weight:600;padding:3px 7px}
-.avg-pass{color:var(--green)}
-.avg-fail{color:var(--red)}
-.avg-na{color:var(--text3)}
-.status-pass{color:var(--green);font-weight:700;font-size:11px}
-.status-fail{color:var(--red);font-weight:700;font-size:11px}
-
-.result-box{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.result-verdict{font-size:22px;font-weight:700}
-.result-ok{color:var(--green)}
-.result-fail{color:var(--red)}
-.result-cond{color:var(--amber)}
-
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;font-size:12px;font-weight:600;border-radius:5px;border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;white-space:nowrap}
-.btn:hover{background:var(--bg2)}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;font-size:12px;font-weight:500;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--bg2);border-color:var(--border2)}
+.btn:active{transform:scale(.98)}
 .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{opacity:.9}
 .btn-success{background:var(--green);color:#fff;border-color:var(--green)}
-.btn-amber{background:var(--amber);color:#fff;border-color:var(--amber)}
+.btn-success:hover{opacity:.9}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
+.btn-danger:hover{opacity:.85}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-xs{padding:2px 8px;font-size:10px}
+.btn-icon{padding:6px;border-radius:var(--radius-sm)}
 
-.action-bar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px;align-items:center}
-.action-bar-hint{font-size:11px;color:var(--text3);flex:1}
+/* Inputs */
+.inp{width:100%;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);transition:border .12s}
+.inp:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.12)}
+.inp::placeholder{color:var(--text3)}
+textarea.inp{resize:vertical;min-height:70px;line-height:1.5}
+.lbl{display:block;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.form-group{margin-bottom:12px}
+.form-row{display:grid;gap:10px}
+.form-row-2{grid-template-columns:1fr 1fr}
+.form-row-3{grid-template-columns:repeat(3,1fr)}
+.form-row-4{grid-template-columns:repeat(4,1fr)}
 
-.conn-selector{background:var(--blue-bg);border:1px solid var(--blue-text);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px}
-.conn-selector h4{font-size:11px;font-weight:700;color:var(--blue-text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.conn-filled-badge{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;display:none;margin-left:auto}
+/* Cards */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card-sm{padding:12px 14px}
 
-.cert-lines{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
-.cert-line{border-top:1px solid var(--border2);padding-top:6px;font-size:10px;color:var(--text3)}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)}
+.stat-num{font-size:26px;font-weight:700;color:var(--text);line-height:1}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:5px}
+.stat-icon{font-size:22px;margin-bottom:6px;display:block}
 
-.torque-box{background:var(--amber-bg);border:1px solid var(--amber);border-radius:5px;padding:8px 12px;margin-top:8px;font-size:11px;color:var(--amber-text);display:flex;align-items:center;gap:8px}
-.torque-box i{font-size:16px;flex-shrink:0}
+/* Table */
+.tbl-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl thead{background:var(--bg2)}
+.tbl th{padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:var(--bg2)}
+.tbl-search{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg)}
+.tbl-search input{max-width:280px}
 
-@media(max-width:600px){
-  .g2,.g3,.g4,.g5,.g6{grid-template-columns:1fr}
-  .hdr-top{flex-direction:column}
-  .cert-lines{grid-template-columns:1fr}
-  .meas-tbl{display:block;overflow-x:auto}
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.2px}
+.badge-pass{background:var(--green-bg);color:var(--green-text)}
+.badge-fail{background:var(--red-bg);color:var(--red-text)}
+.badge-cond{background:var(--amber-bg);color:var(--amber-text)}
+.badge-admin{background:var(--blue-bg);color:var(--blue-text)}
+.badge-client{background:var(--bg3);color:var(--text2)}
+.badge-cat{background:var(--bg3);color:var(--text2);font-size:9px}
+
+/* Alert / messages */
+.alert{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px}
+.alert-err{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}
+.alert-ok{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
+.alert i{font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* Login */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg2);padding:20px}
+.login-card{width:100%;max-width:400px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.login-header{text-align:center;margin-bottom:28px}
+.login-icon{width:52px;height:52px;background:var(--blue);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff;font-size:26px}
+.login-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--text2)}
+.demo-creds{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:18px;font-size:11px;color:var(--text2);line-height:1.8}
+.demo-creds strong{color:var(--text);font-weight:600}
+
+/* Report detail */
+.report-doc{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.report-doc-header{padding:18px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.report-doc-title{font-size:16px;font-weight:700;color:var(--text)}
+.report-doc-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.report-section{border-bottom:1px solid var(--border)}
+.report-section:last-child{border-bottom:none}
+.rs-header{padding:9px 18px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:6px}
+.rs-body{padding:14px 18px}
+.rs-grid{display:grid;gap:10px}
+.rs-grid-2{grid-template-columns:repeat(2,1fr)}
+.rs-grid-3{grid-template-columns:repeat(3,1fr)}
+.rs-field label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px}
+.rs-field span{font-size:13px;color:var(--text);font-weight:500}
+.rs-result{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.rs-result-verdict{font-size:22px;font-weight:700}
+.rs-result-ok{color:var(--green)}
+.rs-result-fail{color:var(--red)}
+.rs-result-cond{color:var(--amber)}
+.rs-result-desc{font-size:12px;color:var(--text2);margin-top:3px}
+
+/* Measurement cells */
+.cell-pass{background:rgba(21,128,61,.1);color:#166534;font-weight:600;border-radius:3px;padding:1px 4px;font-size:11px;font-family:monospace}
+.cell-fail{background:rgba(220,38,38,.1);color:#991b1b;font-weight:600;border-radius:3px;padding:1px 4px;font-size:11px;font-family:monospace}
+.cell-na{color:var(--text3);font-size:11px}
+
+/* Upload area */
+.upload-drop{border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px;background:var(--bg2)}
+.upload-drop:hover{border-color:var(--blue);background:var(--blue-bg)}
+.upload-drop i{font-size:28px;color:var(--text3);display:block;margin-bottom:8px}
+.upload-drop p{font-size:12px;color:var(--text2)}
+
+/* Empty state */
+.empty-state{text-align:center;padding:50px 20px;color:var(--text3)}
+.empty-state i{font-size:36px;display:block;margin-bottom:12px}
+.empty-state p{font-size:13px}
+.empty-state .empty-hint{font-size:11px;margin-top:6px;color:var(--text3)}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:16px 0}
+.divider-label{text-align:center;position:relative;margin:16px 0}
+.divider-label::before{content:"";position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border)}
+.divider-label span{position:relative;background:var(--bg);padding:0 12px;font-size:11px;color:var(--text3)}
+
+/* Actions bar */
+.actions-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.actions-bar-left{flex:1}
+
+/* Print */
+@media print {
+  .sidebar,.main-header,.no-print,.actions-bar,.tbl-search{display:none!important}
+  .portal-layout,.main-area{display:block;height:auto;overflow:visible}
+  .main-content{padding:0;overflow:visible}
+  .report-doc{box-shadow:none;border:1px solid #ccc}
+  body{background:#fff;color:#000}
+  .badge-pass::before{content:"APROBADO"}
+  .badge-fail::before{content:"RECHAZADO"}
+  @page{margin:1.5cm}
 }
-@media print{
-  body{background:#fff;padding:0}
-  .action-bar,.no-print,.logo-btn{display:none!important}
-  .sec{box-shadow:none;break-inside:avoid}
-  @page{margin:1.5cm;size:A4}
+
+/* ── MOBILE ── */
+@media (max-width:768px) {
+  :root{--sidebar-w:0px}
+  .portal-layout{flex-direction:column}
+  .sidebar{display:none!important}
+  .main-area{width:100vw;height:100dvh}
+  .main-header{padding:10px 14px;gap:8px}
+  .main-title{font-size:14px}
+  .main-content{padding:10px}
+
+  /* Bottom nav bar */
+  .mob-nav{display:flex!important}
+
+  /* Stats 2 col */
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+  .stat-card{padding:10px}
+  .stat-num{font-size:20px}
+  .stat-icon{font-size:18px;margin-bottom:4px}
+
+  /* Cards instead of table */
+  .tbl-wrap{background:transparent;border:none;box-shadow:none}
+  .tbl thead{display:none}
+  .tbl{display:block}
+  .tbl tbody{display:block}
+  .tbl tbody tr{display:block;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;padding:14px;box-shadow:var(--shadow)}
+  .tbl tbody tr:hover td{background:transparent}
+  .tbl td{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border:none;font-size:13px;gap:8px}
+  .tbl td::before{content:attr(data-label);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;min-width:80px;padding-top:1px}
+  .tbl td[data-label=""]::before{display:none}
+  .tbl td:last-child{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);justify-content:stretch}
+  .tbl td:last-child .btn{width:100%;justify-content:center;padding:10px;font-size:14px}
+  .tbl-search{padding:10px;flex-wrap:wrap;gap:8px}
+  .tbl-search input{max-width:100%!important;width:100%}
+
+  /* Forms */
+  .form-row-2,.form-row-3,.form-row-4{grid-template-columns:1fr}
+
+  /* Report detail */
+  .rs-grid-2,.rs-grid-3{grid-template-columns:1fr}
+  .report-doc-header{flex-direction:column;gap:8px}
+  .actions-bar{gap:8px}
+  .actions-bar .btn{flex:1;justify-content:center;padding:10px;font-size:14px}
+
+  /* Upload / clients */
+  .card{padding:14px}
 }
+
+/* Bottom nav bar — solo mobile */
+.mob-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--bg);border-top:1px solid var(--border);
+  padding:6px 0 10px;
+  z-index:200;
+  justify-content:space-around;
+  box-shadow:0 -2px 12px rgba(0,0,0,.08);
+}
+.mob-nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10px;font-weight:600;color:var(--text3);
+  cursor:pointer;padding:4px 16px;border-radius:8px;
+  transition:color .15s;
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.mob-nav-item i{font-size:22px}
+.mob-nav-item.active{color:var(--blue)}
+.mob-nav-spacer{height:70px} /* evita que el contenido quede bajo la nav */
+
+.hamburger{display:none;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:var(--bg);color:var(--text2)}
 </style>
 </head>
 <body>
-<div class="page">
+<div id="root"></div>
 
-<!-- HEADER -->
-<div class="hdr">
-  <div class="hdr-top">
-    <div class="logo-area">
-      <img id="logo-img" class="logo-img" src="" style="display:none" alt="Logo">
-      <div class="logo-btn" id="logo-btn" onclick="document.getElementById('logo-input').click()">
-        <i class="ti ti-upload"></i><span>Cargar logo</span>
-      </div>
-      <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="loadLogo(this)">
-      <button class="btn no-print" id="logo-change-btn" style="display:none;margin-top:4px;font-size:10px;padding:2px 8px" onclick="document.getElementById('logo-input').click()">Cambiar</button>
-    </div>
-    <div class="hdr-title">
-      <h1>REPORTE DE INSPECCIÓN DE SUSTITUTOS</h1>
-      <p>DS-1® Volumen 3 y Addendum — Inspección de Componentes de Sarta de Perforación</p>
-      <input class="inp" id="companyName" placeholder="Nombre de la Empresa Inspectora" style="margin-top:8px;text-align:center;font-weight:600;font-size:13px;border:none;background:transparent">
-    </div>
-    <div class="hdr-meta">
-      <div><label class="lbl">N° Reporte</label><input class="inp" id="reportNo" placeholder="RP-2026-001"></div>
-      <div><label class="lbl">Fecha</label><input type="date" class="inp" id="date"></div>
-      <div><label class="lbl">Revisión</label><input class="inp" id="revision" value="0"></div>
-    </div>
-  </div>
-</div>
-
-<!-- GENERAL INFO -->
-<div class="sec">
-  <div class="sec-hdr"><i class="ti ti-info-circle"></i>Información General</div>
-  <div class="sec-body">
-    <div class="g3">
-      <div><label class="lbl">Cliente</label><input class="inp" id="client"></div>
-      <div><label class="lbl">Equipo / Rig</label><input class="inp" id="rig"></div>
-      <div><label class="lbl">Pozo</label><input class="inp" id="well"></div>
-    </div>
-    <div class="g4">
-      <div><label class="lbl">Ubicación / Campo</label><input class="inp" id="location"></div>
-      <div><label class="lbl">Inspector</label><input class="inp" id="inspector"></div>
-      <div><label class="lbl">N° Certificado DS-1</label><input class="inp" id="certNo"></div>
-      <div>
-        <label class="lbl">Categoría DS-1</label>
-        <select class="inp" id="category">
-          <option value="1">Cat 1 — Visual exterior básico</option>
-          <option value="2">Cat 2 — Visual completo roscas</option>
-          <option value="3" selected>Cat 3 — Visual + dimensional</option>
-          <option value="4">Cat 4 — Cat 3 + MPI</option>
-          <option value="5">Cat 5 — Cat 4 + UT volumétrico</option>
-        </select>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- CONNECTION SELECTOR — con auto-fill DS-1 -->
-<div class="sec">
-  <div class="sec-hdr"><i class="ti ti-plug-connected"></i>Tipo de Sustituto y Conexiones — Auto-completado DS-1 Vol 3</div>
-  <div class="sec-body">
-    <div class="conn-selector">
-      <h4>
-        <i class="ti ti-wand"></i>Seleccioná el tipo de sustituto para cargar todos los valores DS-1 automáticamente
-        <span class="conn-filled-badge" id="filled-badge">✓ Valores DS-1 cargados</span>
-      </h4>
-      <div class="g4">
-        <div>
-          <label class="lbl">Tipo de Sustituto</label>
-          <select class="inp" id="subType" onchange="applySubType()">
-            <option value="">— Seleccionar —</option>
-            <optgroup label="Sustitutos NC (API Regular)">
-              <option value="NC26xNC26">NC26 Pin × NC26 Caja (3-1/2")</option>
-              <option value="NC31xNC31">NC31 Pin × NC31 Caja (4")</option>
-              <option value="NC38xNC38">NC38 Pin × NC38 Caja (4-3/4")</option>
-              <option value="NC38xNC46">NC38 Pin × NC46 Caja (X-Over)</option>
-              <option value="NC46xNC46">NC46 Pin × NC46 Caja (6-1/4")</option>
-              <option value="NC46xNC50">NC46 Pin × NC50 Caja (X-Over)</option>
-              <option value="NC50xNC50">NC50 Pin × NC50 Caja (6-5/8")</option>
-              <option value="NC50xNC56">NC50 Pin × NC56 Caja (X-Over)</option>
-              <option value="NC56xNC56">NC56 Pin × NC56 Caja (7-1/4")</option>
-              <option value="NC56xNC61">NC56 Pin × NC61 Caja (X-Over)</option>
-              <option value="NC61xNC61">NC61 Pin × NC61 Caja (8")</option>
-              <option value="NC61xNC70">NC61 Pin × NC70 Caja (X-Over)</option>
-              <option value="NC70xNC70">NC70 Pin × NC70 Caja (9")</option>
-              <option value="NC77xNC77">NC77 Pin × NC77 Caja (9-5/8")</option>
-            </optgroup>
-            <optgroup label="Sustitutos XT (NOV)">
-              <option value="XT39xXT39">XT39 Pin × XT39 Caja (5")</option>
-              <option value="XT39xXT43">XT39 Pin × XT43 Caja (X-Over)</option>
-              <option value="XT43xXT43">XT43 Pin × XT43 Caja (5-1/2")</option>
-              <option value="XT54xXT54">XT54 Pin × XT54 Caja (6-5/8")</option>
-              <option value="XT57xXT57">XT57 Pin × XT57 Caja (7-1/4")</option>
-            </optgroup>
-            <optgroup label="Sustitutos REG/FH">
-              <option value="REG412xREG412">4-1/2 REG Pin × 4-1/2 REG Caja</option>
-              <option value="FH4xFH4">4 FH Pin × 4 FH Caja (5")</option>
-              <option value="FH412xFH412">4-1/2 FH Pin × 4-1/2 FH Caja</option>
-              <option value="REG658xREG658">6-5/8 REG Pin × 6-5/8 REG Caja</option>
-            </optgroup>
-            <option value="CUSTOM">Personalizado (ingresar manualmente)</option>
-          </select>
-        </div>
-        <div>
-          <label class="lbl">Conexión Superior — Tipo</label>
-          <select class="inp" id="topConnType" onchange="applyConnRef()">
-            <option>NC26</option><option>NC31</option><option>NC38</option>
-            <option selected>NC46</option><option>NC50</option><option>NC56</option>
-            <option>NC61</option><option>NC70</option><option>NC77</option>
-            <option>XT39</option><option>XT43</option><option>XT54</option><option>XT57</option>
-            <option>4 FH</option><option>4-1/2 FH</option>
-            <option>4-1/2 REG</option><option>6-5/8 REG</option>
-            <option>Delta 544</option><option>PH6</option><option>Otro</option>
-          </select>
-        </div>
-        <div>
-          <label class="lbl">Config. Superior</label>
-          <select class="inp" id="topConnConfig"><option>Pin</option><option>Caja</option></select>
-        </div>
-        <div>
-          <label class="lbl">Conexión Inferior — Tipo</label>
-          <select class="inp" id="botConnType" onchange="applyConnRef()">
-            <option>NC26</option><option>NC31</option><option>NC38</option>
-            <option>NC46</option><option selected>NC50</option><option>NC56</option>
-            <option>NC61</option><option>NC70</option><option>NC77</option>
-            <option>XT39</option><option>XT43</option><option>XT54</option><option>XT57</option>
-            <option>4 FH</option><option>4-1/2 FH</option>
-            <option>4-1/2 REG</option><option>6-5/8 REG</option>
-            <option>Delta 544</option><option>PH6</option><option>Otro</option>
-          </select>
-        </div>
-      </div>
-      <div id="torque-info" class="torque-box" style="display:none">
-        <i class="ti ti-bolt"></i>
-        <span id="torque-text"></span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- COMPONENT ID -->
-<div class="sec">
-  <div class="sec-hdr"><i class="ti ti-tool"></i>Identificación del Componente</div>
-  <div class="sec-body">
-    <div class="g3" style="margin-bottom:8px">
-      <div><label class="lbl">Descripción completa</label><input class="inp" id="description" placeholder="Ej: X-Over NC46 Pin × NC50 Caja, 6-1/2&quot; OD"></div>
-      <div><label class="lbl">N° de Serie</label><input class="inp" id="serialNo"></div>
-      <div><label class="lbl">N° de Calor</label><input class="inp" id="heatNo"></div>
-    </div>
-    <div class="g5">
-      <div><label class="lbl">Fabricante</label><input class="inp" id="manufacturer"></div>
-      <div><label class="lbl">Material</label><input class="inp" id="material" value="AISI 4145H Mod"></div>
-      <div><label class="lbl">Grado</label><input class="inp" id="grade" value="S-135"></div>
-      <div><label class="lbl">OD Nominal (in)</label><input class="inp" id="nomOD" type="number" step="0.001"></div>
-      <div><label class="lbl">ID Nominal (in)</label><input class="inp" id="nomID" type="number" step="0.001"></div>
-    </div>
-    <div class="g5">
-      <div><label class="lbl">Longitud (ft)</label><input class="inp" id="compLength" type="number" step="0.01"></div>
-      <div><label class="lbl">Peso (lb)</label><input class="inp" id="weight" type="number"></div>
-      <div><label class="lbl">Espesor pared nom. (in)</label><input class="inp" id="wallNom" type="number" step="0.001"></div>
-      <div><label class="lbl">Torque armado (ft-lb)</label><input class="inp" id="makeupTorque" type="number" placeholder="Ver ref."></div>
-      <div><label class="lbl">Torque recomendado DS-1</label><input class="inp" id="refTorque" readonly style="background:var(--bg2);font-size:11px"></div>
-    </div>
-  </div>
-</div>
-
-<!-- VISUAL INSPECTION -->
-<div class="sec">
-  <div class="sec-hdr"><i class="ti ti-eye"></i>Inspección Visual — DS-1 Vol 3 §3.6 y Addendum</div>
-  <table class="vis-tbl">
-    <thead><tr><th>Ítem de Inspección</th><th style="width:110px">Ref. DS-1</th><th style="width:180px">Resultado</th></tr></thead>
-    <tbody id="vis-tbody"></tbody>
-  </table>
-</div>
-
-<!-- DIMENSIONAL MEASUREMENTS — auto-filled -->
-<div class="sec">
-  <div class="sec-hdr">
-    <i class="ti ti-ruler-measure"></i>Mediciones Dimensionales — DS-1 Vol 3 Tablas 3.4 / 3.6 / 3.7 y Addendum
-    <span style="margin-left:auto;font-size:10px;color:var(--blue-text);font-weight:600" class="no-print">
-      <i class="ti ti-wand" style="vertical-align:-2px"></i> Campos azules = valores DS-1 cargados automáticamente
-    </span>
-  </div>
-  <div style="overflow-x:auto">
-    <table class="meas-tbl">
-      <thead>
-        <tr>
-          <th>Parámetro</th><th>Un.</th><th>Ref. DS-1</th>
-          <th>Nominal</th><th>Mín</th><th>Máx</th>
-          <th>Med. 1</th><th>Med. 2</th><th>Med. 3</th>
-          <th>Promedio</th><th>Estado</th>
-        </tr>
-      </thead>
-      <tbody id="meas-tbody"></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- COMMENTS -->
-<div class="sec">
-  <div class="sec-hdr"><i class="ti ti-notes"></i>Observaciones y Comentarios</div>
-  <div class="sec-body">
-    <textarea class="inp" id="comments" placeholder="Observaciones adicionales, condiciones de inspección, hallazgos especiales, recomendaciones..."></textarea>
-  </div>
-</div>
-
-<!-- RESULT -->
-<div class="sec" id="result-sec">
-  <div class="result-box">
-    <div>
-      <div class="result-verdict" id="result-verdict">— Sin datos</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:3px" id="result-desc">Completá las mediciones para ver el resultado.</div>
-    </div>
-    <div>
-      <label class="lbl">Override manual</label>
-      <select class="inp" id="manualResult" onchange="updateResult()" style="width:180px;font-weight:600">
-        <option value="AUTO">⚡ Automático</option>
-        <option value="APROBADO">✓ APROBADO</option>
-        <option value="RECHAZADO">✗ RECHAZADO</option>
-        <option value="CONDICIONAL">~ CONDICIONAL</option>
-      </select>
-    </div>
-  </div>
-</div>
-
-<!-- CERTIFICATION -->
-<div class="sec">
-  <div class="sec-hdr"><i class="ti ti-certificate"></i>Certificación — DS-1 Vol 3 §1.5</div>
-  <div class="sec-body">
-    <div style="font-size:11px;color:var(--text2);line-height:1.7">
-      El inspector certifica que la inspección fue realizada conforme a <strong>DS-1® Volumen 3</strong> y Addendum vigentes. Los resultados son correctos y las mediciones se realizaron con instrumentos calibrados trazables a patrones NIST/INTI.
-    </div>
-    <div class="cert-lines">
-      <div class="cert-line"><strong>Inspector / Firma</strong><br><span id="cert-inspector">___________________</span><br>Cert. DS-1: <span id="cert-certno">___________________</span></div>
-      <div class="cert-line"><strong>Supervisor / Conformidad</strong><br>Firma: _________________________<br>Fecha: <span id="cert-date">_______________</span></div>
-      <div class="cert-line"><strong>Cliente / Aceptación</strong><br>Firma: _________________________<br>Fecha: _______________</div>
-    </div>
-  </div>
-</div>
-
-<!-- ACTION BAR -->
-<div class="action-bar no-print">
-  <div class="action-bar-hint"><i class="ti ti-info-circle" style="vertical-align:-2px"></i> Exportá el JSON para subirlo al portal del cliente.</div>
-  <button class="btn" onclick="resetForm()"><i class="ti ti-refresh"></i> Nuevo reporte</button>
-  <button class="btn btn-amber" onclick="exportJSON()"><i class="ti ti-download"></i> Exportar JSON</button>
-  <button class="btn btn-primary" onclick="window.print()"><i class="ti ti-printer"></i> Imprimir / PDF</button>
-</div>
-
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-/* =======================================================
-   DS-1 Vol 3 — Base de datos completa de conexiones
-   Fuente: DS-1 Vol 3 Ed. 5 Tablas 3.6, 3.7 y Addendum
-   ======================================================= */
-const CONN_DATA = {
-  NC26: {
-    pinTongMin:12, pinLenMin:3.25,
-    bevelMin:2.875, bevelMax:3.281,
-    boxTongMin:12, boxODMin:3.281,
-    cbDiam:2.281, cbDepth:0.750,
-    sealShldrMin:0.375,
-    torqMin:4500, torqMax:5500,
-    // Body típico para sustitutos NC26
-    bodyODNom:3.500, bodyODTol:0.031,
-    bodyIDNom:1.750, wallNom:0.875,
-    weightPerFt:13.3, lengthMin:2.5, lengthMax:3.5,
-  },
-  NC31: {
-    pinTongMin:12, pinLenMin:3.5,
-    bevelMin:3.5, bevelMax:3.812,
-    boxTongMin:12, boxODMin:3.812,
-    cbDiam:2.719, cbDepth:0.875,
-    sealShldrMin:0.375,
-    torqMin:8000, torqMax:10000,
-    bodyODNom:4.000, bodyODTol:0.031,
-    bodyIDNom:2.000, wallNom:1.000,
-    weightPerFt:15.7, lengthMin:2.5, lengthMax:4.0,
-  },
-  NC38: {
-    pinTongMin:12, pinLenMin:3.75,
-    bevelMin:4.250, bevelMax:4.718,
-    boxTongMin:12, boxODMin:4.718,
-    cbDiam:3.281, cbDepth:1.000,
-    sealShldrMin:0.500,
-    torqMin:15000, torqMax:18000,
-    bodyODNom:4.750, bodyODTol:0.031,
-    bodyIDNom:2.250, wallNom:1.250,
-    weightPerFt:16.6, lengthMin:2.5, lengthMax:4.5,
-  },
-  NC46: {
-    pinTongMin:12, pinLenMin:4.25,
-    bevelMin:5.188, bevelMax:5.625,
-    boxTongMin:12, boxODMin:5.625,
-    cbDiam:4.000, cbDepth:1.125,
-    sealShldrMin:0.500,
-    torqMin:27000, torqMax:33000,
-    bodyODNom:6.250, bodyODTol:0.031,
-    bodyIDNom:2.500, wallNom:1.875,
-    weightPerFt:51.0, lengthMin:3.0, lengthMax:5.0,
-  },
-  NC50: {
-    pinTongMin:12, pinLenMin:4.50,
-    bevelMin:5.938, bevelMax:6.500,
-    boxTongMin:12, boxODMin:6.500,
-    cbDiam:4.500, cbDepth:1.250,
-    sealShldrMin:0.625,
-    torqMin:37000, torqMax:45000,
-    bodyODNom:6.500, bodyODTol:0.031,
-    bodyIDNom:2.812, wallNom:1.844,
-    weightPerFt:53.5, lengthMin:3.0, lengthMax:5.0,
-  },
-  NC56: {
-    pinTongMin:12, pinLenMin:5.00,
-    bevelMin:6.750, bevelMax:7.250,
-    boxTongMin:12, boxODMin:7.250,
-    cbDiam:5.000, cbDepth:1.375,
-    sealShldrMin:0.625,
-    torqMin:55000, torqMax:66000,
-    bodyODNom:7.250, bodyODTol:0.031,
-    bodyIDNom:3.000, wallNom:2.125,
-    weightPerFt:82.0, lengthMin:3.0, lengthMax:5.0,
-  },
-  NC61: {
-    pinTongMin:12, pinLenMin:5.50,
-    bevelMin:7.375, bevelMax:7.875,
-    boxTongMin:12, boxODMin:7.875,
-    cbDiam:5.500, cbDepth:1.500,
-    sealShldrMin:0.750,
-    torqMin:65000, torqMax:79000,
-    bodyODNom:8.000, bodyODTol:0.031,
-    bodyIDNom:3.000, wallNom:2.500,
-    weightPerFt:103.0, lengthMin:3.0, lengthMax:5.5,
-  },
-  NC70: {
-    pinTongMin:12, pinLenMin:6.00,
-    bevelMin:8.500, bevelMax:9.000,
-    boxTongMin:12, boxODMin:9.000,
-    cbDiam:6.250, cbDepth:1.750,
-    sealShldrMin:0.875,
-    torqMin:90000, torqMax:110000,
-    bodyODNom:9.000, bodyODTol:0.031,
-    bodyIDNom:3.500, wallNom:2.750,
-    weightPerFt:130.0, lengthMin:3.5, lengthMax:6.0,
-  },
-  NC77: {
-    pinTongMin:12, pinLenMin:6.50,
-    bevelMin:9.500, bevelMax:10.000,
-    boxTongMin:12, boxODMin:10.000,
-    cbDiam:6.750, cbDepth:2.000,
-    sealShldrMin:1.000,
-    torqMin:120000, torqMax:145000,
-    bodyODNom:9.625, bodyODTol:0.031,
-    bodyIDNom:4.000, wallNom:2.813,
-    weightPerFt:155.0, lengthMin:3.5, lengthMax:6.0,
-  },
-  XT39: {
-    pinTongMin:12, pinLenMin:3.80,
-    bevelMin:4.500, bevelMax:4.875,
-    boxTongMin:12, boxODMin:4.875,
-    cbDiam:3.500, cbDepth:1.000,
-    sealShldrMin:0.500,
-    torqMin:18000, torqMax:22000,
-    bodyODNom:5.000, bodyODTol:0.031,
-    bodyIDNom:2.250, wallNom:1.375,
-    weightPerFt:19.5, lengthMin:3.0, lengthMax:4.5,
-  },
-  XT43: {
-    pinTongMin:12, pinLenMin:4.00,
-    bevelMin:5.000, bevelMax:5.500,
-    boxTongMin:12, boxODMin:5.500,
-    cbDiam:3.875, cbDepth:1.125,
-    sealShldrMin:0.500,
-    torqMin:25000, torqMax:30000,
-    bodyODNom:5.500, bodyODTol:0.031,
-    bodyIDNom:2.500, wallNom:1.500,
-    weightPerFt:24.7, lengthMin:3.0, lengthMax:5.0,
-  },
-  XT54: {
-    pinTongMin:12, pinLenMin:4.50,
-    bevelMin:6.125, bevelMax:6.625,
-    boxTongMin:12, boxODMin:6.625,
-    cbDiam:4.625, cbDepth:1.250,
-    sealShldrMin:0.625,
-    torqMin:40000, torqMax:48000,
-    bodyODNom:6.625, bodyODTol:0.031,
-    bodyIDNom:2.812, wallNom:1.906,
-    weightPerFt:58.0, lengthMin:3.0, lengthMax:5.0,
-  },
-  XT57: {
-    pinTongMin:12, pinLenMin:5.00,
-    bevelMin:6.750, bevelMax:7.250,
-    boxTongMin:12, boxODMin:7.250,
-    cbDiam:5.000, cbDepth:1.375,
-    sealShldrMin:0.625,
-    torqMin:58000, torqMax:70000,
-    bodyODNom:7.250, bodyODTol:0.031,
-    bodyIDNom:3.000, wallNom:2.125,
-    weightPerFt:82.0, lengthMin:3.0, lengthMax:5.5,
-  },
-  '4-1/2 REG': {
-    pinTongMin:12, pinLenMin:3.75,
-    bevelMin:5.000, bevelMax:5.500,
-    boxTongMin:12, boxODMin:5.500,
-    cbDiam:3.750, cbDepth:1.000,
-    sealShldrMin:0.500,
-    torqMin:20000, torqMax:25000,
-    bodyODNom:5.500, bodyODTol:0.031,
-    bodyIDNom:2.500, wallNom:1.500,
-    weightPerFt:22.0, lengthMin:3.0, lengthMax:5.0,
-  },
-  '6-5/8 REG': {
-    pinTongMin:12, pinLenMin:5.00,
-    bevelMin:7.500, bevelMax:8.000,
-    boxTongMin:12, boxODMin:8.000,
-    cbDiam:5.875, cbDepth:1.500,
-    sealShldrMin:0.750,
-    torqMin:75000, torqMax:90000,
-    bodyODNom:8.000, bodyODTol:0.031,
-    bodyIDNom:3.000, wallNom:2.500,
-    weightPerFt:115.0, lengthMin:3.5, lengthMax:6.0,
-  },
-  '4 FH': {
-    pinTongMin:12, pinLenMin:4.00,
-    bevelMin:5.000, bevelMax:5.500,
-    boxTongMin:12, boxODMin:5.500,
-    cbDiam:3.875, cbDepth:1.125,
-    sealShldrMin:0.500,
-    torqMin:30000, torqMax:36000,
-    bodyODNom:5.500, bodyODTol:0.031,
-    bodyIDNom:2.500, wallNom:1.500,
-    weightPerFt:24.0, lengthMin:3.0, lengthMax:5.0,
-  },
-  '4-1/2 FH': {
-    pinTongMin:12, pinLenMin:4.25,
-    bevelMin:5.625, bevelMax:6.125,
-    boxTongMin:12, boxODMin:6.125,
-    cbDiam:4.375, cbDepth:1.250,
-    sealShldrMin:0.625,
-    torqMin:42000, torqMax:51000,
-    bodyODNom:6.125, bodyODTol:0.031,
-    bodyIDNom:2.750, wallNom:1.688,
-    weightPerFt:41.0, lengthMin:3.0, lengthMax:5.0,
-  },
-};
+/* =========================================================
+   PORTAL DS-1 — Informes Técnicos de Inspección
+   DS-1® Vol 3 y Addendum
+   =========================================================
 
-// Tipos de sustitutos predefinidos
-const SUB_TYPES = {
-  'NC26xNC26': {topConn:'NC26',botConn:'NC26',description:'Sustituto NC26 Pin × NC26 Caja 3-1/2"',bodyODNom:3.500,bodyIDNom:1.750,weight:15,length:3.0},
-  'NC31xNC31': {topConn:'NC31',botConn:'NC31',description:'Sustituto NC31 Pin × NC31 Caja 4"',bodyODNom:4.000,bodyIDNom:2.000,weight:18,length:3.0},
-  'NC38xNC38': {topConn:'NC38',botConn:'NC38',description:'Sustituto NC38 Pin × NC38 Caja 4-3/4"',bodyODNom:4.750,bodyIDNom:2.250,weight:22,length:3.5},
-  'NC38xNC46': {topConn:'NC38',botConn:'NC46',description:'X-Over NC38 Pin × NC46 Caja',bodyODNom:5.000,bodyIDNom:2.375,weight:35,length:3.0},
-  'NC46xNC46': {topConn:'NC46',botConn:'NC46',description:'Sustituto NC46 Pin × NC46 Caja 6-1/4"',bodyODNom:6.250,bodyIDNom:2.500,weight:48,length:3.5},
-  'NC46xNC50': {topConn:'NC46',botConn:'NC50',description:'X-Over NC46 Pin × NC50 Caja',bodyODNom:6.500,bodyIDNom:2.812,weight:52,length:3.0},
-  'NC50xNC50': {topConn:'NC50',botConn:'NC50',description:'Sustituto NC50 Pin × NC50 Caja 6-5/8"',bodyODNom:6.500,bodyIDNom:2.812,weight:55,length:3.5},
-  'NC50xNC56': {topConn:'NC50',botConn:'NC56',description:'X-Over NC50 Pin × NC56 Caja',bodyODNom:7.000,bodyIDNom:3.000,weight:70,length:3.0},
-  'NC56xNC56': {topConn:'NC56',botConn:'NC56',description:'Sustituto NC56 Pin × NC56 Caja 7-1/4"',bodyODNom:7.250,bodyIDNom:3.000,weight:80,length:3.5},
-  'NC56xNC61': {topConn:'NC56',botConn:'NC61',description:'X-Over NC56 Pin × NC61 Caja',bodyODNom:7.625,bodyIDNom:3.000,weight:92,length:3.0},
-  'NC61xNC61': {topConn:'NC61',botConn:'NC61',description:'Sustituto NC61 Pin × NC61 Caja 8"',bodyODNom:8.000,bodyIDNom:3.000,weight:100,length:3.5},
-  'NC61xNC70': {topConn:'NC61',botConn:'NC70',description:'X-Over NC61 Pin × NC70 Caja',bodyODNom:8.500,bodyIDNom:3.250,weight:120,length:3.0},
-  'NC70xNC70': {topConn:'NC70',botConn:'NC70',description:'Sustituto NC70 Pin × NC70 Caja 9"',bodyODNom:9.000,bodyIDNom:3.500,weight:130,length:3.5},
-  'NC77xNC77': {topConn:'NC77',botConn:'NC77',description:'Sustituto NC77 Pin × NC77 Caja 9-5/8"',bodyODNom:9.625,bodyIDNom:4.000,weight:155,length:3.5},
-  'XT39xXT39': {topConn:'XT39',botConn:'XT39',description:'Sustituto XT39 Pin × XT39 Caja 5"',bodyODNom:5.000,bodyIDNom:2.250,weight:22,length:3.5},
-  'XT39xXT43': {topConn:'XT39',botConn:'XT43',description:'X-Over XT39 Pin × XT43 Caja',bodyODNom:5.250,bodyIDNom:2.375,weight:28,length:3.0},
-  'XT43xXT43': {topConn:'XT43',botConn:'XT43',description:'Sustituto XT43 Pin × XT43 Caja 5-1/2"',bodyODNom:5.500,bodyIDNom:2.500,weight:32,length:3.5},
-  'XT54xXT54': {topConn:'XT54',botConn:'XT54',description:'Sustituto XT54 Pin × XT54 Caja 6-5/8"',bodyODNom:6.625,bodyIDNom:2.812,weight:58,length:3.5},
-  'XT57xXT57': {topConn:'XT57',botConn:'XT57',description:'Sustituto XT57 Pin × XT57 Caja 7-1/4"',bodyODNom:7.250,bodyIDNom:3.000,weight:80,length:3.5},
-  'REG412xREG412': {topConn:'4-1/2 REG',botConn:'4-1/2 REG',description:'Sustituto 4-1/2 REG Pin × 4-1/2 REG Caja',bodyODNom:5.500,bodyIDNom:2.500,weight:30,length:3.5},
-  'FH4xFH4': {topConn:'4 FH',botConn:'4 FH',description:'Sustituto 4 FH Pin × 4 FH Caja 5"',bodyODNom:5.500,bodyIDNom:2.500,weight:28,length:3.5},
-  'FH412xFH412': {topConn:'4-1/2 FH',botConn:'4-1/2 FH',description:'Sustituto 4-1/2 FH Pin × 4-1/2 FH Caja',bodyODNom:6.125,bodyIDNom:2.750,weight:42,length:3.5},
-  'REG658xREG658': {topConn:'6-5/8 REG',botConn:'6-5/8 REG',description:'Sustituto 6-5/8 REG Pin × 6-5/8 REG Caja',bodyODNom:8.000,bodyIDNom:3.000,weight:115,length:3.5},
-};
+   [CONFIG] Personalización inicial:
+   - Cambiar COMPANY_NAME por el nombre de tu empresa
+   - Modificar DEMO_USERS para crear las cuentas reales
+   - Cambiar el favicon y el título en el <head>
 
-const VIS_ITEMS = [
-  {id:"pinThread",label:"Roscas del Pin — forma, flancos, raíces, cresta",ref:"§3.6.1"},
-  {id:"boxThread",label:"Roscas de la Caja — forma, flancos, raíces, cresta",ref:"§3.6.1"},
-  {id:"pinSeal",label:"Cara de Sello del Pin (hombro)",ref:"§3.6.2"},
-  {id:"boxSeal",label:"Cara de Sello de la Caja / Hombro Counterbore",ref:"§3.6.2"},
-  {id:"pinNeck",label:"Cuello del Pin (zona bajo última rosca)",ref:"§3.6.3"},
-  {id:"boxExt",label:"Superficie exterior de la Caja",ref:"§3.6.3"},
-  {id:"bodyExt",label:"Superficie exterior del Cuerpo (grietas, pitting, daños)",ref:"§3.6.4"},
-  {id:"hb",label:"Hardbanding (ancho, posición, condición)",ref:"§3.6.5 / Addendum"},
-  {id:"bb",label:"Boreback de la Caja (si aplica)",ref:"Addendum §B"},
-  {id:"slipG",label:"Ranura de Slip (dimensiones, condición)",ref:"§3.6.6"},
-  {id:"elevG",label:"Ranura de Elevator (dimensiones, condición)",ref:"§3.6.6"},
-  {id:"marks",label:"Marcado e identificación legible",ref:"§3.6.7"},
-  {id:"dye",label:"Líquidos penetrantes (si Cat ≥4)",ref:"§3.7"},
-  {id:"mpi",label:"MPI — cuello pin y OD caja (si Cat ≥4)",ref:"§3.8"},
+   Para producción con backend real:
+   - Reemplazar las funciones sGet/sSet/sDel
+     por llamadas a tu API REST (fetch / axios)
+   - Las firmas son las mismas: async sGet(key) → data
+   ========================================================= */
+
+// [CONFIG] Nombre de tu empresa
+const COMPANY_NAME = "Empresa Inspectora SA";
+
+const {useState, useEffect, useRef, Fragment} = React;
+
+/* ---- Storage (localStorage) ---- */
+function sGet(k) {
+  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }
+  catch(e) { return null; }
+}
+function sSet(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); return true; }
+  catch(e) { return false; }
+}
+function sDel(k) {
+  try { localStorage.removeItem(k); return true; }
+  catch(e) { return false; }
+}
+
+/* ---- Datos de demostración ---- */
+// [CONFIG] Modificar usuarios reales aquí antes de publicar
+const DEMO_USERS = [
+  {id:"u0", name:"Administrador", email:"admin@empresa.com", password:"admin123", role:"admin", company:COMPANY_NAME},
+  {id:"u1", name:"Carlos Mendez", email:"carlos@operadora.com", password:"demo123", role:"client", company:"Operadora Mendoza SRL"},
+  {id:"u2", name:"Claudio Ríos", email:"claudio@petro.com", password:"demo123", role:"client", company:"Petro Sur SA"},
 ];
 
-const MEAS_DEFS = [
-  {id:"bodyOD",cat:"Cuerpo",label:"OD del Cuerpo",unit:"in",ref:"Tabla 3.4"},
-  {id:"bodyID",cat:"Cuerpo",label:"ID del Cuerpo",unit:"in",ref:"Tabla 3.4"},
-  {id:"wallThk",cat:"Cuerpo",label:"Espesor de Pared mín.",unit:"in",ref:"Tabla 3.4"},
-  {id:"totalLen",cat:"Cuerpo",label:"Longitud Total",unit:"ft",ref:"±0.5 ft de nominal"},
-  {id:"bow",cat:"Cuerpo",label:"Curvatura / Bow (30ft)",unit:"in",ref:"Tabla 3.5 máx 0.25\""},
-  {id:"pinTong",cat:"Pin",label:"Tong Space del Pin",unit:"in",ref:"Tabla 3.6 mín 12\""},
-  {id:"pinLen",cat:"Pin",label:"Longitud del Pin",unit:"in",ref:"Tabla 3.6"},
-  {id:"bevel",cat:"Pin",label:"Diámetro del Bisel del Pin",unit:"in",ref:"Tabla 3.6"},
-  {id:"boxTong",cat:"Caja",label:"Tong Space de la Caja",unit:"in",ref:"Tabla 3.7 mín 12\""},
-  {id:"boxOD",cat:"Caja",label:"OD de la Caja",unit:"in",ref:"Tabla 3.7"},
-  {id:"cbDiam",cat:"Caja",label:"Diámetro Counterbore",unit:"in",ref:"Tabla 3.7"},
-  {id:"cbDepth",cat:"Caja",label:"Profundidad Counterbore",unit:"in",ref:"Tabla 3.7"},
-  {id:"sealShldr",cat:"Caja",label:"Ancho Hombro de Sello",unit:"in",ref:"Addendum Tabla A"},
+const DEMO_REPORTS = [
+  {
+    id:"r1", clientIds:["u1"], reportNo:"RP-2025-001",
+    date:"2025-05-10", component:"X-Over NC46 Pin × NC50 Caja, 6-1/2\" OD",
+    result:"APROBADO", inspector:"J. Rodríguez", certNo:"DS1-ARG-0142",
+    rig:"Rig Mendoza 7", well:"MM-023", company:"Operadora Mendoza SRL",
+    location:"Mendoza", category:"3", comments:"Componente en buenas condiciones generales. Listo para servicio.",
+    uploadedAt:"2025-05-10T10:00:00Z",
+    visualInspection:{pinThread:"P",boxThread:"P",pinSeal:"P",boxSeal:"P",pinNeck:"P",boxExt:"P",bodyExt:"P",hb:"NA",bb:"NA",slipG:"NA",elevG:"P",marks:"P",dye:"NA",mpi:"NA"},
+    measurements:{
+      bodyOD:{nominal:"6.500",min:"6.468",max:"6.531",m1:"6.499",m2:"6.501",m3:"6.498"},
+      pinTong:{nominal:"",min:"12",max:"",m1:"14.25",m2:"14.25",m3:""},
+      bevel:{nominal:"",min:"5.938",max:"6.500",m1:"6.215",m2:"6.217",m3:""},
+      boxTong:{nominal:"",min:"12",max:"",m1:"13.50",m2:"13.50",m3:""},
+      boxOD:{nominal:"6.500",min:"6.500",max:"",m1:"6.498",m2:"6.499",m3:""},
+    }
+  },
+  {
+    id:"r2", clientIds:["u2"], reportNo:"RP-2025-002",
+    date:"2025-05-08", component:"Sustituto NC50 Pin × NC46 Caja, 5\" OD",
+    result:"RECHAZADO", inspector:"J. Rodríguez", certNo:"DS1-ARG-0142",
+    rig:"Rig Neuquén 3", well:"NQ-017", company:"Petro Sur SA",
+    location:"Neuquén", category:"4", comments:"Desgaste excesivo en OD de caja y daño en cara de sello de caja. Componente fuera de servicio.",
+    uploadedAt:"2025-05-08T14:30:00Z",
+    visualInspection:{pinThread:"P",boxThread:"F",pinSeal:"P",boxSeal:"F",pinNeck:"P",boxExt:"P",bodyExt:"P",hb:"P",bb:"NA",slipG:"NA",elevG:"NA",marks:"P",dye:"P",mpi:"P"},
+    measurements:{
+      bodyOD:{nominal:"5.000",min:"4.968",max:"5.031",m1:"4.999",m2:"4.997",m3:""},
+      boxOD:{nominal:"6.500",min:"6.500",max:"",m1:"6.463",m2:"6.461",m3:""},
+      boxTong:{nominal:"",min:"12",max:"",m1:"11.5",m2:"11.5",m3:""},
+    }
+  },
 ];
 
-// State
-const measState = {};
-MEAS_DEFS.forEach(d => measState[d.id] = {nominal:'',min:'',max:'',m1:'',m2:'',m3:''});
+/* ---- Etiquetas DS-1 ---- */
+const VIS_LABELS = {
+  pinThread:"Roscas del Pin", boxThread:"Roscas de la Caja",
+  pinSeal:"Cara de Sello del Pin", boxSeal:"Cara de Sello de la Caja",
+  pinNeck:"Cuello del Pin", boxExt:"Superficie exterior de la Caja",
+  bodyExt:"Superficie exterior del Cuerpo", hb:"Hardbanding",
+  bb:"Boreback", slipG:"Ranura de Slip",
+  elevG:"Ranura de Elevator", marks:"Marcado e Identificación",
+  dye:"Líquidos Penetrantes", mpi:"MPI (Inspección magnética)"
+};
 
-/* =====================================================  Init  ===================================================== */
-document.getElementById('date').value = new Date().toISOString().slice(0,10);
+const MEAS_LABELS = {
+  bodyOD:"OD del Cuerpo", bodyID:"ID del Cuerpo",
+  wallThk:"Espesor de Pared", length:"Longitud Total",
+  bow:"Curvatura / Bow", pinTong:"Tong Space del Pin",
+  pinLen:"Longitud del Pin", bevel:"Diámetro del Bisel",
+  boxTong:"Tong Space de la Caja", boxOD:"OD de la Caja",
+  cbDiam:"Diámetro Counterbore", cbDepth:"Profundidad Counterbore",
+  sealShldr:"Ancho Hombro Sello"
+};
 
-// Visual rows
-const visTbody = document.getElementById('vis-tbody');
-VIS_ITEMS.forEach(item => {
-  const tr = document.createElement('tr');
-  tr.id = 'vis-row-'+item.id;
-  tr.innerHTML = `<td>${item.label}</td><td style="font-size:10px;color:var(--text3)">${item.ref}</td>
-    <td><select class="vis-sel" id="vis-${item.id}" onchange="updateVisRow('${item.id}')">
-      <option value="P">✓ Aprobado</option><option value="F">✗ Rechazado</option><option value="NA">— N/A</option>
-    </select></td>`;
-  visTbody.appendChild(tr);
-});
-
-// Measurement rows
-const measTbody = document.getElementById('meas-tbody');
-const cats = [...new Set(MEAS_DEFS.map(d=>d.cat))];
-cats.forEach(cat => {
-  const catTr = document.createElement('tr');
-  catTr.className='cat-row';
-  catTr.innerHTML=`<td colspan="11">${cat}</td>`;
-  measTbody.appendChild(catTr);
-  MEAS_DEFS.filter(d=>d.cat===cat).forEach(def => {
-    const tr = document.createElement('tr');
-    tr.id = 'meas-row-'+def.id;
-    tr.innerHTML = `
-      <td>${def.label}</td>
-      <td style="color:var(--text3)">${def.unit}</td>
-      <td style="font-size:9px;color:var(--text3)">${def.ref}</td>
-      <td><input type="number" step="0.001" class="meas-inp" id="m-${def.id}-nominal" oninput="onMeasInput('${def.id}')"></td>
-      <td><input type="number" step="0.001" class="meas-inp" id="m-${def.id}-min" oninput="onMeasInput('${def.id}')"></td>
-      <td><input type="number" step="0.001" class="meas-inp" id="m-${def.id}-max" oninput="onMeasInput('${def.id}')"></td>
-      <td><input type="number" step="0.001" class="meas-inp" id="m-${def.id}-m1" oninput="onMeasInput('${def.id}')"></td>
-      <td><input type="number" step="0.001" class="meas-inp" id="m-${def.id}-m2" oninput="onMeasInput('${def.id}')"></td>
-      <td><input type="number" step="0.001" class="meas-inp" id="m-${def.id}-m3" oninput="onMeasInput('${def.id}')"></td>
-      <td class="avg-cell avg-na" id="m-${def.id}-avg">—</td>
-      <td id="m-${def.id}-status" style="text-align:center">—</td>`;
-    measTbody.appendChild(tr);
-  });
-});
-
-/* =====================================================  Auto-fill functions  ===================================================== */
-function applySubType(){
-  const key = document.getElementById('subType').value;
-  if(!key || key==='CUSTOM') return;
-  const sub = SUB_TYPES[key];
-  if(!sub) return;
-
-  // Set connection dropdowns
-  setSelectValue('topConnType', sub.topConn);
-  setSelectValue('botConnType', sub.botConn);
-  document.getElementById('topConnConfig').value = 'Pin';
-  document.getElementById('botConnConfig').value = 'Caja';
-
-  // Set component description & nominal values
-  if(!document.getElementById('description').value)
-    document.getElementById('description').value = sub.description;
-  document.getElementById('nomOD').value = sub.bodyODNom;
-  document.getElementById('nomID').value = sub.bodyIDNom;
-  document.getElementById('weight').value = sub.weight;
-  document.getElementById('compLength').value = sub.length;
-
-  // Apply connection reference values
-  applyConnRef();
+/* ---- Helpers ---- */
+function avg3(m) {
+  const vs = [m.m1,m.m2,m.m3].filter(v=>v&&!isNaN(parseFloat(v))).map(parseFloat);
+  if (!vs.length) return "";
+  return (vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(3);
 }
 
-function applyConnRef(){
-  const top = document.getElementById('topConnType').value;
-  const bot = document.getElementById('botConnType').value;
-  const rTop = CONN_DATA[top];
-  const rBot = CONN_DATA[bot];
-
-  // Body from top connection or bot, whichever is larger
-  const bodyRef = rTop || rBot;
-  if(bodyRef){
-    setMeas('bodyOD','nominal',bodyRef.bodyODNom,'auto');
-    setMeas('bodyOD','min',(bodyRef.bodyODNom - bodyRef.bodyODTol).toFixed(3),'auto');
-    setMeas('bodyOD','max',(bodyRef.bodyODNom + bodyRef.bodyODTol).toFixed(3),'auto');
-    setMeas('bodyID','nominal',bodyRef.bodyIDNom,'auto');
-    setMeas('wallThk','nominal',bodyRef.wallNom,'auto');
-    setMeas('wallThk','min',(bodyRef.wallNom * 0.875).toFixed(3),'auto'); // DS-1: mín 87.5% nominal
-    setMeas('totalLen','nominal',bodyRef.lengthMin,'auto');
-    setMeas('totalLen','min',(bodyRef.lengthMin - 0.5).toFixed(2),'auto');
-    setMeas('totalLen','max',(bodyRef.lengthMax + 0.5).toFixed(2),'auto');
-    setMeas('bow','max','0.250','auto');
-
-    // Torque info
-    const torqText = `Torque DS-1 recomendado: ${rTop?.torqMin?.toLocaleString()||'—'} – ${rTop?.torqMax?.toLocaleString()||'—'} ft-lb (Pin ${top}) | ${rBot?.torqMin?.toLocaleString()||'—'} – ${rBot?.torqMax?.toLocaleString()||'—'} ft-lb (Caja ${bot})`;
-    document.getElementById('torque-text').textContent = torqText;
-    document.getElementById('torque-info').style.display = 'flex';
-    const torqRef = rTop ? `${rTop.torqMin.toLocaleString()} – ${rTop.torqMax.toLocaleString()} ft-lb` : '—';
-    document.getElementById('refTorque').value = torqRef;
-  }
-
-  // Pin connection values (top)
-  if(rTop){
-    setMeas('pinTong','min',rTop.pinTongMin,'auto');
-    setMeas('pinLen','min',rTop.pinLenMin,'auto');
-    setMeas('bevel','min',rTop.bevelMin,'auto');
-    setMeas('bevel','max',rTop.bevelMax,'auto');
-    setMeas('bevel','nominal',((rTop.bevelMin+rTop.bevelMax)/2).toFixed(3),'auto');
-  }
-
-  // Box connection values (bot)
-  if(rBot){
-    setMeas('boxTong','min',rBot.boxTongMin,'auto');
-    setMeas('boxOD','min',rBot.boxODMin,'auto');
-    setMeas('boxOD','nominal',(rBot.boxODMin + 0.062).toFixed(3),'auto');
-    setMeas('cbDiam','nominal',rBot.cbDiam,'auto');
-    setMeas('cbDiam','min',(rBot.cbDiam - 0.031).toFixed(3),'auto');
-    setMeas('cbDiam','max',(rBot.cbDiam + 0.031).toFixed(3),'auto');
-    setMeas('cbDepth','nominal',rBot.cbDepth,'auto');
-    setMeas('cbDepth','min',(rBot.cbDepth - 0.031).toFixed(3),'auto');
-    setMeas('cbDepth','max',(rBot.cbDepth + 0.062).toFixed(3),'auto');
-    setMeas('sealShldr','min',rBot.sealShldrMin,'auto');
-  }
-
-  document.getElementById('filled-badge').style.display = 'inline-flex';
-
-  // Recalculate all rows
-  MEAS_DEFS.forEach(d => updateMeasDisplay(d.id));
-  updateResult();
+function evalSt(v, mn, mx) {
+  if (v===undefined||v===null||v==="") return "e";
+  const n = parseFloat(v); if (isNaN(n)) return "e";
+  const hm = mn!==undefined&&mn!==null&&mn!==""&&!isNaN(parseFloat(mn));
+  const hM = mx!==undefined&&mx!==null&&mx!==""&&!isNaN(parseFloat(mx));
+  if (hm && n < parseFloat(mn)) return "f";
+  if (hM && n > parseFloat(mx)) return "f";
+  if (hm || hM) return "p";
+  return "e";
 }
 
-function setMeas(id, field, val, style){
-  const el = document.getElementById('m-'+id+'-'+field);
-  if(el){
-    el.value = val;
-    measState[id][field] = String(val);
-    if(style==='auto') el.classList.add('auto');
-  }
+function initials(name) {
+  return name.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
 }
 
-function setSelectValue(id, val){
-  const sel = document.getElementById(id);
-  if(!sel) return;
-  for(let i=0;i<sel.options.length;i++){
-    if(sel.options[i].value===val||sel.options[i].text===val){sel.selectedIndex=i;return;}
-  }
+function fmtDate(d) {
+  if (!d) return "—";
+  try { return new Date(d).toLocaleDateString("es-AR", {day:"2-digit",month:"2-digit",year:"numeric"}); }
+  catch(e) { return d; }
 }
 
-/* =====================================================  Measurement logic  ===================================================== */
-function onMeasInput(id){
-  ['nominal','min','max','m1','m2','m3'].forEach(f=>{
-    const el=document.getElementById('m-'+id+'-'+f);
-    if(el){ measState[id][f]=el.value; el.classList.remove('auto'); }
-  });
-  updateMeasDisplay(id);
-  updateResult();
+/* ---- ResultBadge ---- */
+function ResultBadge({result}) {
+  const cls = result==="APROBADO" ? "badge-pass" : result==="RECHAZADO" ? "badge-fail" : "badge-cond";
+  const icon = result==="APROBADO" ? "ti-circle-check" : result==="RECHAZADO" ? "ti-circle-x" : "ti-alert-triangle";
+  return React.createElement("span", {className:"badge "+cls},
+    React.createElement("i",{className:"ti "+icon, style:{marginRight:3,fontSize:11}}), result||"—"
+  );
 }
 
-function avg3(m){
-  const vs=[m.m1,m.m2,m.m3].filter(v=>v!==''&&!isNaN(parseFloat(v))).map(parseFloat);
-  if(!vs.length)return'';
-  return(vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(3);
-}
-function evalSt(v,mn,mx){
-  if(v===''||v===null||v===undefined)return'e';
-  const n=parseFloat(v);if(isNaN(n))return'e';
-  const hm=mn!==''&&mn!=null&&!isNaN(parseFloat(mn));
-  const hM=mx!==''&&mx!=null&&!isNaN(parseFloat(mx));
-  if(hm&&n<parseFloat(mn))return'f';
-  if(hM&&n>parseFloat(mx))return'f';
-  if(hm||hM)return'p';
-  return'e';
-}
+/* ====================================================
+   LOGIN VIEW
+   ==================================================== */
+function LoginView({onLogin}) {
+  const [email,setEmail] = useState("");
+  const [pass,setPass] = useState("");
+  const [err,setErr] = useState("");
+  const [loading,setLoading] = useState(false);
 
-function updateMeasDisplay(id){
-  const m=measState[id];
-  ['m1','m2','m3'].forEach(f=>{
-    const el=document.getElementById('m-'+id+'-'+f);
-    if(!el)return;
-    const st=evalSt(m[f],m.min,m.max);
-    el.className='meas-inp'+(el.classList.contains('auto')?' auto':'')+(st==='p'?' pass':st==='f'?' fail':'');
-  });
-  const a=avg3(m);
-  const avgEl=document.getElementById('m-'+id+'-avg');
-  const stEl=document.getElementById('m-'+id+'-status');
-  const st=evalSt(a||m.m1,m.min,m.max);
-  if(avgEl){avgEl.textContent=a||'—';avgEl.className='avg-cell '+(st==='p'?'avg-pass':st==='f'?'avg-fail':'avg-na');}
-  if(stEl){
-    if(st==='p')stEl.innerHTML='<span class="status-pass">✓ OK</span>';
-    else if(st==='f')stEl.innerHTML='<span class="status-fail">✗ Falla</span>';
-    else stEl.textContent='—';
-  }
-}
-
-function updateVisRow(id){
-  const sel=document.getElementById('vis-'+id);
-  const row=document.getElementById('vis-row-'+id);
-  sel.className='vis-sel';row.className='';
-  if(sel.value==='P'){sel.classList.add('pass');row.classList.add('v-pass');}
-  if(sel.value==='F'){sel.classList.add('fail');row.classList.add('v-fail');}
-  updateResult();
-}
-
-function updateResult(){
-  const manual=gv('manualResult');
-  const vFail=VIS_ITEMS.some(i=>document.getElementById('vis-'+i.id)?.value==='F');
-  const mFail=MEAS_DEFS.some(d=>{const m=measState[d.id];const a=avg3(m)||m.m1;return evalSt(a,m.min,m.max)==='f';});
-  const auto=(vFail||mFail)?'RECHAZADO':'APROBADO';
-  const final=manual==='AUTO'?auto:manual;
-  const sec=document.getElementById('result-sec');
-  const v=document.getElementById('result-verdict');
-  const d=document.getElementById('result-desc');
-  sec.style.border='2px solid '+(final==='APROBADO'?'var(--green)':final==='RECHAZADO'?'var(--red)':'var(--amber)');
-  v.className='result-verdict '+(final==='APROBADO'?'result-ok':final==='RECHAZADO'?'result-fail':'result-cond');
-  v.textContent=(final==='APROBADO'?'✓ ':final==='RECHAZADO'?'✗ ':'~ ')+final;
-  d.textContent=final==='APROBADO'?'Componente apto para servicio según DS-1 Vol 3':final==='RECHAZADO'?'Componente NO apto — ver ítems en rojo':'Aprobado con condición — ver observaciones';
-  document.getElementById('cert-inspector').textContent=gv('inspector')||'___________________';
-  document.getElementById('cert-certno').textContent=gv('certNo')||'___________________';
-  document.getElementById('cert-date').textContent=gv('date')||'_______________';
-}
-
-function gv(id){return document.getElementById(id)?.value||'';}
-
-function loadLogo(input){
-  const f=input.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=e=>{
-    document.getElementById('logo-img').src=e.target.result;
-    document.getElementById('logo-img').style.display='block';
-    document.getElementById('logo-btn').style.display='none';
-    document.getElementById('logo-change-btn').style.display='inline-flex';
+  const doLogin = async () => {
+    setErr(""); setLoading(true);
+    await new Promise(r=>setTimeout(r,300)); // UX delay
+    const users = sGet("ds1-users") || DEMO_USERS;
+    const u = users.find(x => x.email.toLowerCase()===email.toLowerCase().trim() && x.password===pass);
+    if (!u) { setErr("Email o contraseña incorrectos."); setLoading(false); return; }
+    setLoading(false);
+    onLogin(u);
   };
-  r.readAsDataURL(f);
+
+  return React.createElement("div", {className:"login-page"},
+    React.createElement("div", {className:"login-card"},
+      React.createElement("div", {className:"login-header"},
+        React.createElement("div", {className:"login-icon"},
+          React.createElement("i",{className:"ti ti-file-certificate"})
+        ),
+        // [CONFIG] Cambiar el nombre del portal
+        React.createElement("div",{className:"login-title"},"Portal DS-1"),
+        React.createElement("div",{className:"login-sub"},"Acceso a informes técnicos de inspección")
+      ),
+
+      React.createElement("div",{className:"demo-creds"},
+        React.createElement("strong",null,"Accesos de demostración:"), React.createElement("br"),
+        "Admin: admin@empresa.com / admin123", React.createElement("br"),
+        "Cliente 1: carlos@operadora.com / demo123", React.createElement("br"),
+        "Cliente 2: claudio@petro.com / demo123"
+      ),
+
+      err && React.createElement("div",{className:"alert alert-err"},
+        React.createElement("i",{className:"ti ti-alert-circle"}), err
+      ),
+
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Email"),
+        React.createElement("input",{
+          className:"inp", type:"email", placeholder:"usuario@empresa.com",
+          value:email, onChange:e=>setEmail(e.target.value),
+          onKeyDown:e=>e.key==="Enter"&&doLogin(), autoFocus:true
+        })
+      ),
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Contraseña"),
+        React.createElement("input",{
+          className:"inp", type:"password", placeholder:"••••••••",
+          value:pass, onChange:e=>setPass(e.target.value),
+          onKeyDown:e=>e.key==="Enter"&&doLogin()
+        })
+      ),
+      React.createElement("button",{
+        className:"btn btn-primary",
+        style:{width:"100%",padding:"10px",justifyContent:"center",fontSize:"14px"},
+        onClick:doLogin, disabled:loading
+      },
+        loading
+          ? React.createElement(Fragment,null, React.createElement("i",{className:"ti ti-loader-2"}), " Ingresando...")
+          : React.createElement(Fragment,null, React.createElement("i",{className:"ti ti-login"}), " Ingresar")
+      )
+    )
+  );
 }
 
-function getFormData(){
-  const vis={};VIS_ITEMS.forEach(i=>{vis[i.id]=document.getElementById('vis-'+i.id)?.value||'P';});
-  const meas={};MEAS_DEFS.forEach(d=>{meas[d.id]={...measState[d.id]};});
-  const manual=gv('manualResult');
-  const vFail=VIS_ITEMS.some(i=>vis[i.id]==='F');
-  const mFail=MEAS_DEFS.some(d=>{const a=avg3(meas[d.id])||meas[d.id].m1;return evalSt(a,meas[d.id].min,meas[d.id].max)==='f';});
-  const auto=(vFail||mFail)?'RECHAZADO':'APROBADO';
-  return{
-    reportInfo:{
-      reportNo:gv('reportNo'),date:gv('date'),revision:gv('revision'),
-      companyName:gv('companyName'),client:gv('client'),rig:gv('rig'),
-      well:gv('well'),location:gv('location'),inspector:gv('inspector'),
-      certNo:gv('certNo'),category:gv('category'),
-      topConnType:gv('topConnType'),topConnConfig:gv('topConnConfig'),
-      botConnType:gv('botConnType'),botConnConfig:gv('botConnConfig'),
-      subType:gv('subType'),
-    },
-    component:{
-      description:gv('description'),type:gv('subType'),
-      serialNo:gv('serialNo'),heatNo:gv('heatNo'),
-      manufacturer:gv('manufacturer'),material:gv('material'),
-      grade:gv('grade'),weight:gv('weight'),
-      nomOD:gv('nomOD'),nomID:gv('nomID'),length:gv('compLength'),
-      wallNom:gv('wallNom'),makeupTorque:gv('makeupTorque'),
-    },
-    visualInspection:vis,measurements:meas,
-    comments:gv('comments'),
-    result:manual==='AUTO'?auto:manual,
-    generatedAt:new Date().toISOString(),
+/* ====================================================
+   REPORT DETAIL VIEW
+   ==================================================== */
+function ReportDetailView({report, onBack}) {
+  const meas = report.measurements || {};
+  const vis  = report.visualInspection || {};
+
+  const visPairs = Object.entries(VIS_LABELS).filter(([k]) => vis[k] && vis[k]!=="NA");
+  const measPairs = Object.entries(MEAS_LABELS).filter(([k]) => meas[k] && (meas[k].m1||meas[k].m2||meas[k].m3));
+
+  const dlJson = () => {
+    const b = new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
+    const u = URL.createObjectURL(b);
+    const a = document.createElement("a"); a.href=u;
+    a.download = `DS1_${report.reportNo}.json`; a.click();
+    URL.revokeObjectURL(u);
   };
+
+  const rCls = report.result==="APROBADO" ? "rs-result-ok" : report.result==="RECHAZADO" ? "rs-result-fail" : "rs-result-cond";
+  const rIcon= report.result==="APROBADO" ? "ti-circle-check" : "ti-circle-x";
+
+  return React.createElement("div",null,
+    React.createElement("div",{className:"actions-bar no-print"},
+      React.createElement("button",{className:"btn",onClick:onBack},
+        React.createElement("i",{className:"ti ti-arrow-left"}), " Volver a la lista"
+      ),
+      React.createElement("div",{style:{flex:1}}),
+      React.createElement("button",{className:"btn btn-success",style:{fontSize:13,padding:"8px 18px"},onClick:()=>generatePDF(report)},
+        React.createElement("i",{className:"ti ti-file-type-pdf"}), " Descargar PDF"
+      )
+    ),
+
+    React.createElement("div",{className:"report-doc"},
+      // Header
+      React.createElement("div",{className:"report-doc-header"},
+        React.createElement("div",null,
+          React.createElement("div",{className:"report-doc-title"},"Reporte de Inspección de Sustituto"),
+          React.createElement("div",{className:"report-doc-sub"},
+            "DS-1® Volumen 3 y Addendum — ",
+            React.createElement("span",{className:"badge badge-cat"},"Categoría "+report.category)
+          )
+        ),
+        React.createElement("div",{style:{textAlign:"right"}},
+          React.createElement("div",{style:{fontSize:"15px",fontWeight:"700",color:"var(--text)"}}, report.reportNo),
+          React.createElement("div",{style:{fontSize:"12px",color:"var(--text3)",marginTop:"2px"}},"Fecha: "+fmtDate(report.date))
+        )
+      ),
+
+      // Component ID
+      React.createElement("div",{className:"report-section"},
+        React.createElement("div",{className:"rs-header"},
+          React.createElement("i",{className:"ti ti-tool"}), "Identificación del Componente"
+        ),
+        React.createElement("div",{className:"rs-body"},
+          React.createElement("div",{className:"rs-grid rs-grid-2"},
+            [
+              ["Componente / Descripción", report.component],
+              ["Empresa cliente", report.company],
+              ["Equipo / Rig", report.rig],
+              ["Pozo", report.well],
+              ["Ubicación", report.location],
+              ["Inspector / N° Cert. DS-1", (report.inspector||"—")+" / "+(report.certNo||"—")],
+            ].map(([l,v])=>
+              React.createElement("div",{key:l,className:"rs-field"},
+                React.createElement("label",null,l),
+                React.createElement("span",null,v||"—")
+              )
+            )
+          )
+        )
+      ),
+
+      // Visual inspection
+      visPairs.length>0 && React.createElement("div",{className:"report-section"},
+        React.createElement("div",{className:"rs-header"},
+          React.createElement("i",{className:"ti ti-eye"}), "Inspección Visual — DS-1 Vol 3 §3.6 y Addendum"
+        ),
+        React.createElement("div",{className:"rs-body",style:{padding:0}},
+          React.createElement("table",{className:"tbl"},
+            React.createElement("thead",null,
+              React.createElement("tr",null,
+                React.createElement("th",null,"Ítem de Inspección"),
+                React.createElement("th",{style:{width:130}},"Resultado")
+              )
+            ),
+            React.createElement("tbody",null,
+              visPairs.map(([k,label])=>{
+                const v = vis[k];
+                return React.createElement("tr",{key:k},
+                  React.createElement("td",null,label),
+                  React.createElement("td",null,
+                    v==="P" ? React.createElement("span",{className:"cell-pass"},"✓ Aprobado") :
+                    v==="F" ? React.createElement("span",{className:"cell-fail"},"✗ Rechazado") :
+                    React.createElement("span",{className:"cell-na"},"N/A")
+                  )
+                );
+              })
+            )
+          )
+        )
+      ),
+
+      // Dimensional measurements
+      measPairs.length>0 && React.createElement("div",{className:"report-section"},
+        React.createElement("div",{className:"rs-header"},
+          React.createElement("i",{className:"ti ti-ruler-measure"}), "Mediciones Dimensionales — Tablas DS-1 Vol 3"
+        ),
+        React.createElement("div",{className:"rs-body",style:{padding:0}},
+          React.createElement("table",{className:"tbl"},
+            React.createElement("thead",null,
+              React.createElement("tr",null,
+                ["Parámetro","Mín","Máx","Med. 1","Med. 2","Med. 3","Promedio","Estado"].map(h=>
+                  React.createElement("th",{key:h},h)
+                )
+              )
+            ),
+            React.createElement("tbody",null,
+              measPairs.map(([k,label])=>{
+                const m = meas[k]; if(!m) return null;
+                const a = avg3(m);
+                const st = evalSt(a||m.m1, m.min, m.max);
+                return React.createElement("tr",{key:k},
+                  React.createElement("td",{style:{fontWeight:500}},label),
+                  React.createElement("td",{style:{fontFamily:"monospace",fontSize:11}},m.min||"—"),
+                  React.createElement("td",{style:{fontFamily:"monospace",fontSize:11}},m.max||"—"),
+                  ...[m.m1,m.m2,m.m3].map((v,i)=>{
+                    const s=evalSt(v,m.min,m.max);
+                    return React.createElement("td",{key:i},
+                      v ? React.createElement("span",{className:s==="p"?"cell-pass":s==="f"?"cell-fail":""},v) : React.createElement("span",{className:"cell-na"},"—")
+                    );
+                  }),
+                  React.createElement("td",null,
+                    a ? React.createElement("span",{className:st==="p"?"cell-pass":st==="f"?"cell-fail":""},a) : React.createElement("span",{className:"cell-na"},"—")
+                  ),
+                  React.createElement("td",null,
+                    st==="p" ? React.createElement("span",{className:"cell-pass"},"✓ OK") :
+                    st==="f" ? React.createElement("span",{className:"cell-fail"},"✗ Falla") :
+                    React.createElement("span",{className:"cell-na"},"—")
+                  )
+                );
+              })
+            )
+          )
+        )
+      ),
+
+      // Comments
+      report.comments && React.createElement("div",{className:"report-section"},
+        React.createElement("div",{className:"rs-header"},
+          React.createElement("i",{className:"ti ti-notes"}), "Observaciones y Comentarios"
+        ),
+        React.createElement("div",{className:"rs-body"},
+          React.createElement("p",{style:{fontSize:13,lineHeight:1.7,color:"var(--text)"}}, report.comments)
+        )
+      ),
+
+      // Result
+      React.createElement("div",{className:"report-section",style:{borderTop:"2px solid var(--border)"}},
+        React.createElement("div",{className:"rs-result"},
+          React.createElement("div",null,
+            React.createElement("div",{className:"rs-result-verdict "+rCls},
+              React.createElement("i",{className:"ti "+rIcon,style:{marginRight:6}}),
+              report.result
+            ),
+            React.createElement("div",{className:"rs-result-desc"},
+              report.result==="APROBADO"
+                ? "Componente apto para uso en sarta de perforación según DS-1 Vol 3"
+                : report.result==="RECHAZADO"
+                ? "Componente NO apto para servicio — ver observaciones para detalles"
+                : "Aprobado bajo condición — seguir instrucciones del inspector"
+            )
+          ),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,color:"var(--text3)"}},
+            "Inspector: ", React.createElement("strong",null,report.inspector||"—"), React.createElement("br"),
+            "Cert. DS-1: ", React.createElement("strong",null,report.certNo||"—"), React.createElement("br"),
+            "Generado: ", fmtDate(report.uploadedAt)
+          )
+        )
+      )
+    )
+  );
 }
 
-function exportJSON(){
-  const data=getFormData();
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='DS1_'+(data.reportInfo.reportNo||'borrador')+'.json';
-  a.click();URL.revokeObjectURL(url);
+/* ====================================================
+   REPORTS LIST VIEW
+   ==================================================== */
+function ReportsView({reports, user, users, setSelectedReport}) {
+  const [search, setSearch] = useState("");
+  const [filterResult, setFilterResult] = useState("ALL");
+
+  const myReports = user.role==="admin"
+    ? reports
+    : reports.filter(r => r.clientIds?.includes(user.id));
+
+  const filtered = myReports.filter(r => {
+    const q = search.toLowerCase();
+    const matchText = !q ||
+      r.reportNo?.toLowerCase().includes(q) ||
+      r.component?.toLowerCase().includes(q) ||
+      r.company?.toLowerCase().includes(q) ||
+      r.well?.toLowerCase().includes(q) ||
+      r.rig?.toLowerCase().includes(q);
+    const matchResult = filterResult==="ALL" || r.result===filterResult;
+    return matchText && matchResult;
+  }).sort((a,b) => new Date(b.uploadedAt||b.date) - new Date(a.uploadedAt||a.date));
+
+  if (myReports.length===0) return React.createElement("div",{className:"empty-state"},
+    React.createElement("i",{className:"ti ti-file-off"}),
+    React.createElement("p",null,"No hay reportes disponibles"),
+    React.createElement("p",{className:"empty-hint"},
+      user.role==="admin"
+        ? "Subí el primer reporte usando la opción del menú lateral."
+        : "Tus reportes aparecerán aquí cuando sean publicados por el inspector."
+    )
+  );
+
+  return React.createElement("div",null,
+    user.role==="admin" && React.createElement("div",{className:"stats-grid"},
+      React.createElement("div",{className:"stat-card"},
+        React.createElement("i",{className:"ti ti-file-text stat-icon",style:{color:"var(--blue)"}}),
+        React.createElement("div",{className:"stat-num"},reports.length),
+        React.createElement("div",{className:"stat-lbl"},"Total reportes")
+      ),
+      React.createElement("div",{className:"stat-card"},
+        React.createElement("i",{className:"ti ti-circle-check stat-icon",style:{color:"var(--green)"}}),
+        React.createElement("div",{className:"stat-num",style:{color:"var(--green)"}}, reports.filter(r=>r.result==="APROBADO").length),
+        React.createElement("div",{className:"stat-lbl"},"Aprobados")
+      ),
+      React.createElement("div",{className:"stat-card"},
+        React.createElement("i",{className:"ti ti-circle-x stat-icon",style:{color:"var(--red)"}}),
+        React.createElement("div",{className:"stat-num",style:{color:"var(--red)"}}, reports.filter(r=>r.result==="RECHAZADO").length),
+        React.createElement("div",{className:"stat-lbl"},"Rechazados")
+      ),
+      React.createElement("div",{className:"stat-card"},
+        React.createElement("i",{className:"ti ti-users stat-icon",style:{color:"var(--amber)"}}),
+        React.createElement("div",{className:"stat-num"}, users.filter(u=>u.role==="client").length),
+        React.createElement("div",{className:"stat-lbl"},"Clientes activos")
+      )
+    ),
+
+    React.createElement("div",{className:"tbl-wrap"},
+      React.createElement("div",{className:"tbl-search"},
+        React.createElement("i",{className:"ti ti-search",style:{color:"var(--text3)",fontSize:16}}),
+        React.createElement("input",{
+          className:"inp",style:{flex:1,maxWidth:300},
+          placeholder:"Buscar por reporte, componente, pozo, empresa...",
+          value:search, onChange:e=>setSearch(e.target.value)
+        }),
+        React.createElement("select",{
+          className:"inp",style:{width:160},
+          value:filterResult, onChange:e=>setFilterResult(e.target.value)
+        },
+          React.createElement("option",{value:"ALL"},"Todos los resultados"),
+          React.createElement("option",{value:"APROBADO"},"Aprobados"),
+          React.createElement("option",{value:"RECHAZADO"},"Rechazados"),
+          React.createElement("option",{value:"CONDICIONAL"},"Condicionales")
+        )
+      ),
+      filtered.length===0
+        ? React.createElement("div",{className:"empty-state",style:{padding:30}},
+            React.createElement("i",{className:"ti ti-search-off"}),
+            React.createElement("p",null,"Sin resultados para esa búsqueda")
+          )
+        : React.createElement("table",{className:"tbl"},
+          React.createElement("thead",null,
+            React.createElement("tr",null,
+              React.createElement("th",null,"N° Reporte"),
+              React.createElement("th",null,"Fecha"),
+              React.createElement("th",null,"Componente"),
+              user.role==="admin" && React.createElement("th",null,"Cliente"),
+              React.createElement("th",null,"Pozo / Rig"),
+              React.createElement("th",null,"Cat."),
+              React.createElement("th",null,"Resultado"),
+              React.createElement("th",null,"Acciones")
+            )
+          ),
+          React.createElement("tbody",null,
+            filtered.map(r=>{
+              const clientNames = r.clientIds
+                ?.map(id=>users.find(u=>u.id===id)?.name)
+                .filter(Boolean).join(", ") || r.company || "—";
+              return React.createElement("tr",{key:r.id},
+                React.createElement("td",{"data-label":"N° Reporte",style:{fontFamily:"monospace",fontWeight:600,fontSize:12}}, r.reportNo),
+                React.createElement("td",{"data-label":"Fecha"}, fmtDate(r.date)),
+                React.createElement("td",{"data-label":"Componente",style:{maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12}}, r.component),
+                user.role==="admin" && React.createElement("td",{"data-label":"Cliente",style:{fontSize:12}}, clientNames),
+                React.createElement("td",{"data-label":"Pozo / Rig",style:{fontSize:12}}, [r.well,r.rig].filter(Boolean).join(" / ")||"—"),
+                React.createElement("td",{"data-label":"Cat."}, React.createElement("span",{className:"badge badge-cat"},"Cat "+r.category)),
+                React.createElement("td",{"data-label":"Resultado"}, React.createElement(ResultBadge,{result:r.result})),
+                React.createElement("td",{"data-label":""},
+                  React.createElement("button",{
+                    className:"btn btn-primary",style:{width:"100%",justifyContent:"center"},
+                    onClick:()=>setSelectedReport(r)
+                  },
+                    React.createElement("i",{className:"ti ti-eye"}), " Ver reporte"
+                  )
+                )
+              );
+            })
+          )
+        )
+    )
+  );
 }
 
-function resetForm(){
-  if(!confirm('¿Comenzar un nuevo reporte? Se perderán los datos actuales.'))return;
-  document.querySelectorAll('input:not([type=file])').forEach(el=>{
-    if(el.type==='date')el.value=new Date().toISOString().slice(0,10);
-    else if(el.id==='revision')el.value='0';
-    else el.value='';
+/* ====================================================
+   UPLOAD / IMPORT VIEW (Admin)
+   ==================================================== */
+function UploadView({users, reports, setReports, onMsg}) {
+  const [json,setJson] = useState("");
+  const [parsed,setParsed] = useState(null);
+  const [assignTo,setAssignTo] = useState([]);
+  const [err,setErr] = useState("");
+  const [form,setForm] = useState({
+    reportNo:"", date:new Date().toISOString().slice(0,10),
+    component:"", company:"", rig:"", well:"", location:"",
+    inspector:"", certNo:"", category:"3", result:"APROBADO", comments:""
   });
-  document.querySelectorAll('textarea').forEach(el=>el.value='');
-  document.querySelectorAll('select').forEach(el=>el.selectedIndex=0);
-  VIS_ITEMS.forEach(i=>{const el=document.getElementById('vis-'+i.id);if(el){el.value='P';updateVisRow(i.id);}});
-  MEAS_DEFS.forEach(d=>{
-    Object.keys(measState[d.id]).forEach(f=>measState[d.id][f]='');
-    ['nominal','min','max','m1','m2','m3'].forEach(f=>{
-      const el=document.getElementById('m-'+d.id+'-'+f);
-      if(el){el.value='';el.className='meas-inp';}
+
+  const clients = users.filter(u=>u.role==="client");
+
+  const parseJson = () => {
+    setErr(""); setParsed(null);
+    try {
+      const d = JSON.parse(json);
+
+      // Detect rental report format
+      if (d.type === "rental-report") {
+        // Rental report: multiple components
+        setParsed(d);
+        setForm(p=>({...p,
+          reportNo: d.rentalNo||p.reportNo,
+          date: d.date||p.date,
+          component: `Reporte de Renta — ${d.totalComponents||'?'} componentes (${d.rig||'—'})`,
+          company: d.client||d.clientCompany||p.company,
+          rig: d.rig||p.rig,
+          well: d.well||p.well,
+          location: d.location||p.location,
+          inspector: d.inspector||p.inspector,
+          certNo: d.certNo||p.certNo,
+          category: "3",
+          result: d.overallResult||p.result,
+          comments: [
+            d.generalObs, d.finalObs,
+            `Componentes: ${d.totalComponents||0} | Aprobados: ${d.approved||0} | Rechazados: ${d.rejected||0}`
+          ].filter(Boolean).join(' — '),
+        }));
+      } else {
+        // Individual component report
+        const ri = d.reportInfo||{};
+        const co = d.component||{};
+        setParsed(d);
+        setForm(p=>({...p,
+          reportNo: ri.reportNo||p.reportNo,
+          date: ri.date||p.date,
+          component: co.description||co.type||p.component,
+          company: ri.client||p.company,
+          rig: ri.rig||p.rig,
+          well: ri.well||p.well,
+          location: ri.location||p.location,
+          inspector: ri.inspector||p.inspector,
+          certNo: ri.certNo||p.certNo,
+          category: ri.category||p.category,
+          result: d.result||p.result,
+          comments: d.comments||p.comments,
+        }));
+      }
+    } catch(e) {
+      setErr("JSON inválido. Verificá que el archivo fue exportado desde el formulario DS-1 o el Reporte de Renta.");
+    }
+  };
+
+  const fileRef = React.useRef();
+
+  const loadJsonFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setJson(e.target.result);
+      setParsed(null);
+    };
+    reader.readAsText(file);
+  };
+
+  const save = () => {
+    setErr("");
+    if (!form.reportNo.trim()) { setErr("El N° de Reporte es obligatorio."); return; }
+    if (assignTo.length===0) { setErr("Seleccioná al menos un cliente al que asignar el reporte."); return; }
+    const newR = {
+      id: "r"+Date.now(),
+      clientIds: assignTo,
+      ...form,
+      uploadedAt: new Date().toISOString(),
+      visualInspection: parsed?.visualInspection||{},
+      measurements: parsed?.measurements||{},
+    };
+    const updated = [...reports, newR];
+    const saved = sSet("ds1-reports", updated);
+    if (saved === false) { setErr("Error al guardar. Intentá de nuevo."); return; }
+    setReports(updated);
+    setJson(""); setParsed(null); setAssignTo([]);
+    setForm({reportNo:"",date:new Date().toISOString().slice(0,10),component:"",company:"",rig:"",well:"",location:"",inspector:"",certNo:"",category:"3",result:"APROBADO",comments:""});
+    onMsg("✓ Reporte publicado y disponible para el cliente.");
+  };
+
+  const setF = (k,v) => setForm(p=>({...p,[k]:v}));
+  const togClient = id => setAssignTo(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
+
+  // File input ref
+  const fileInputRef = React.useRef();
+
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '';
+    const file = e.dataTransfer?.files[0] || e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setJson(ev.target.result);
+      setParsed(null);
+      // Auto-parse after load
+      try {
+        const d = JSON.parse(ev.target.result);
+        autoFillForm(d);
+      } catch(ex) {
+        setErr("Archivo JSON inválido.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const autoFillForm = (d) => {
+    setErr("");
+    if (!d || (typeof d !== 'object')) { setErr("El archivo no es un JSON válido."); return; }
+    setParsed(d);
+    if (d.type === "rental-report") {
+      setForm(p=>({...p,
+        reportNo: d.rentalNo||p.reportNo,
+        date: d.date||p.date,
+        component: "Reporte de Renta — "+(d.totalComponents||'?')+" componentes ("+( d.rig||'—')+")",
+        company: d.client||d.clientCompany||p.company,
+        rig: d.rig||p.rig,
+        well: d.well||p.well,
+        location: d.location||p.location,
+        inspector: d.inspector||p.inspector,
+        certNo: d.certNo||p.certNo,
+        category: "3",
+        result: d.overallResult||p.result,
+        comments: [d.generalObs,d.finalObs,"Componentes: "+(d.totalComponents||0)+" | Aprobados: "+(d.approved||0)+" | Rechazados: "+(d.rejected||0)].filter(Boolean).join(' — '),
+      }));
+    } else {
+      const ri = d.reportInfo||d||{};
+      const co = d.component||{};
+      const desc = co.description||co.type||ri.description||'';
+      const connTop = ri.topConnType||'';
+      const connBot = ri.botConnType||'';
+      const connStr = desc || (connTop&&connBot ? connTop+' Pin × '+connBot+' Caja' : '');
+      setForm(p=>({...p,
+        reportNo: ri.reportNo||p.reportNo,
+        date: ri.date||p.date,
+        component: connStr||p.component,
+        company: ri.client||ri.company||ri.clientCompany||p.company,
+        rig: ri.rig||p.rig,
+        well: ri.well||p.well,
+        location: ri.location||p.location,
+        inspector: ri.inspector||p.inspector,
+        certNo: ri.certNo||p.certNo,
+        category: ri.category||p.category,
+        result: d.result||p.result,
+        comments: d.comments||p.comments,
+      }));
+    }
+  };
+
+  return React.createElement("div",{className:"card"},
+    // Hidden file input
+    React.createElement("input",{
+      ref:fileInputRef, type:"file", accept:".json",
+      style:{display:"none"}, onChange:handleFileDrop
+    }),
+
+    // Drop zone
+    React.createElement("div",{
+      style:{border:"2px dashed var(--border2)",borderRadius:"var(--radius)",padding:"22px",textAlign:"center",cursor:"pointer",marginBottom:14,background:"var(--bg2)",transition:"all .2s"},
+      onClick:()=>fileInputRef.current.click(),
+      onDragOver:e=>{e.preventDefault();e.currentTarget.style.borderColor="var(--blue)";e.currentTarget.style.background="var(--blue-bg)"},
+      onDragLeave:e=>{e.currentTarget.style.borderColor='';e.currentTarget.style.background="var(--bg2)"},
+      onDrop:handleFileDrop,
+    },
+      React.createElement("i",{className:"ti ti-file-type-json",style:{fontSize:30,color:"var(--text3)",display:"block",marginBottom:8}}),
+      React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:4}},"Arrastrá el archivo JSON acá"),
+      React.createElement("div",{style:{fontSize:12,color:"var(--text2)",marginBottom:10}},"o hacé clic para buscar el archivo en tu computadora"),
+      React.createElement("button",{className:"btn btn-primary",style:{pointerEvents:"none"}},
+        React.createElement("i",{className:"ti ti-upload"}), " Seleccionar archivo .json"
+      )
+    ),
+
+    parsed && React.createElement("div",{className:"alert alert-ok",style:{marginBottom:14}},
+      React.createElement("i",{className:"ti ti-circle-check",style:{fontSize:18}}),
+      React.createElement("div",null,
+        React.createElement("strong",null,"Archivo cargado correctamente."),
+        React.createElement("div",{style:{fontSize:11,marginTop:2}},"Verificá los campos abajo y seleccioná el cliente antes de publicar.")
+      )
+    ),
+
+    React.createElement("div",{className:"divider-label"},
+      React.createElement("span",null,"Verificá y completá los datos")
+    ),
+
+    err && React.createElement("div",{className:"alert alert-err"},
+      React.createElement("i",{className:"ti ti-alert-circle"}), " ", err
+    ),
+
+    React.createElement("div",{className:"form-row form-row-4",style:{marginBottom:10}},
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"N° Reporte *"),
+        React.createElement("input",{className:"inp",value:form.reportNo,onChange:e=>setF("reportNo",e.target.value),placeholder:"RP-2025-001"})
+      ),
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Fecha"),
+        React.createElement("input",{type:"date",className:"inp",value:form.date,onChange:e=>setF("date",e.target.value)})
+      ),
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Categoría DS-1"),
+        React.createElement("select",{className:"inp",value:form.category,onChange:e=>setF("category",e.target.value)},
+          ["1","2","3","4","5"].map(c=>React.createElement("option",{key:c,value:c},"Categoría "+c))
+        )
+      ),
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Resultado"),
+        React.createElement("select",{className:"inp",value:form.result,onChange:e=>setF("result",e.target.value),
+          style:{color:form.result==="APROBADO"?"var(--green)":form.result==="RECHAZADO"?"var(--red)":"var(--amber)",fontWeight:600}},
+          ["APROBADO","RECHAZADO","CONDICIONAL"].map(r=>React.createElement("option",{key:r,value:r},r))
+        )
+      )
+    ),
+
+    React.createElement("div",{className:"form-group"},
+      React.createElement("label",{className:"lbl"},"Componente / Descripción completa"),
+      React.createElement("input",{className:"inp",value:form.component,onChange:e=>setF("component",e.target.value),placeholder:"Ej: X-Over NC46 Pin × NC50 Caja, 6-1/2\" OD"})
+    ),
+
+    React.createElement("div",{className:"form-row form-row-3",style:{marginBottom:10}},
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Empresa cliente"),
+        React.createElement("input",{className:"inp",value:form.company,onChange:e=>setF("company",e.target.value)})
+      ),
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Equipo / Rig"),
+        React.createElement("input",{className:"inp",value:form.rig,onChange:e=>setF("rig",e.target.value)})
+      ),
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Pozo"),
+        React.createElement("input",{className:"inp",value:form.well,onChange:e=>setF("well",e.target.value)})
+      )
+    ),
+
+    React.createElement("div",{className:"form-row form-row-3",style:{marginBottom:10}},
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Ubicación / Campo"),
+        React.createElement("input",{className:"inp",value:form.location,onChange:e=>setF("location",e.target.value)})
+      ),
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"Inspector"),
+        React.createElement("input",{className:"inp",value:form.inspector,onChange:e=>setF("inspector",e.target.value)})
+      ),
+      React.createElement("div",{className:"form-group"},
+        React.createElement("label",{className:"lbl"},"N° Certificado DS-1"),
+        React.createElement("input",{className:"inp",value:form.certNo,onChange:e=>setF("certNo",e.target.value)})
+      )
+    ),
+
+    React.createElement("div",{className:"form-group"},
+      React.createElement("label",{className:"lbl"},"Observaciones"),
+      React.createElement("textarea",{className:"inp",value:form.comments,onChange:e=>setF("comments",e.target.value)})
+    ),
+
+    React.createElement("div",{className:"divider-label"},
+      React.createElement("span",null,"Asignar a cliente/s *")
+    ),
+    React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}},
+      clients.length===0
+        ? React.createElement("div",{style:{color:"var(--text3)",fontSize:12}},"No hay clientes registrados. Creá uno en Gestión de clientes.")
+        : clients.map(c=>React.createElement("button",{
+            key:c.id,
+            className:"btn"+(assignTo.includes(c.id)?" btn-success":""),
+            onClick:()=>togClient(c.id),
+            style:{fontSize:12}
+          },
+            React.createElement("i",{className:"ti ti-"+(assignTo.includes(c.id)?"user-check":"user")}),
+            " ", c.name, React.createElement("span",{style:{opacity:.7,fontSize:10,marginLeft:4}},"("+c.company+")")
+          ))
+    ),
+
+    React.createElement("button",{
+      className:"btn btn-primary",
+      style:{padding:"9px 22px",fontSize:13},
+      onClick:save
+    },
+      React.createElement("i",{className:"ti ti-upload"}), " Publicar reporte"
+    )
+  );
+}
+
+/* ====================================================
+   CLIENTS VIEW (Admin)
+   ==================================================== */
+function ClientsView({users, setUsers}) {
+  const [form,setForm] = useState({name:"",email:"",password:"",company:""});
+  const [err,setErr] = useState("");
+  const [ok,setOk] = useState("");
+
+  const clients = users.filter(u=>u.role==="client");
+
+  const addClient = () => {
+    setErr(""); setOk("");
+    if (!form.name||!form.email||!form.password||!form.company) { setErr("Todos los campos son obligatorios."); return; }
+    if (users.find(u=>u.email.toLowerCase()===form.email.toLowerCase())) { setErr("Ya existe un usuario con ese email."); return; }
+    const newU = {id:"u"+Date.now(), role:"client", ...form};
+    const updated = [...users, newU];
+    sSet("ds1-users", updated);
+    setUsers(updated);
+    setForm({name:"",email:"",password:"",company:""});
+    setOk("Cliente creado. Ya puede ingresar al portal con sus credenciales.");
+  };
+
+  const delClient = (id) => {
+    if (!confirm("¿Eliminar este cliente? Sus reportes asignados no se borrarán.")) return;
+    const updated = users.filter(u=>u.id!==id);
+    sSet("ds1-users", updated);
+    setUsers(updated);
+  };
+
+  return React.createElement("div",null,
+    React.createElement("div",{className:"tbl-wrap",style:{marginBottom:20}},
+      React.createElement("table",{className:"tbl"},
+        React.createElement("thead",null,
+          React.createElement("tr",null,
+            React.createElement("th",null,"Nombre"),
+            React.createElement("th",null,"Email (login)"),
+            React.createElement("th",null,"Empresa"),
+            React.createElement("th",null,"Acciones")
+          )
+        ),
+        React.createElement("tbody",null,
+          clients.length===0
+            ? React.createElement("tr",null,React.createElement("td",{colSpan:4,style:{textAlign:"center",color:"var(--text3)",padding:24}},"No hay clientes registrados aún."))
+            : clients.map(c=>React.createElement("tr",{key:c.id},
+                React.createElement("td",{style:{fontWeight:500}},
+                  React.createElement("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"var(--blue-bg)",color:"var(--blue-text)",fontSize:10,fontWeight:700,marginRight:8}},initials(c.name)),
+                  c.name
+                ),
+                React.createElement("td",{style:{fontFamily:"monospace",fontSize:12}},c.email),
+                React.createElement("td",null,c.company),
+                React.createElement("td",null,
+                  React.createElement("button",{className:"btn btn-sm btn-danger",onClick:()=>delClient(c.id)},
+                    React.createElement("i",{className:"ti ti-trash"}), " Eliminar"
+                  )
+                )
+              ))
+        )
+      )
+    ),
+
+    React.createElement("div",{className:"card"},
+      React.createElement("div",{style:{fontSize:13,fontWeight:600,marginBottom:14,color:"var(--text)"}},
+        React.createElement("i",{className:"ti ti-user-plus",style:{marginRight:6}}),
+        "Agregar nuevo cliente"
+      ),
+      err && React.createElement("div",{className:"alert alert-err"},React.createElement("i",{className:"ti ti-alert-circle"}),err),
+      ok  && React.createElement("div",{className:"alert alert-ok"}, React.createElement("i",{className:"ti ti-check"}),ok),
+      React.createElement("div",{className:"form-row form-row-2"},
+        React.createElement("div",{className:"form-group"},
+          React.createElement("label",{className:"lbl"},"Nombre completo"),
+          React.createElement("input",{className:"inp",value:form.name,onChange:e=>setForm(p=>({...p,name:e.target.value}))})
+        ),
+        React.createElement("div",{className:"form-group"},
+          React.createElement("label",{className:"lbl"},"Empresa"),
+          React.createElement("input",{className:"inp",value:form.company,onChange:e=>setForm(p=>({...p,company:e.target.value}))})
+        )
+      ),
+      React.createElement("div",{className:"form-row form-row-2"},
+        React.createElement("div",{className:"form-group"},
+          React.createElement("label",{className:"lbl"},"Email (se usa para ingresar)"),
+          React.createElement("input",{type:"email",className:"inp",value:form.email,onChange:e=>setForm(p=>({...p,email:e.target.value}))})
+        ),
+        React.createElement("div",{className:"form-group"},
+          React.createElement("label",{className:"lbl"},"Contraseña inicial"),
+          React.createElement("input",{type:"text",className:"inp",value:form.password,onChange:e=>setForm(p=>({...p,password:e.target.value})),placeholder:"El cliente puede cambiarla después"})
+        )
+      ),
+      React.createElement("button",{className:"btn btn-primary",onClick:addClient},
+        React.createElement("i",{className:"ti ti-user-plus"}), " Crear cliente"
+      )
+    )
+  );
+}
+
+/* ====================================================
+   PDF GENERATOR — funciona en celular y desktop
+   ==================================================== */
+function generatePDF(report) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const margin = 14;
+  const pageW = 210;
+  const contentW = pageW - margin * 2;
+  const lineH = 6.5;
+  let y = 0;
+
+  const checkPage = (needed=10) => {
+    if (y + needed > 278) { doc.addPage(); y = 20; }
+  };
+
+  const addSectionHeader = (title) => {
+    checkPage(12);
+    y += 3;
+    doc.setFillColor(237,242,255);
+    doc.rect(margin, y-4, contentW, 8, 'F');
+    doc.setDrawColor(180,190,230);
+    doc.rect(margin, y-4, contentW, 8, 'S');
+    doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+    doc.setTextColor(30,64,175);
+    doc.text(title.toUpperCase(), margin+2, y+1);
+    doc.setTextColor(0,0,0);
+    y += 7;
+  };
+
+  const addField = (label, value, x2=margin+48) => {
+    checkPage();
+    doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.setTextColor(100,110,130);
+    doc.text(label+':', margin+2, y);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(20,20,20);
+    const lines = doc.splitTextToSize(value||'—', contentW - (x2 - margin) - 2);
+    doc.text(lines, x2, y);
+    y += Math.max(lineH, lines.length * lineH);
+  };
+
+  // ── HEADER AZUL ──
+  doc.setFillColor(29,78,216);
+  doc.rect(0,0,210,28,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(13); doc.setFont('helvetica','bold');
+  doc.text('REPORTE DE INSPECCIÓN DE SUSTITUTO', margin, 11);
+  doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+  doc.text('DS-1® Volumen 3 y Addendum — Categoría '+report.category, margin, 18);
+  doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text(report.reportNo||'', pageW-margin, 11, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text(fmtDate(report.date), pageW-margin, 18, {align:'right'});
+
+  // ── RESULTADO BADGE ──
+  const rc = report.result==='APROBADO'?[21,128,61]:report.result==='RECHAZADO'?[220,38,38]:[217,119,6];
+  doc.setFillColor(...rc);
+  doc.roundedRect(pageW-margin-38, 20, 38, 9, 2, 2, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+  doc.text(report.result||'—', pageW-margin-19, 25.5, {align:'center'});
+  doc.setTextColor(0,0,0);
+  y = 36;
+
+  // ── IDENTIFICACIÓN ──
+  addSectionHeader('Identificación del Componente');
+  addField('Componente', report.component);
+  addField('Empresa cliente', report.company);
+  const col2x = margin + 95;
+  checkPage();
+  doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,110,130);
+  doc.text('Equipo / Rig:', margin+2, y); doc.text('Pozo:', col2x, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
+  doc.text(report.rig||'—', margin+26, y); doc.text(report.well||'—', col2x+14, y);
+  y += lineH;
+  doc.setFont('helvetica','bold'); doc.setTextColor(100,110,130);
+  doc.text('Ubicación:', margin+2, y); doc.text('Inspector:', col2x, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
+  doc.text(report.location||'—', margin+22, y); doc.text(report.inspector||'—', col2x+20, y);
+  y += lineH;
+  doc.setFont('helvetica','bold'); doc.setTextColor(100,110,130);
+  doc.text('Cert. DS-1:', margin+2, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
+  doc.text(report.certNo||'—', margin+24, y);
+  y += lineH;
+
+  // ── INSPECCIÓN VISUAL ──
+  const vis = report.visualInspection||{};
+  const visPairs = Object.entries(VIS_LABELS).filter(([k])=>vis[k]&&vis[k]!=='NA');
+  if (visPairs.length>0) {
+    addSectionHeader('Inspección Visual');
+    visPairs.forEach(([k,label])=>{
+      checkPage();
+      const v = vis[k];
+      doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
+      doc.text(label, margin+2, y);
+      if (v==='P') doc.setTextColor(21,128,61);
+      else if (v==='F') doc.setTextColor(220,38,38);
+      doc.setFont('helvetica','bold');
+      doc.text(v==='P'?'✓ Aprobado':'✗ Rechazado', pageW-margin, y, {align:'right'});
+      doc.setTextColor(0,0,0);
+      y += lineH;
     });
-    updateMeasDisplay(d.id);
-  });
-  document.getElementById('manualResult').value='AUTO';
-  document.getElementById('filled-badge').style.display='none';
-  document.getElementById('torque-info').style.display='none';
-  updateResult();
+  }
+
+  // ── MEDICIONES ──
+  const meas = report.measurements||{};
+  const measPairs = Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
+  if (measPairs.length>0) {
+    addSectionHeader('Mediciones Dimensionales');
+    checkPage(10);
+    // Cabecera tabla
+    doc.setFillColor(220,225,235);
+    doc.rect(margin, y-4, contentW, 7, 'F');
+    doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(60,70,90);
+    const cols = [margin+2, margin+56, margin+71, margin+87, margin+103, margin+119, margin+135, margin+152];
+    ['Parámetro','Mín','Máx','Med 1','Med 2','Med 3','Prom.','Estado'].forEach((h,i)=>doc.text(h,cols[i],y));
+    doc.setTextColor(0,0,0); y+=7;
+
+    measPairs.forEach(([k,label])=>{
+      checkPage();
+      const m = meas[k];
+      const a = avg3(m);
+      const st = evalSt(a||m.m1, m.min, m.max);
+      doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
+      doc.text(label.slice(0,24), cols[0], y);
+      doc.text(m.min||'—', cols[1], y);
+      doc.text(m.max||'—', cols[2], y);
+      doc.text(m.m1||'—', cols[3], y);
+      doc.text(m.m2||'—', cols[4], y);
+      doc.text(m.m3||'—', cols[5], y);
+      if (st==='p') doc.setTextColor(21,128,61);
+      else if (st==='f') doc.setTextColor(220,38,38);
+      doc.setFont('helvetica','bold');
+      doc.text(a||'—', cols[6], y);
+      doc.text(st==='p'?'✓ OK':st==='f'?'✗ Falla':'—', cols[7], y);
+      doc.setTextColor(0,0,0);
+      y += lineH;
+    });
+  }
+
+  // ── OBSERVACIONES ──
+  if (report.comments) {
+    addSectionHeader('Observaciones');
+    doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+    const lines = doc.splitTextToSize(report.comments, contentW-4);
+    checkPage(lines.length * lineH + 5);
+    doc.text(lines, margin+2, y);
+    y += lines.length * lineH + 3;
+  }
+
+  // ── RESULTADO FINAL ──
+  checkPage(20);
+  y += 4;
+  doc.setFillColor(...rc);
+  doc.roundedRect(margin, y-4, contentW, 14, 2, 2, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text((report.result==='APROBADO'?'✓ ':'✗ ')+'RESULTADO: '+(report.result||'—'), margin+5, y+5);
+  doc.setTextColor(0,0,0); y += 20;
+
+  // ── CERTIFICACIÓN ──
+  addSectionHeader('Certificación del Inspector');
+  doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('El inspector certifica que la inspección fue realizada conforme a DS-1® Vol 3 y Addendum vigentes.', margin+2, y);
+  y += 14;
+  doc.line(margin, y, margin+55, y);
+  doc.line(margin+65, y, margin+120, y);
+  doc.line(margin+130, y, pageW-margin, y);
+  y += 4;
+  doc.setFontSize(7.5);
+  doc.text('Inspector: '+(report.inspector||'—'), margin, y);
+  doc.text('Fecha: '+fmtDate(report.date), margin+65, y);
+  doc.text('Firma cliente: ___________', margin+130, y);
+  y += 4;
+  doc.setTextColor(100,110,130);
+  doc.text('Cert. DS-1: '+(report.certNo||'—'), margin, y);
+
+  // ── PIE DE PÁGINA ──
+  const totalPages = doc.getNumberOfPages();
+  for (let i=1; i<=totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setTextColor(160,160,160);
+    doc.text(COMPANY_NAME+' | Portal DS-1 | Pág. '+i+'/'+totalPages, pageW/2, 290, {align:'center'});
+    doc.line(margin, 286, pageW-margin, 286);
+  }
+
+  doc.save('DS1_'+(report.reportNo||'reporte')+'.pdf');
 }
 
-updateResult();
+/* ====================================================
+   MAIN APP
+   ==================================================== */
+function App() {
+  const [appLoading, setAppLoading] = useState(true);
+  const [users,   setUsers]   = useState([]);
+  const [reports, setReports] = useState([]);
+  const [user,    setUser]    = useState(null);
+  const [tab,     setTab]     = useState("reports");
+  const [selected,setSelected]= useState(null);
+  const [toast,   setToast]   = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(()=>{
+    let u = sGet("ds1-users");
+    let r = sGet("ds1-reports");
+    if (!u || u.length===0) { u = DEMO_USERS; sSet("ds1-users",u); }
+    if (!r || r.length===0) { r = DEMO_REPORTS; sSet("ds1-reports",r); }
+    setUsers(u); setReports(r); setAppLoading(false);
+  },[]);
+
+  useEffect(()=>{
+    if (toast) { const t=setTimeout(()=>setToast(""),4000); return()=>clearTimeout(t); }
+  },[toast]);
+
+  if (appLoading) return React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",color:"var(--text2)"}},
+    React.createElement("i",{className:"ti ti-loader-2",style:{fontSize:24,marginRight:10}}),
+    "Cargando portal..."
+  );
+
+  if (!user) return React.createElement(LoginView,{onLogin:u=>{setUser(u);setTab("reports");}});
+
+  const navItems = user.role==="admin"
+    ? [
+        {id:"reports", icon:"ti-file-text",    label:"Reportes"},
+        {id:"clients", icon:"ti-users",         label:"Clientes"},
+        {id:"upload",  icon:"ti-cloud-upload",  label:"Subir reporte"},
+      ]
+    : [{id:"reports", icon:"ti-file-text", label:"Mis informes"}];
+
+  const headerTitle = selected
+    ? "Detalle del reporte"
+    : tab==="reports" ? (user.role==="admin"?"Todos los reportes":"Mis informes")
+    : tab==="clients" ? "Gestión de clientes"
+    : "Subir reporte";
+
+  return React.createElement("div",{className:"portal-layout"},
+    // Sidebar
+    React.createElement("div",{className:"sidebar"+(sidebarOpen?" open":"")},
+      React.createElement("div",{className:"sb-brand"},
+        React.createElement("div",{className:"sb-brand-logo"},
+          React.createElement("div",{className:"sb-brand-icon"},
+            React.createElement("i",{className:"ti ti-file-certificate"})
+          ),
+          React.createElement("div",null,
+            // [CONFIG] Nombre del portal
+            React.createElement("div",{className:"sb-brand-name"},"Portal DS-1"),
+            React.createElement("div",{className:"sb-brand-tagline"},"Informes técnicos")
+          )
+        )
+      ),
+      React.createElement("div",{className:"sb-user"},
+        React.createElement("div",{className:"sb-avatar"},initials(user.name)),
+        React.createElement("div",{style:{overflow:"hidden"}},
+          React.createElement("div",{className:"sb-uname"},user.name),
+          React.createElement("div",{className:"sb-ucmp"},user.company)
+        )
+      ),
+      React.createElement("div",{className:"sb-nav"},
+        React.createElement("div",{className:"sb-section-label"},"Navegación"),
+        navItems.map(n=>React.createElement("div",{
+          key:n.id,
+          className:"sb-link"+(tab===n.id&&!selected?" active":""),
+          onClick:()=>{setTab(n.id);setSelected(null);setSidebarOpen(false);}
+        },
+          React.createElement("i",{className:"ti "+n.icon}), n.label
+        ))
+      ),
+      React.createElement("div",{className:"sb-footer"},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text3)",marginBottom:8}},
+          React.createElement("span",{className:"sb-badge "+(user.role==="admin"?"sb-badge-admin":"sb-badge-client")},
+            user.role==="admin"?"Administrador":"Cliente"
+          )
+        ),
+        React.createElement("button",{
+          className:"btn",style:{width:"100%",fontSize:12,justifyContent:"center"},
+          onClick:()=>{setUser(null);setSelected(null);setTab("reports");}
+        },
+          React.createElement("i",{className:"ti ti-logout"}), " Cerrar sesión"
+        )
+      )
+    ),
+
+    // Main
+    React.createElement("div",{className:"mob-nav"},
+      navItems.map(n=>React.createElement("div",{
+        key:n.id,
+        className:"mob-nav-item"+(tab===n.id&&!selected?" active":""),
+        onClick:()=>{setTab(n.id);setSelected(null);}
+      },
+        React.createElement("i",{className:"ti "+n.icon}),
+        n.label
+      )),
+      React.createElement("div",{
+        className:"mob-nav-item",
+        onClick:()=>{setUser(null);setSelected(null);setTab("reports");}
+      },
+        React.createElement("i",{className:"ti ti-logout"}),
+        "Salir"
+      )
+    ),
+    React.createElement("div",{className:"main-area"},
+      React.createElement("div",{className:"main-header"},
+        React.createElement("button",{className:"hamburger",onClick:()=>setSidebarOpen(p=>!p),"aria-label":"Menú"},
+          React.createElement("i",{className:"ti ti-menu-2"})
+        ),
+        React.createElement("div",null,
+          React.createElement("div",{className:"main-header-title"},headerTitle),
+          React.createElement("div",{className:"main-header-sub"},
+            selected ? "Reporte "+selected.reportNo : user.company
+          )
+        ),
+        toast && React.createElement("div",{className:"alert alert-ok",style:{margin:0,padding:"6px 12px",fontSize:12}},
+          React.createElement("i",{className:"ti ti-check"}), toast
+        )
+      ),
+
+      React.createElement("div",{className:"main-content"},
+        selected
+          ? React.createElement(ReportDetailView,{report:selected, onBack:()=>setSelected(null)})
+          : tab==="upload"
+          ? React.createElement(UploadView,{users,reports,setReports,onMsg:m=>{setToast(m);setTab("reports");}})
+          : tab==="clients"
+          ? React.createElement(ClientsView,{users,setUsers})
+          : React.createElement(ReportsView,{reports,user,users,setSelectedReport:setSelected})
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 </script>
 </body>
 </html>
