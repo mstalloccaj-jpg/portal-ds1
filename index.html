@@ -1310,5 +1310,11 @@ async function init(){
 
 init();
 </script>
-</body>
-</html>
+try{
+  const{data:{session},error}=await sb.auth.getSession();
+  if(error)throw error;
+  if(!session)render();
+}catch(e){
+  console.error('Supabase error:',e);
+  render();
+}
