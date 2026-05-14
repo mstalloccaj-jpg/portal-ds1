@@ -1,1162 +1,355 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal DS-1 — GM Robótica</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
-
-<!-- ============================================================
-  PORTAL DS-1 — Versión Supabase (Backend Real)
-  
-  CONFIGURACIÓN INICIAL (obligatorio):
-  1. Creá tu proyecto gratuito en https://supabase.com
-  2. En Supabase → SQL Editor → pegá y ejecutá el archivo schema-supabase.sql
-  3. En Supabase → Settings → API → copiá "Project URL" y "anon public key"
-  4. Pegá los valores en SUPABASE_URL y SUPABASE_ANON_KEY abajo
-  5. Abrí este archivo en tu navegador
-  6. Registrate con tu email → luego en SQL Editor ejecutá:
-     UPDATE profiles SET role = 'admin' WHERE id = (
-       SELECT id FROM auth.users WHERE email = 'TU_EMAIL'
-     );
-  ============================================================ -->
-
-<style>
-:root{
-  --bg:#111111;--bg2:#1a1a1a;--bg3:#222222;
-  --border:#2d2d2d;--border2:#3a3a3a;
-  --text:#f0f0f0;--text2:#a0a0a0;--text3:#666666;
-  --blue:#f97316;--blue-bg:rgba(249,115,22,.15);--blue-text:#fb923c;
-  --green:#22c55e;--green-bg:rgba(34,197,94,.12);--green-text:#4ade80;
-  --red:#ef4444;--red-bg:rgba(239,68,68,.12);--red-text:#f87171;
-  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--amber-text:#fbbf24;
-  --radius:6px;--shadow:0 2px 12px rgba(0,0,0,.5)
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:var(--text);background:var(--bg2)}
-button,input,select,textarea{font-family:inherit;font-size:inherit}
-button{cursor:pointer}
-
-/* Layout */
-.layout{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:210px;min-width:210px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-
-/* Sidebar */
-.sb-brand{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.sb-icon{width:34px;height:34px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0}
-.sb-name{font-size:14px;font-weight:700;color:var(--text);line-height:1.2}
-.sb-tag{font-size:10px;color:var(--text3)}
-.sb-user{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.sb-av{width:30px;height:30px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.sb-uname{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sb-ucmp{font-size:10px;color:var(--text3)}
-.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
-.sb-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:8px 14px 3px}
-.sb-link{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-left:3px solid transparent;transition:all .1s}
-.sb-link:hover{background:var(--bg2);color:var(--text);border-left-color:var(--border2)}
-.sb-link.active{background:rgba(249,115,22,.08);color:#f97316;border-left-color:#f97316;font-weight:700}
-.sb-link i{font-size:16px;flex-shrink:0}
-.sb-foot{padding:12px 14px;border-top:1px solid var(--border)}
-
-/* Main header */
-.mhdr{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:12px;min-height:54px}
-.mhdr-title{font-size:15px;font-weight:700;color:var(--text)}
-.mhdr-sub{font-size:11px;color:var(--text3);margin-top:1px}
-.mcontent{flex:1;overflow-y:auto;padding:20px;background:var(--bg2)}
-
-/* Buttons */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;font-size:12px;font-weight:600;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;white-space:nowrap;transition:all .1s}
-.btn:hover{background:var(--bg2)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-primary{background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border-color:#f97316}
-.btn-primary:hover{opacity:.9}
-.btn-success{background:var(--green);color:#fff;border-color:var(--green)}
-.btn-success:hover{opacity:.9}
-.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
-.btn-sm{padding:4px 10px;font-size:11px}
-
-/* Inputs */
-.inp{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;font-size:13px}
-.inp:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(29,78,216,.1)}
-textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
-.lbl{display:block;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.form-group{margin-bottom:12px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-
-/* Cards */
-.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
-
-/* Stats */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
-.stat-num{font-size:26px;font-weight:700;line-height:1}
-.stat-lbl{font-size:10px;color:var(--text2);margin-top:4px}
-
-/* Alerts */
-.alert{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:var(--radius);font-size:12px;margin-bottom:12px}
-.alert-ok{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
-.alert-err{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}
-.alert-info{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue)}
-.alert i{font-size:16px;flex-shrink:0;margin-top:1px}
-
-/* Badges */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700}
-.badge-pass{background:var(--green-bg);color:var(--green-text)}
-.badge-fail{background:var(--red-bg);color:var(--red-text)}
-.badge-cond{background:var(--amber-bg);color:var(--amber-text)}
-.badge-admin{background:var(--blue-bg);color:var(--blue-text)}
-.badge-grey{background:var(--bg3);color:var(--text2)}
-
-/* Table */
-.tbl-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
-.tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl thead{background:var(--bg2)}
-.tbl th{padding:9px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
-.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tbody tr:hover td{background:var(--bg2)}
-.tbl-search{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
-
-/* Login */
-.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 60% 40%, rgba(249,115,22,.08) 0%, #111 60%);padding:20px}
-.login-card{width:100%;max-width:400px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-
-/* Drop zone */
-.dropzone{border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;background:var(--bg2);transition:all .2s;margin-bottom:12px}
-.dropzone:hover,.dropzone.drag{border-color:var(--blue);background:var(--blue-bg)}
-
-/* Empty state */
-.empty{text-align:center;padding:48px 20px;color:var(--text3)}
-.empty i{font-size:34px;display:block;margin-bottom:10px}
-
-/* Mobile bottom nav */
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:6px 0 10px;z-index:200;justify-content:space-around}
-.mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:700;color:var(--text3);cursor:pointer;padding:4px 12px;text-transform:uppercase;letter-spacing:.3px}
-.mob-nav-item i{font-size:22px}
-.mob-nav-item.active{color:var(--blue)}
-.mob-spacer{height:68px}
-
-/* Report detail */
-.rpt-section{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;background:var(--bg)}
-.rpt-hdr{background:var(--bg2);padding:8px 14px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
-.rpt-body{padding:12px 14px}
-.rpt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.rpt-field label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:700;display:block;margin-bottom:2px}
-.rpt-field span{font-size:12px;color:var(--text);font-weight:500}
-.cell-pass{color:var(--green);font-weight:700}
-.cell-fail{color:var(--red);font-weight:700}
-
-/* Config warning */
-.config-warning{max-width:600px;margin:60px auto;padding:30px;background:var(--bg);border:2px solid var(--amber);border-radius:12px;text-align:center}
-
-/* Toast */
-.toast{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;max-width:340px;transform:translateY(100px);opacity:0;transition:all .3s}
-.toast.show{transform:translateY(0);opacity:1}
-.toast.ok{border-color:var(--green);color:var(--green-text);background:var(--green-bg)}
-.toast.err{border-color:var(--red);color:var(--red-text);background:var(--red-bg)}
-
-@media(max-width:768px){
-  .sidebar{display:none}
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .grid2,.grid3,.grid4{grid-template-columns:1fr}
-  .rpt-grid{grid-template-columns:1fr 1fr}
-  .mob-nav{display:flex}
-  .mcontent{padding:12px}
-  .tbl-wrap{overflow-x:auto}
-  .mhdr{padding:10px 14px}
-}
-@media print{
-  .sidebar,.mhdr,.mob-nav,.btn,.no-print{display:none!important}
-  .layout{display:block;height:auto}
-  .main{overflow:visible}
-  .mcontent{overflow:visible;padding:0}
-  @page{margin:1.5cm}
-}
-</style>
-</head>
-<body>
-
-<!-- Toast -->
-<div id="toast" class="toast"></div>
-<div id="app"></div>
-
-<!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<!-- pdf-lib for watermark -->
-<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script>
-
-/* ============================================================
-   ⚙️  CONFIGURACIÓN — COMPLETAR CON TUS DATOS DE SUPABASE
-   ============================================================
-   1. Ir a https://supabase.com → tu proyecto → Settings → API
-   2. Copiar "Project URL" y "anon public" key
-   ============================================================ */
-const SUPABASE_URL  = 'https://ysuwpuaucfvnqlfnczlu.supabase.co';   // ← CAMBIAR
-const SUPABASE_ANON = 'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-';                  // ← CAMBIAR
-
-// [CONFIG] Nombre de tu empresa inspectora
-const COMPANY_NAME  = 'GM Robótica';
-
-/* ============================================================ */
-
-const IS_CONFIGURED = !SUPABASE_URL.includes('TU_PROYECTO') && !SUPABASE_ANON.includes('TU_ANON');
-const sb = IS_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
-
-/* ── State global ── */
-let state = {
-  user: null,
-  profile: null,
-  tab: 'reports',
-  selected: null,
-  toast: null,
-};
-
-/* ── Helpers ── */
-const $ = id => document.getElementById(id);
-const fmtDate = d => { try { return new Date(d).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}); } catch(e){return d||'—';} };
-const fmtDT = d => { try { return new Date(d).toLocaleString('es-AR'); } catch(e){return d||'—';} };
-const initials = n => n?.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
-const resultBadge = r => {
-  const cls = r==='APROBADO'?'badge-pass':r==='RECHAZADO'?'badge-fail':'badge-cond';
-  const icon = r==='APROBADO'?'ti-circle-check':r==='RECHAZADO'?'ti-circle-x':'ti-alert-triangle';
-  return `<span class="badge ${cls}"><i class="ti ${icon}" style="font-size:10px;margin-right:2px"></i>${r||'—'}</span>`;
-};
-
-const VIS_LABELS = {pinThread:'Roscas Pin',boxThread:'Roscas Caja',pinSeal:'Sello Pin',boxSeal:'Sello Caja',pinNeck:'Cuello Pin',boxExt:'Ext Caja',bodyExt:'Cuerpo',hb:'Hardbanding',bb:'Boreback',slipG:'Ranura Slip',elevG:'Ranura Elevator',marks:'Marcado',dye:'Líq. Penetrantes',mpi:'MPI'};
-const MEAS_LABELS = {bodyOD:'OD Cuerpo',bodyID:'ID Cuerpo',wallThk:'Esp. Pared',totalLen:'Longitud',bow:'Curvatura',pinTong:'Tong Space Pin',pinLen:'Long. Pin',bevel:'Bisel Pin',boxTong:'Tong Space Caja',boxOD:'OD Caja',cbDiam:'Ø Counterbore',cbDepth:'Prof. Counterbore',sealShldr:'Ancho Sello'};
-
-function showToast(msg, type='ok') {
-  const t = $('toast');
-  t.className = `toast ${type}`;
-  t.innerHTML = `<i class="ti ti-${type==='ok'?'circle-check':'alert-circle'}"></i> ${msg}`;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 4000);
-}
-
-function avg3(m) {
-  const vs=[m?.m1,m?.m2,m?.m3].filter(v=>v!==''&&v!=null&&!isNaN(parseFloat(v))).map(parseFloat);
-  if(!vs.length) return '';
-  return(vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(3);
-}
-function evalSt(v,mn,mx) {
-  if(v===''||v==null) return 'e';
-  const n=parseFloat(v);if(isNaN(n))return 'e';
-  const hm=mn!=null&&mn!==''&&!isNaN(parseFloat(mn));
-  const hM=mx!=null&&mx!==''&&!isNaN(parseFloat(mx));
-  if(hm&&n<parseFloat(mn))return 'f';
-  if(hM&&n>parseFloat(mx))return 'f';
-  if(hm||hM)return 'p';
-  return 'e';
-}
-
-/* ── Audit Log ── */
-async function logEvent(event, reportId=null, reportNo=null, meta={}) {
-  if(!sb||!state.profile) return;
-  try {
-    await sb.from('audit_logs').insert({
-      event, user_id:state.user.id,
-      user_name:state.profile.full_name,
-      user_company:state.profile.company,
-      report_id:reportId, report_no:reportNo,
-      metadata:meta,
-    });
-  } catch(e) { console.warn('Audit log error:', e); }
-}
-
-/* ── PDF Watermark ── */
-async function downloadPDF(report) {
-  showToast('Generando PDF con marca de agua...', 'ok');
-  try {
-    const { PDFDocument, rgb, StandardFonts, degrees } = window.PDFLib;
-
-    // Try to load existing PDF from Supabase Storage if available
-    // Otherwise generate from report data
-    let pdfDoc;
-    const storageKey = `reports/${report.id}.pdf`;
-    let loadedFromStorage = false;
-
-    try {
-      const { data, error } = await sb.storage.from('reports').download(storageKey);
-      if (data && !error) {
-        const arrayBuffer = await data.arrayBuffer();
-        pdfDoc = await PDFDocument.load(arrayBuffer);
-        loadedFromStorage = true;
-      }
-    } catch(e) { /* generate from data */ }
-
-    if (!loadedFromStorage) {
-      pdfDoc = await generatePDFFromData(report);
-    }
-
-    // ── Add watermark to every page ──
-    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const fontLight = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const now = new Date();
-    const downloadId = Math.random().toString(36).slice(2,10).toUpperCase();
-    const wm1 = `DESCARGADO POR: ${state.profile.full_name} — ${state.profile.company}`;
-    const wm2 = `Fecha: ${now.toLocaleString('es-AR')} | ID: ${downloadId}`;
-    const wm3 = `USO CONFIDENCIAL — Prohibida su reproducción sin autorización`;
-
-    pdfDoc.getPages().forEach(page => {
-      const { width, height } = page.getSize();
-      const cx = width / 2, cy = height / 2;
-
-      // Diagonal watermark (large, transparent)
-      page.drawText(state.profile.company?.toUpperCase()||'CONFIDENCIAL', {
-        x: cx - 200, y: cy,
-        size: 52, font, color: rgb(0.7,0.7,0.7), opacity: 0.07,
-        rotate: degrees(45),
-      });
-
-      // Footer watermark bar
-      const barH = 30;
-      page.drawRectangle({ x:0, y:0, width, height:barH, color:rgb(0.13,0.31,0.85), opacity:0.08 });
-      page.drawText(wm1, { x:10, y:barH-11, size:7, font, color:rgb(0.1,0.1,0.5), opacity:0.8 });
-      page.drawText(wm2, { x:10, y:3, size:6, font:fontLight, color:rgb(0.2,0.2,0.5), opacity:0.7 });
-      page.drawText(wm3, { x:width-280, y:3, size:5.5, font:fontLight, color:rgb(0.5,0.1,0.1), opacity:0.7 });
-    });
-
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type:'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `DS1_${report.report_no||'informe'}_${downloadId}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    // Log the download
-    await logEvent('descarga_pdf', report.id, report.report_no, { downloadId });
-    showToast(`PDF descargado con marca de agua — ID: ${downloadId}`, 'ok');
-
-  } catch(err) {
-    console.error(err);
-    showToast('Error generando PDF: ' + err.message, 'err');
-  }
-}
-
-/* ── Generate PDF from JSON report data ── */
-async function generatePDFFromData(r) {
-  const { PDFDocument, rgb, StandardFonts } = window.PDFLib;
-  const doc = await PDFDocument.create();
-  const fontB = await doc.embedFont(StandardFonts.HelveticaBold);
-  const font  = await doc.embedFont(StandardFonts.Helvetica);
-
-  const addPage = () => {
-    const p = doc.addPage([595, 842]); // A4
-    let y = 820;
-    const margin = 40;
-    const W = 515;
-
-    // Header bar
-    p.drawRectangle({ x:0, y:808, width:595, height:34, color:rgb(0.11,0.31,0.85) });
-    p.drawText('REPORTE DE INSPECCIÓN DS-1 — Vol 3 y Addendum', { x:margin, y:817, size:10, font:fontB, color:rgb(1,1,1) });
-    p.drawText(`${r.report_no||'—'}  |  ${fmtDate(r.date)}`, { x:595-160, y:817, size:9, font, color:rgb(0.8,0.9,1) });
-    y = 795;
-
-    return { p, y: [y], margin, W };
-  };
-
-  const field = (p, x, y, label, value, labelColor=rgb(0.4,0.4,0.4)) => {
-    p.drawText(label+':',{ x, y:y+2, size:7, font:fontB, color:labelColor });
-    p.drawText(String(value||'—'),{ x, y:y-9, size:9, font, color:rgb(0.1,0.1,0.1) });
-  };
-
-  const secHeader = (p, y, text, W, margin) => {
-    p.drawRectangle({ x:margin, y:y-2, width:W, height:14, color:rgb(0.93,0.96,1) });
-    p.drawText(text, { x:margin+4, y:y+2, size:8, font:fontB, color:rgb(0.11,0.31,0.85) });
-    return y - 20;
-  };
-
-  // Page 1
-  let { p, y, margin, W } = addPage();
-  let cy = y[0];
-
-  // Component section
-  cy = secHeader(p, cy, 'IDENTIFICACIÓN DEL COMPONENTE', W, margin);
-  field(p, margin, cy, 'Componente', r.component); field(p, margin+180, cy, 'N° Reporte', r.report_no);
-  cy -= 22;
-  field(p, margin, cy, 'Empresa cliente', r.company); field(p, margin+180, cy, 'Equipo / Rig', r.rig); field(p, margin+340, cy, 'Pozo', r.well);
-  cy -= 22;
-  field(p, margin, cy, 'Inspector', r.inspector); field(p, margin+180, cy, 'Cert. DS-1', r.cert_no); field(p, margin+340, cy, 'Categoría', `Cat. ${r.category}`);
-  cy -= 22;
-  field(p, margin, cy, 'N° Serie', r.serial_no); field(p, margin+140, cy, 'N° Calor', r.heat_no); field(p, margin+280, cy, 'Fabricante', r.manufacturer); field(p, margin+400, cy, 'Grado', r.grade);
-  cy -= 22;
-  field(p, margin, cy, 'Conexión superior', r.conn_top); field(p, margin+220, cy, 'Conexión inferior', r.conn_bot); field(p, margin+440, cy, 'OD Nominal', r.nom_od?`${r.nom_od}"`:'—');
-  cy -= 30;
-
-  // Visual inspection
-  const vis = r.visual_inspection||{};
-  const visFail = Object.entries(vis).filter(([,v])=>v==='F');
-  const visPass = Object.entries(vis).filter(([,v])=>v==='P');
-  cy = secHeader(p, cy, 'INSPECCIÓN VISUAL', W, margin);
-  if(visFail.length===0) {
-    p.drawText('✓ Todos los ítems visuales APROBADOS', { x:margin+4, y:cy, size:9, font:fontB, color:rgb(0.09,0.5,0.24) });
-  } else {
-    p.drawText(`Ítems RECHAZADOS: ${visFail.map(([k])=>VIS_LABELS[k]||k).join(', ')}`, { x:margin+4, y:cy, size:8, font:fontB, color:rgb(0.86,0.15,0.15) });
-  }
-  cy -= 30;
-
-  // Measurements
-  const meas = r.measurements||{};
-  const measEntries = Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
-  if(measEntries.length>0) {
-    cy = secHeader(p, cy, 'MEDICIONES DIMENSIONALES', W, margin);
-    // Table header
-    const cols = [margin, margin+120, margin+175, margin+230, margin+280, margin+330, margin+385, margin+440, margin+480];
-    p.drawRectangle({ x:margin, y:cy-2, width:W, height:13, color:rgb(0.2,0.35,0.7), opacity:0.15 });
-    ['Parámetro','Un','Mín','Máx','Med 1','Med 2','Med 3','Prom.','Est.'].forEach((h,i)=>{
-      p.drawText(h,{x:cols[i]+2,y:cy+2,size:6.5,font:fontB,color:rgb(0.2,0.3,0.6)});
-    });
-    cy -= 13;
-    measEntries.forEach(([k,label]) => {
-      if(cy < 60) { /* new page if needed */ }
-      const m = meas[k];
-      const a = avg3(m);
-      const st = evalSt(a||m.m1, m.min, m.max);
-      const rowColor = st==='f'?rgb(1,0.9,0.9):st==='p'?rgb(0.9,1,0.93):rgb(1,1,1);
-      p.drawRectangle({ x:margin, y:cy-1, width:W, height:12, color:rowColor, opacity:0.6 });
-      p.drawText(label.slice(0,20),{x:cols[0]+2,y:cy+2,size:6.5,font,color:rgb(0.1,0.1,0.1)});
-      p.drawText('in',{x:cols[1]+2,y:cy+2,size:6,font,color:rgb(0.5,0.5,0.5)});
-      p.drawText(m.min||'',{x:cols[2]+2,y:cy+2,size:6.5,font,color:rgb(0.2,0.2,0.7)});
-      p.drawText(m.max||'',{x:cols[3]+2,y:cy+2,size:6.5,font,color:rgb(0.2,0.2,0.7)});
-      p.drawText(m.m1||'—',{x:cols[4]+2,y:cy+2,size:6.5,font,color:rgb(0.1,0.1,0.1)});
-      p.drawText(m.m2||'—',{x:cols[5]+2,y:cy+2,size:6.5,font,color:rgb(0.1,0.1,0.1)});
-      p.drawText(m.m3||'—',{x:cols[6]+2,y:cy+2,size:6.5,font,color:rgb(0.1,0.1,0.1)});
-      if(a) p.drawText(a,{x:cols[7]+2,y:cy+2,size:6.5,font:fontB,color:st==='p'?rgb(0.09,0.5,0.24):st==='f'?rgb(0.86,0.15,0.15):rgb(0.1,0.1,0.1)});
-      if(st!=='e') p.drawText(st==='p'?'✓ OK':'✗ Falla',{x:cols[8]+2,y:cy+2,size:6,font:fontB,color:st==='p'?rgb(0.09,0.5,0.24):rgb(0.86,0.15,0.15)});
-      cy -= 12;
-    });
-    cy -= 10;
-  }
-
-  // Comments
-  if(r.comments) {
-    cy = secHeader(p, cy, 'OBSERVACIONES', W, margin);
-    p.drawText(r.comments.slice(0,200),{x:margin+4,y:cy,size:8,font,color:rgb(0.2,0.2,0.2),maxWidth:W-8,lineHeight:11});
-    cy -= 30;
-  }
-
-  // Result
-  const rc = r.result==='APROBADO'?rgb(0.09,0.5,0.24):r.result==='RECHAZADO'?rgb(0.86,0.15,0.15):rgb(0.6,0.27,0.04);
-  p.drawRectangle({ x:margin, y:cy-18, width:W, height:28, color:rc, opacity:0.12, borderColor:rc, borderOpacity:0.8, borderWidth:1 });
-  p.drawText(`RESULTADO: ${r.result||'—'}`, { x:margin+8, y:cy-6, size:13, font:fontB, color:rc });
-  cy -= 40;
-
-  // Certification
-  cy = secHeader(p, cy, 'CERTIFICACIÓN — DS-1 Vol 3 §1.5', W, margin);
-  p.drawText('El inspector certifica que la inspección fue realizada conforme a DS-1® Vol 3 y Addendum vigentes.',
-    {x:margin+4,y:cy,size:7.5,font,color:rgb(0.3,0.3,0.3)});
-  cy -= 30;
-  [0,1,2].forEach(i=>{
-    p.drawLine({ start:{x:margin+i*175,y:cy}, end:{x:margin+i*175+140,y:cy}, thickness:0.5, color:rgb(0.5,0.5,0.5) });
-    const lbls=['Inspector / Firma','Supervisor / Conformidad','Cliente / Recepción'];
-    p.drawText(lbls[i],{x:margin+i*175,y:cy-12,size:6.5,font,color:rgb(0.5,0.5,0.5)});
-    if(i===0){
-      p.drawText(r.inspector||'',{x:margin,y:cy-22,size:7,font:fontB,color:rgb(0.2,0.2,0.2)});
-      p.drawText(`Cert. DS-1: ${r.cert_no||'—'}`,{x:margin,y:cy-32,size:6.5,font,color:rgb(0.4,0.4,0.4)});
-    }
-    p.drawText(`Fecha: ${fmtDate(r.date)||''}`,{x:margin+i*175,y:cy-32,size:6.5,font,color:rgb(0.4,0.4,0.4)});
-  });
-
-  return doc;
-}
-
-/* ============================================================
-   RENDER ENGINE
-   ============================================================ */
-function render() {
-  const app = $('app');
-  if(!IS_CONFIGURED) { renderConfig(app); return; }
-  if(!state.user)    { renderLogin(app); return; }
-  renderPortal(app);
-}
-
-/* ── Config screen ── */
-function renderConfig(app) {
-  app.innerHTML = `
-  <div class="config-warning">
-    <i class="ti ti-settings" style="font-size:40px;color:var(--amber);display:block;margin-bottom:14px"></i>
-    <h2 style="margin-bottom:8px;color:var(--text)">Configurar Supabase</h2>
-    <p style="color:var(--text2);margin-bottom:16px;line-height:1.6">Para activar el portal, abrí este archivo con el Bloc de notas y completá <strong>SUPABASE_URL</strong> y <strong>SUPABASE_ANON</strong> con los datos de tu proyecto en <a href="https://supabase.com" target="_blank" style="color:var(--blue)">supabase.com</a>.</p>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:left;font-family:monospace;font-size:11px;color:var(--text2)">
-      const SUPABASE_URL = '<strong style="color:var(--red-text)">https://ysuwpuaucfvnqlfnczlu.supabase.co</strong>';<br>
-      const SUPABASE_ANON = '<strong style="color:var(--red-text)">sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-</strong>';
-    </div>
-    <p style="margin-top:14px;font-size:11px;color:var(--text3)">Después de configurar, ejecutá también <strong>schema-supabase.sql</strong> en Supabase → SQL Editor.</p>
-  </div>`;
-}
-
-/* ── Login ── */
-function renderLogin(app) {
-  app.innerHTML = `
-  <div class="login-page">
-    <div class="login-card">
-      <div style="text-align:center;margin-bottom:24px">
-        <div style="margin:0 auto 14px;text-align:center"><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=300,fit=crop/d95gEJ0jJgfxbzwe/recurso-1-2x-1yBLDy8iVJ2EB3go.png" style="max-height:60px;max-width:220px;object-fit:contain" alt="GM Robótica"></div>
-        <h2 style="font-size:22px;font-weight:800;margin-bottom:4px;color:#f97316">GM Robótica</h2>
-        <p style="font-size:12px;color:var(--text2)">Portal DS-1 — Informes técnicos de inspección</p>
-        <p style="font-size:11px;color:var(--text3);margin-top:4px">${COMPANY_NAME}</p>
-      </div>
-      <div id="login-err"></div>
-      <div id="login-mode">
-        <div class="form-group">
-          <label class="lbl">Email</label>
-          <input class="inp" type="email" id="l-email" placeholder="usuario@empresa.com">
-        </div>
-        <div class="form-group">
-          <label class="lbl">Contraseña</label>
-          <input class="inp" type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-        <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center;font-size:14px" onclick="doLogin()">
-          <i class="ti ti-login"></i> Ingresar
-        </button>
-        <div style="margin-top:12px;text-align:center">
-          <button onclick="showRegister()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit">
-            ¿No tenés cuenta? Registrate
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
-
-async function showRegister() {
-  const mode = $('login-mode');
-  mode.innerHTML = `
-    <div class="form-group">
-      <label class="lbl">Nombre completo</label>
-      <input class="inp" id="r-name" placeholder="Juan Pérez">
-    </div>
-    <div class="form-group">
-      <label class="lbl">Empresa</label>
-      <input class="inp" id="r-company" placeholder="Operadora SA">
-    </div>
-    <div class="form-group">
-      <label class="lbl">Email</label>
-      <input class="inp" type="email" id="r-email" placeholder="juan@empresa.com">
-    </div>
-    <div class="form-group">
-      <label class="lbl">Contraseña (mínimo 6 caracteres)</label>
-      <input class="inp" type="password" id="r-pass" placeholder="••••••••">
-    </div>
-    <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center" onclick="doRegister()">
-      <i class="ti ti-user-plus"></i> Crear cuenta
-    </button>
-    <div style="margin-top:10px;text-align:center">
-      <button onclick="renderLogin($('app'))" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit">← Volver al login</button>
-    </div>`;
-}
-
-async function doLogin() {
-  const email = $('l-email')?.value?.trim();
-  const pass  = $('l-pass')?.value;
-  if(!email||!pass) return;
-  const {data,error} = await sb.auth.signInWithPassword({email,password:pass});
-  if(error) { $('login-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`; return; }
-}
-
-async function doRegister() {
-  const name = $('r-name')?.value?.trim();
-  const company = $('r-company')?.value?.trim();
-  const email = $('r-email')?.value?.trim();
-  const pass = $('r-pass')?.value;
-  if(!name||!company||!email||!pass) { showToast('Completá todos los campos','err'); return; }
-  const {data,error} = await sb.auth.signUp({ email, password:pass, options:{data:{full_name:name,company}} });
-  if(error) { showToast(error.message,'err'); return; }
-  showToast('¡Cuenta creada! Revisá tu email para confirmarla.','ok');
-  renderLogin($('app'));
-}
-
-/* ── Portal layout ── */
-function renderPortal(app) {
-  const p = state.profile;
-  const isAdmin = p?.role==='admin';
-  const navItems = isAdmin
-    ? [{id:'reports',icon:'ti-file-text',label:'Reportes'},{id:'upload',icon:'ti-cloud-upload',label:'Subir'},{id:'clients',icon:'ti-users',label:'Clientes'},{id:'auditlog',icon:'ti-shield-check',label:'Audit Log'}]
-    : [{id:'reports',icon:'ti-file-text',label:'Mis informes'}];
-
-  const t = state.tab;
-  const titleMap = {reports:isAdmin?'Todos los reportes':'Mis informes',upload:'Subir reporte',clients:'Gestión de clientes',auditlog:'Audit Log de Descargas'};
-
-  app.innerHTML = `
-  <div class="layout">
-    <div class="sidebar">
-      <div class="sb-brand">
-        <div style="padding:4px 8px 0;display:flex;align-items:center"><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=300,fit=crop/d95gEJ0jJgfxbzwe/recurso-1-2x-1yBLDy8iVJ2EB3go.png" style="max-height:32px;max-width:120px;object-fit:contain;filter:brightness(1.1)" alt="GM Robótica"></div>
-        <div><div class="sb-name" style="color:#f97316;font-weight:800">GM Robótica</div><div class="sb-tag">Portal DS-1 · Informes técnicos</div></div>
-      </div>
-      <div class="sb-user">
-        <div class="sb-av">${initials(p?.full_name)}</div>
-        <div style="overflow:hidden">
-          <div class="sb-uname">${p?.full_name||'Usuario'}</div>
-          <div class="sb-ucmp">${p?.company||''}</div>
-        </div>
-      </div>
-      <div class="sb-nav">
-        <div class="sb-lbl">Navegación</div>
-        ${navItems.map(n=>`<div class="sb-link ${t===n.id?'active':''}" onclick="setTab('${n.id}')"><i class="ti ${n.icon}"></i>${n.label}</div>`).join('')}
-        ${isAdmin?`<div class="sb-lbl" style="margin-top:8px">Sistema</div>
-        <div class="sb-link"><i class="ti ti-database"></i>Supabase</div>`:``}
-      </div>
-      <div class="sb-foot">
-        <div style="font-size:10px;color:var(--text3);margin-bottom:8px">
-          <span class="badge ${isAdmin?'badge-admin':'badge-grey'}">${isAdmin?'Administrador':'Cliente'}</span>
-        </div>
-        <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="doLogout()">
-          <i class="ti ti-logout"></i> Cerrar sesión
-        </button>
-      </div>
-    </div>
-
-    <div class="main">
-      <div class="mhdr">
-        <div>
-          <div class="mhdr-title">${state.selected?'Detalle del reporte':titleMap[t]||''}</div>
-          <div class="mhdr-sub">${state.selected?'Reporte '+state.selected.report_no:p?.company||''}</div>
-        </div>
-        <div style="margin-left:auto" id="hdr-actions"></div>
-      </div>
-      <div class="mcontent" id="main-content">
-        <div style="text-align:center;padding:40px;color:var(--text3)"><i class="ti ti-loader-2" style="font-size:28px;animation:spin 1s linear infinite"></i></div>
-      </div>
-    </div>
-
-    <div class="mob-nav">
-      ${navItems.map(n=>`<div class="mob-nav-item ${t===n.id?'active':''}" onclick="setTab('${n.id}')"><i class="ti ${n.icon}"></i>${n.label}</div>`).join('')}
-      <div class="mob-nav-item" onclick="doLogout()"><i class="ti ti-logout"></i>Salir</div>
-    </div>
-  </div>
-
-  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
-
-  loadTab();
-}
-
-function setTab(tab) {
-  state.tab = tab;
-  state.selected = null;
-  renderPortal($('app'));
-}
-
-async function doLogout() {
-  await sb.auth.signOut();
-  state.user = null; state.profile = null; state.tab='reports'; state.selected=null;
-  render();
-}
-
-/* ── Load tab content ── */
-async function loadTab() {
-  const isAdmin = state.profile?.role==='admin';
-  if(state.selected) { await renderReportDetail(state.selected); return; }
-  if(state.tab==='reports') await renderReports(isAdmin);
-  else if(state.tab==='upload' && isAdmin) await renderUpload();
-  else if(state.tab==='clients' && isAdmin) await renderClients();
-  else if(state.tab==='auditlog' && isAdmin) await renderAuditLog();
-}
-
-/* ── Reports list ── */
-async function renderReports(isAdmin) {
-  const mc = $('main-content');
-
-  // Fetch reports
-  let q = sb.from('reports').select(`*, report_assignments(client_id)`).order('created_at',{ascending:false});
-  if(!isAdmin) {
-    // Get only assigned reports
-    const {data:assigned} = await sb.from('report_assignments').select('report_id').eq('client_id',state.user.id);
-    const ids = (assigned||[]).map(a=>a.report_id);
-    if(!ids.length) {
-      mc.innerHTML=`<div class="empty"><i class="ti ti-file-off"></i><p>No tenés informes disponibles todavía.</p><p style="font-size:11px;margin-top:6px">Tus informes aparecerán aquí cuando sean publicados.</p></div>`;
-      return;
-    }
-    q = q.in('id', ids);
-  }
-
-  const {data:reports,error} = await q;
-  if(error) { mc.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`; return; }
-
-  // Stats (admin)
-  let statsHtml = '';
-  if(isAdmin) {
-    const total=reports.length, pass=reports.filter(r=>r.result==='APROBADO').length, fail=reports.filter(r=>r.result==='RECHAZADO').length;
-    statsHtml=`<div class="stats">
-      <div class="stat"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
-      <div class="stat"><div class="stat-num" style="color:var(--green)">${pass}</div><div class="stat-lbl">Aprobados</div></div>
-      <div class="stat"><div class="stat-num" style="color:var(--red)">${fail}</div><div class="stat-lbl">Rechazados</div></div>
-      <div class="stat"><div class="stat-num" style="color:var(--amber)">${total-pass-fail}</div><div class="stat-lbl">Condicionales</div></div>
-    </div>`;
-  }
-
-  mc.innerHTML = `${statsHtml}
-  <div class="tbl-wrap">
-    <div class="tbl-search">
-      <i class="ti ti-search" style="color:var(--text3);font-size:16px;flex-shrink:0"></i>
-      <input class="inp" id="srch" style="max-width:260px" placeholder="Buscar por reporte, componente, pozo..." oninput="filterTable()">
-      <select class="inp" id="fil-result" style="width:160px" onchange="filterTable()">
-        <option value="">Todos los resultados</option>
-        <option value="APROBADO">Aprobados</option>
-        <option value="RECHAZADO">Rechazados</option>
-        <option value="CONDICIONAL">Condicionales</option>
-      </select>
-      <select class="inp" id="fil-cat" style="width:130px" onchange="filterTable()">
-        <option value="">Todas las categorías</option>
-        ${[1,2,3,4,5].map(c=>`<option value="${c}">Categoría ${c}</option>`).join('')}
-      </select>
-    </div>
-    <table class="tbl" id="reports-tbl">
-      <thead><tr>
-        <th>N° Reporte</th><th>Fecha</th><th>Componente</th>
-        ${isAdmin?'<th>Cliente</th>':''}
-        <th>Pozo / Rig</th><th>Cat.</th><th>Resultado</th><th>Acciones</th>
-      </tr></thead>
-      <tbody id="reports-body">
-        ${(reports||[]).map(r=>`
-        <tr data-report='${JSON.stringify(r).replace(/'/g,"&apos;")}' data-text="${(r.report_no||'')+(r.component||'')+(r.company||'')+(r.well||'')+(r.rig||'')}".toLowerCase() data-result="${r.result}" data-cat="${r.category}">
-          <td style="font-family:monospace;font-weight:700">${r.report_no||'—'}</td>
-          <td>${fmtDate(r.date)}</td>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.component||'—'}</td>
-          ${isAdmin?`<td style="font-size:11px">${r.company||'—'}</td>`:''}
-          <td style="font-size:11px">${[r.well,r.rig].filter(Boolean).join(' / ')||'—'}</td>
-          <td><span class="badge badge-grey">Cat ${r.category||'—'}</span></td>
-          <td>${resultBadge(r.result)}</td>
-          <td>
-            <div style="display:flex;gap:4px">
-              <button class="btn btn-sm" onclick="viewReport(this.closest('tr'))"><i class="ti ti-eye"></i> Ver</button>
-              <button class="btn btn-sm btn-success" onclick="event.stopPropagation();downloadPDFFromRow(this.closest('tr'))"><i class="ti ti-file-type-pdf"></i> PDF</button>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-    ${!reports?.length?`<div class="empty" style="padding:30px"><i class="ti ti-file-off"></i><p>No hay reportes.</p></div>`:''}
-  </div>`;
-}
-
-function filterTable() {
-  const q=($('srch')?.value||'').toLowerCase();
-  const r=$('fil-result')?.value||'';
-  const c=$('fil-cat')?.value||'';
-  document.querySelectorAll('#reports-tbl tbody tr').forEach(tr=>{
-    const text=(tr.dataset.text||'').toLowerCase();
-    const result=tr.dataset.result||'';
-    const cat=tr.dataset.cat||'';
-    const ok=(!q||text.includes(q))&&(!r||result===r)&&(!c||cat===c);
-    tr.style.display=ok?'':'none';
-  });
-}
-
-function viewReport(tr) {
-  try { state.selected=JSON.parse(tr.dataset.report); renderPortal($('app')); } catch(e){}
-}
-
-function downloadPDFFromRow(tr) {
-  try { const r=JSON.parse(tr.dataset.report); downloadPDF(r); } catch(e){}
-}
-
-/* ── Report detail ── */
-async function renderReportDetail(r) {
-  await logEvent('ver_detalle', r.id, r.report_no);
-  const mc = $('main-content');
-  const ha = $('hdr-actions');
-  if(ha) ha.innerHTML=`<div style="display:flex;gap:8px">
-    <button class="btn" onclick="state.selected=null;renderPortal($('app'))"><i class="ti ti-arrow-left"></i> Volver</button>
-    <button class="btn btn-success" style="font-size:13px;padding:8px 18px" onclick="downloadPDF(state.selected)"><i class="ti ti-file-type-pdf"></i> Descargar PDF</button>
-  </div>`;
-
-  const vis=r.visual_inspection||{};
-  const meas=r.measurements||{};
-  const visPairs=Object.entries(VIS_LABELS).filter(([k])=>vis[k]&&vis[k]!=='NA');
-  const measPairs=Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
-
-  mc.innerHTML=`
-  <!-- Header -->
-  <div class="rpt-section" style="border-left:4px solid var(--blue)">
-    <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-      <div>
-        <div style="font-size:16px;font-weight:700">${r.component||'Sustituto'}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">DS-1® Vol 3 y Addendum — Categoría ${r.category}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:15px;font-weight:700">${r.report_no||'—'}</div>
-        <div style="font-size:11px;color:var(--text3)">${fmtDate(r.date)}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Component ID -->
-  <div class="rpt-section">
-    <div class="rpt-hdr"><i class="ti ti-tool"></i>Identificación del Componente</div>
-    <div class="rpt-body">
-      <div class="rpt-grid" style="gap:12px">
-        ${[['Empresa cliente',r.company],['Equipo / Rig',r.rig],['Pozo',r.well],['Ubicación',r.location],['Inspector',r.inspector],['N° Certificado DS-1',r.cert_no],['N° de Serie',r.serial_no],['N° de Calor',r.heat_no],['Fabricante',r.manufacturer]].map(([l,v])=>`
-        <div class="rpt-field"><label>${l}</label><span>${v||'—'}</span></div>`).join('')}
-      </div>
-    </div>
-  </div>
-
-  <!-- Visual -->
-  ${visPairs.length?`<div class="rpt-section">
-    <div class="rpt-hdr"><i class="ti ti-eye"></i>Inspección Visual</div>
-    <div class="rpt-body" style="padding:0">
-      <table class="tbl">
-        <thead><tr><th>Ítem</th><th>Resultado</th></tr></thead>
-        <tbody>${visPairs.map(([k,label])=>{const v=vis[k];return`<tr><td>${label}</td><td>${v==='P'?'<span class="cell-pass">✓ Aprobado</span>':v==='F'?'<span class="cell-fail">✗ Rechazado</span>':'<span style="color:var(--text3)">N/A</span>'}</td></tr>`;}).join('')}</tbody>
-      </table>
-    </div>
-  </div>`:''}
-
-  <!-- Measurements -->
-  ${measPairs.length?`<div class="rpt-section">
-    <div class="rpt-hdr"><i class="ti ti-ruler-measure"></i>Mediciones Dimensionales</div>
-    <div class="rpt-body" style="padding:0;overflow-x:auto">
-      <table class="tbl">
-        <thead><tr><th>Parámetro</th><th>Mín</th><th>Máx</th><th>Med 1</th><th>Med 2</th><th>Med 3</th><th>Promedio</th><th>Estado</th></tr></thead>
-        <tbody>${measPairs.map(([k,label])=>{const m=meas[k]||{};const a=avg3(m);const st=evalSt(a||m.m1,m.min,m.max);return`<tr>
-          <td style="font-weight:500">${label}</td>
-          <td style="font-family:monospace;font-size:11px">${m.min||'—'}</td>
-          <td style="font-family:monospace;font-size:11px">${m.max||'—'}</td>
-          <td class="${evalSt(m.m1,m.min,m.max)==='p'?'cell-pass':evalSt(m.m1,m.min,m.max)==='f'?'cell-fail':''}">${m.m1||'—'}</td>
-          <td class="${evalSt(m.m2,m.min,m.max)==='p'?'cell-pass':evalSt(m.m2,m.min,m.max)==='f'?'cell-fail':''}">${m.m2||'—'}</td>
-          <td class="${evalSt(m.m3,m.min,m.max)==='p'?'cell-pass':evalSt(m.m3,m.min,m.max)==='f'?'cell-fail':''}">${m.m3||'—'}</td>
-          <td class="${st==='p'?'cell-pass':st==='f'?'cell-fail':''}" style="font-family:monospace;font-weight:600">${a||'—'}</td>
-          <td>${st==='p'?'<span class="cell-pass">✓ OK</span>':st==='f'?'<span class="cell-fail">✗ Falla</span>':'—'}</td>
-        </tr>`;}).join('')}</tbody>
-      </table>
-    </div>
-  </div>`:''}
-
-  <!-- Comments -->
-  ${r.comments?`<div class="rpt-section">
-    <div class="rpt-hdr"><i class="ti ti-notes"></i>Observaciones</div>
-    <div class="rpt-body"><p style="font-size:13px;line-height:1.7;color:var(--text)">${r.comments}</p></div>
-  </div>`:''}
-
-  <!-- Result -->
-  <div class="rpt-section" style="border:2px solid ${r.result==='APROBADO'?'var(--green)':r.result==='RECHAZADO'?'var(--red)':'var(--amber)'}">
-    <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <div>
-        <div style="font-size:22px;font-weight:700;color:${r.result==='APROBADO'?'var(--green)':r.result==='RECHAZADO'?'var(--red)':'var(--amber)'}">
-          ${r.result==='APROBADO'?'✓':'✗'} ${r.result||'—'}
-        </div>
-        <div style="font-size:12px;color:var(--text2);margin-top:3px">
-          ${r.result==='APROBADO'?'Componente apto para servicio según DS-1 Vol 3':'Componente NO apto para servicio — ver observaciones'}
-        </div>
-      </div>
-      <div style="text-align:right;font-size:11px;color:var(--text3)">
-        Inspector: <strong>${r.inspector||'—'}</strong><br>
-        Cert. DS-1: <strong>${r.cert_no||'—'}</strong>
-      </div>
-    </div>
-  </div>`;
-}
-
-/* ── Upload ── */
-async function renderUpload() {
-  const mc=$('main-content');
-  // Load clients for assignment
-  const {data:clients}=await sb.from('profiles').select('*').eq('role','client').eq('active',true);
-  const clientOpts=(clients||[]);
-
-  mc.innerHTML=`
-  <div class="card">
-    <input type="file" id="json-file" accept=".json" style="display:none" onchange="loadJsonFile(this.files[0])">
-    <div class="dropzone" id="dropzone" onclick="$('json-file').click()"
-      ondragover="event.preventDefault();this.classList.add('drag')"
-      ondragleave="this.classList.remove('drag')"
-      ondrop="event.preventDefault();this.classList.remove('drag');loadJsonFile(event.dataTransfer.files[0])">
-      <i class="ti ti-file-type-json" style="font-size:32px;color:var(--text3);display:block;margin-bottom:8px"></i>
-      <div style="font-size:14px;font-weight:600;margin-bottom:4px">Arrastrá el JSON del formulario DS-1</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">o hacé clic para seleccionar el archivo</div>
-      <button class="btn btn-primary" style="pointer-events:none"><i class="ti ti-upload"></i> Seleccionar archivo .json</button>
-    </div>
-    <div id="parse-result"></div>
-    <div id="upload-form" style="display:none">
-      <div style="margin-bottom:12px;padding:10px;background:var(--green-bg);border:1px solid var(--green);border-radius:6px;font-size:12px;color:var(--green-text);display:flex;align-items:center;gap:8px">
-        <i class="ti ti-circle-check" style="font-size:16px"></i>
-        <strong>Archivo cargado.</strong> Verificá los campos y asigná al cliente antes de publicar.
-      </div>
-
-      <div class="grid4" style="margin-bottom:10px">
-        <div class="form-group"><label class="lbl">N° Reporte *</label><input class="inp" id="u-reportno" placeholder="RP-2026-001"></div>
-        <div class="form-group"><label class="lbl">Fecha</label><input class="inp" type="date" id="u-date"></div>
-        <div class="form-group"><label class="lbl">Categoría DS-1</label>
-          <select class="inp" id="u-category">${[1,2,3,4,5].map(c=>`<option value="${c}">Categoría ${c}</option>`).join('')}</select>
-        </div>
-        <div class="form-group"><label class="lbl">Resultado</label>
-          <select class="inp" id="u-result" style="font-weight:700">
-            <option value="APROBADO" style="color:var(--green)">APROBADO</option>
-            <option value="RECHAZADO" style="color:var(--red)">RECHAZADO</option>
-            <option value="CONDICIONAL" style="color:var(--amber)">CONDICIONAL</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group"><label class="lbl">Componente / Descripción</label><input class="inp" id="u-component" placeholder="X-Over NC46 Pin × NC50 Caja, 6-1/2&quot; OD"></div>
-      <div class="grid3" style="margin-bottom:10px">
-        <div class="form-group"><label class="lbl">Empresa cliente</label><input class="inp" id="u-company"></div>
-        <div class="form-group"><label class="lbl">Equipo / Rig</label><input class="inp" id="u-rig"></div>
-        <div class="form-group"><label class="lbl">Pozo</label><input class="inp" id="u-well"></div>
-      </div>
-      <div class="grid3" style="margin-bottom:10px">
-        <div class="form-group"><label class="lbl">Ubicación</label><input class="inp" id="u-location"></div>
-        <div class="form-group"><label class="lbl">Inspector</label><input class="inp" id="u-inspector"></div>
-        <div class="form-group"><label class="lbl">N° Certificado DS-1</label><input class="inp" id="u-certno"></div>
-      </div>
-      <div class="grid3" style="margin-bottom:10px">
-        <div class="form-group"><label class="lbl">N° Serie</label><input class="inp" id="u-serialno"></div>
-        <div class="form-group"><label class="lbl">N° Calor</label><input class="inp" id="u-heatno"></div>
-        <div class="form-group"><label class="lbl">Fabricante</label><input class="inp" id="u-manufacturer"></div>
-      </div>
-      <div class="form-group"><label class="lbl">Observaciones</label><textarea class="inp" id="u-comments"></textarea></div>
-
-      <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
-        <label class="lbl" style="margin-bottom:8px">Asignar a cliente/s *</label>
-        <div id="client-btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-          ${clientOpts.length===0
-            ?'<div style="color:var(--text3);font-size:12px">No hay clientes registrados. Creá uno en la sección Clientes.</div>'
-            :clientOpts.map(c=>`<button type="button" class="btn" id="cb-${c.id}" onclick="toggleClient('${c.id}')"><i class="ti ti-user"></i> ${c.full_name} (${c.company})</button>`).join('')}
-        </div>
-        <div id="upload-err"></div>
-        <button class="btn btn-primary" style="padding:9px 22px;font-size:13px" onclick="submitReport()">
-          <i class="ti ti-upload"></i> Publicar reporte
-        </button>
-      </div>
-    </div>
-  </div>`;
-
-  window._selectedClients=[];
-  window._parsedReport=null;
-}
-
-window.toggleClient=function(id){
-  const sc=window._selectedClients;
-  const idx=sc.indexOf(id);
-  if(idx>=0){sc.splice(idx,1);}else{sc.push(id);}
-  const btn=document.getElementById('cb-'+id);
-  if(btn){
-    btn.className='btn'+(sc.includes(id)?' btn-success':'');
-    btn.innerHTML=`<i class="ti ti-${sc.includes(id)?'user-check':'user'}"></i> ${btn.textContent.replace(/✓?\s*/,'').trim()}`;
-  }
-};
-
-window.loadJsonFile=function(file){
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const d=JSON.parse(e.target.result);
-      const ri=d.reportInfo||d||{};
-      const co=d.component||{};
-      const connTop=(ri.topConnType||'')+(ri.topConnConfig?' '+ri.topConnConfig:'');
-      const connBot=(ri.botConnType||'')+(ri.botConnConfig?' '+ri.botConnConfig:'');
-      window._parsedReport={...d,_connTop:connTop,_connBot:connBot};
-
-      // Fill form
-      const set=(id,v)=>{if($(id)&&v)$(id).value=v;};
-      set('u-reportno',ri.reportNo);
-      set('u-date',ri.date);
-      set('u-category',ri.category||'3');
-      set('u-result',d.result||'APROBADO');
-      set('u-component',co.description||co.type||ri.description||`${connTop} × ${connBot}`);
-      set('u-company',ri.client||ri.company||'');
-      set('u-rig',ri.rig||'');
-      set('u-well',ri.well||'');
-      set('u-location',ri.location||'');
-      set('u-inspector',ri.inspector||'');
-      set('u-certno',ri.certNo||'');
-      set('u-serialno',co.serialNo||'');
-      set('u-heatno',co.heatNo||'');
-      set('u-manufacturer',co.manufacturer||'');
-      set('u-comments',d.comments||'');
-
-      $('upload-form').style.display='block';
-      $('parse-result').innerHTML='';
-    }catch(ex){
-      $('parse-result').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>JSON inválido: ${ex.message}</div>`;
-    }
-  };
-  reader.readAsText(file);
-};
-
-window.submitReport=async function(){
-  const err=$('upload-err');
-  const reportNo=$('u-reportno')?.value?.trim();
-  if(!reportNo){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>El N° de Reporte es obligatorio.</div>';return;}
-  if(!window._selectedClients?.length){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Seleccioná al menos un cliente.</div>';return;}
-
-  const d=window._parsedReport||{};
-  const ri=d.reportInfo||{};
-  const co=d.component||{};
-
-  const reportData={
-    report_no:$('u-reportno').value.trim(),
-    date:$('u-date').value||null,
-    revision:ri.revision||'0',
-    component:$('u-component').value,
-    type:co.type||'Sustituto',
-    company:$('u-company').value,
-    rig:$('u-rig').value,
-    well:$('u-well').value,
-    location:$('u-location').value,
-    inspector:$('u-inspector').value,
-    cert_no:$('u-certno').value,
-    category:$('u-category').value,
-    result:$('u-result').value,
-    conn_top:d._connTop||ri.topConnType||'',
-    conn_bot:d._connBot||ri.botConnType||'',
-    serial_no:$('u-serialno').value,
-    heat_no:$('u-heatno').value,
-    manufacturer:$('u-manufacturer').value,
-    material:co.material||'',
-    grade:co.grade||'',
-    nom_od:co.nomOD||'',
-    nom_id:co.nomID||'',
-    comp_length:co.length||co.compLength||'',
-    weight:co.weight||'',
-    makeup_torque:co.makeupTorque||'',
-    comments:$('u-comments').value,
-    visual_inspection:d.visualInspection||{},
-    measurements:d.measurements||{},
-    raw_data:d,
-    uploaded_by:state.user.id,
-    published:true,
-  };
-
-  const {data:rpt,error}=await sb.from('reports').insert(reportData).select().single();
-  if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
-
-  // Assign to clients
-  const assigns=window._selectedClients.map(cid=>({report_id:rpt.id,client_id:cid}));
-  await sb.from('report_assignments').insert(assigns);
-
-  // Log
-  await logEvent('reporte_publicado',rpt.id,rpt.report_no,{clientCount:assigns.length});
-
-  showToast(`Reporte ${rpt.report_no} publicado correctamente.`,'ok');
-  setTab('reports');
-};
-
-/* ── Clients ── */
-async function renderClients() {
-  const mc=$('main-content');
-  const {data:clients}=await sb.from('profiles').select('*').eq('role','client').order('created_at',{ascending:false});
-
-  mc.innerHTML=`
-  <div class="tbl-wrap" style="margin-bottom:16px">
-    <table class="tbl">
-      <thead><tr><th>Nombre</th><th>Email</th><th>Empresa</th><th>Estado</th><th>Acciones</th></tr></thead>
-      <tbody>
-      ${(clients||[]).length===0?`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">No hay clientes registrados.</td></tr>`:
-        (clients||[]).map(c=>`<tr>
-          <td style="font-weight:500"><div style="width:24px;height:24px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-right:8px">${initials(c.full_name)}</div>${c.full_name}</td>
-          <td style="font-family:monospace;font-size:11px">${c.id.slice(0,8)}…</td>
-          <td>${c.company||'—'}</td>
-          <td><span class="badge ${c.active?'badge-pass':'badge-grey'}">${c.active?'Activo':'Inactivo'}</span></td>
-          <td>
-            <button class="btn btn-sm btn-danger" onclick="toggleClient_active('${c.id}',${!c.active})">
-              <i class="ti ti-${c.active?'user-x':'user-check'}"></i> ${c.active?'Desactivar':'Activar'}
-            </button>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text)"><i class="ti ti-user-plus" style="margin-right:6px"></i>Invitar nuevo cliente</div>
-    <div class="alert alert-info"><i class="ti ti-info-circle"></i>El cliente debe registrarse en el portal con su email. Después aparecerá en esta lista y podrás asignarle informes.</div>
-    <p style="font-size:12px;color:var(--text2);margin-top:8px">URL del portal para compartir con el cliente:</p>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:monospace;font-size:12px;color:var(--blue-text);margin-top:6px;cursor:pointer" onclick="navigator.clipboard.writeText(window.location.href).then(()=>showToast('URL copiada','ok'))">
-      ${window.location.href} &nbsp; <i class="ti ti-copy" style="vertical-align:-2px"></i>
-    </div>
-  </div>`;
-}
-
-window.toggleClient_active=async function(id,active){
-  const {error}=await sb.from('profiles').update({active}).eq('id',id);
-  if(error){showToast(error.message,'err');return;}
-  showToast(`Cliente ${active?'activado':'desactivado'}.`,'ok');
-  renderClients();
-};
-
-/* ── Audit Log ── */
-async function renderAuditLog() {
-  const mc=$('main-content');
-  const {data:logs}=await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
-
-  mc.innerHTML=`
-  <div class="tbl-wrap">
-    <div class="tbl-search">
-      <i class="ti ti-shield-check" style="color:var(--text3);font-size:16px"></i>
-      <span style="font-size:12px;color:var(--text2);font-weight:600">Registro de actividad — últimas 200 acciones</span>
-      <div style="margin-left:auto">
-        <button class="btn btn-sm" onclick="exportAuditCSV()"><i class="ti ti-download"></i> Exportar CSV</button>
-      </div>
-    </div>
-    <table class="tbl">
-      <thead><tr><th>Fecha / Hora</th><th>Evento</th><th>Usuario</th><th>Empresa</th><th>Informe</th><th>Detalles</th></tr></thead>
-      <tbody>
-      ${(logs||[]).length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Sin registros todavía.</td></tr>`:
-        (logs||[]).map(l=>{
-          const evtColor=l.event==='descarga_pdf'?'var(--green-text)':l.event==='login'?'var(--blue-text)':'var(--text2)';
-          const evtBg=l.event==='descarga_pdf'?'var(--green-bg)':l.event==='login'?'var(--blue-bg)':'var(--bg3)';
-          return`<tr>
-            <td style="font-size:11px;white-space:nowrap">${fmtDT(l.created_at)}</td>
-            <td><span style="background:${evtBg};color:${evtColor};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700">${l.event}</span></td>
-            <td style="font-size:11px">${l.user_name||'—'}</td>
-            <td style="font-size:11px">${l.user_company||'—'}</td>
-            <td style="font-family:monospace;font-size:11px">${l.report_no||'—'}</td>
-            <td style="font-size:10px;color:var(--text3)">${l.metadata?.downloadId?`ID: ${l.metadata.downloadId}`:''}</td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>
-  </div>`;
-}
-
-window.exportAuditCSV=function(){
-  const rows=document.querySelectorAll('#main-content .tbl tbody tr');
-  let csv='Fecha,Evento,Usuario,Empresa,Informe,Detalles\n';
-  rows.forEach(tr=>{
-    const cols=[...tr.querySelectorAll('td')].map(td=>'"'+td.textContent.trim().replace(/"/g,'""')+'"');
-    csv+=cols.join(',')+'\n';
-  });
-  const b=new Blob([csv],{type:'text/csv'});
-  const u=URL.createObjectURL(b);
-  const a=document.createElement('a');a.href=u;a.download='audit_log.csv';a.click();URL.revokeObjectURL(u);
-};
-
-/* ============================================================
-   AUTH STATE LISTENER
-   ============================================================ */
-async function init() {
-  if(!IS_CONFIGURED) { render(); return; }
-
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (session?.user) {
-      state.user = session.user;
-      // Load profile
-      const {data:profile} = await sb.from('profiles').select('*').eq('id',session.user.id).single();
-      state.profile = profile;
-      if(event==='SIGNED_IN') await logEvent('login');
-      render();
-    } else {
-      state.user = null;
-      state.profile = null;
-      render();
-    }
-  });
-
-  // Check existing session
-  const {data:{session}} = await sb.auth.getSession();
-  if(!session) render();
-}
-
-init();
-</script>
-</body>
-</html>
+-- ============================================================
+--  PORTAL DS-1 — GM Robótica — Schema v2.0
+--  NOVEDADES: Empresas, Roles por empresa, Sistema de invitaciones
+--  Ejecutar en Supabase → SQL Editor (reemplaza el schema anterior)
+-- ============================================================
+
+-- ── Limpiar tablas anteriores si existen ──
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS report_assignments CASCADE;
+DROP TABLE IF EXISTS reports CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS invitations CASCADE;
+DROP TABLE IF EXISTS companies CASCADE;
+DROP FUNCTION IF EXISTS handle_new_user CASCADE;
+DROP FUNCTION IF EXISTS is_admin CASCADE;
+DROP FUNCTION IF EXISTS is_company_admin CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at CASCADE;
+
+-- ============================================================
+-- 1. EMPRESAS
+-- ============================================================
+CREATE TABLE companies (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT NOT NULL,
+  rut_cuit    TEXT,
+  address     TEXT,
+  city        TEXT,
+  country     TEXT DEFAULT 'Argentina',
+  phone       TEXT,
+  email       TEXT,
+  logo_url    TEXT,
+  active      BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Empresa inicial: GM Robótica (la inspectora)
+INSERT INTO companies (id, name, city, email, active)
+VALUES ('00000000-0000-0000-0000-000000000001', 'GM Robótica', 'Mendoza', 'info@gmrobotica.ar', TRUE);
+
+-- ============================================================
+-- 2. PERFILES DE USUARIO
+-- Roles del sistema:
+--   super_admin  → GM Robótica, acceso total
+--   company_admin → admin de una empresa cliente
+--   inspector    → puede crear y subir reportes
+--   supervisor   → aprueba reportes, ve todo de su empresa
+--   viewer       → solo lee/descarga reportes asignados
+-- ============================================================
+CREATE TABLE profiles (
+  id           UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  company_id   UUID REFERENCES companies(id) ON DELETE SET NULL,
+  full_name    TEXT NOT NULL DEFAULT '',
+  position     TEXT,                          -- cargo / posición
+  phone        TEXT,
+  role         TEXT NOT NULL DEFAULT 'viewer'
+                 CHECK (role IN ('super_admin','company_admin','inspector','supervisor','viewer')),
+  active       BOOLEAN NOT NULL DEFAULT TRUE,
+  must_change_password BOOLEAN NOT NULL DEFAULT FALSE,  -- fuerza cambio de contraseña
+  last_login   TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- 3. INVITACIONES (sistema seguro de incorporación)
+-- El admin crea la invitación → el sistema manda el email
+-- El usuario usa el token para activar su cuenta y poner contraseña
+-- ============================================================
+CREATE TABLE invitations (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email        TEXT NOT NULL,
+  full_name    TEXT NOT NULL,
+  company_id   UUID REFERENCES companies(id) ON DELETE CASCADE,
+  role         TEXT NOT NULL DEFAULT 'viewer'
+                 CHECK (role IN ('company_admin','inspector','supervisor','viewer')),
+  token        TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(32), 'hex'),
+  invited_by   UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  accepted     BOOLEAN NOT NULL DEFAULT FALSE,
+  expires_at   TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- 4. REPORTES DE INSPECCIÓN
+-- ============================================================
+CREATE TABLE reports (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- Identificación
+  report_no           TEXT NOT NULL,
+  date                DATE,
+  revision            TEXT DEFAULT '0',
+  -- Componente
+  component           TEXT,
+  type                TEXT,
+  serial_no           TEXT,
+  heat_no             TEXT,
+  manufacturer        TEXT,
+  material            TEXT,
+  grade               TEXT,
+  nom_od              TEXT,
+  nom_id              TEXT,
+  comp_length         TEXT,
+  weight              TEXT,
+  makeup_torque       TEXT,
+  conn_top            TEXT,
+  conn_bot            TEXT,
+  -- Contexto operativo
+  company_id          UUID REFERENCES companies(id) ON DELETE SET NULL,  -- empresa CLIENTE
+  client_company_name TEXT,
+  rig                 TEXT,
+  well                TEXT,
+  location            TEXT,
+  -- Inspector
+  inspector           TEXT,
+  cert_no             TEXT,
+  category            TEXT DEFAULT '3',
+  -- Resultado
+  result              TEXT DEFAULT 'APROBADO'
+                        CHECK (result IN ('APROBADO','RECHAZADO','CONDICIONAL')),
+  comments            TEXT,
+  -- Datos estructurados DS-1
+  visual_inspection   JSONB DEFAULT '{}',
+  measurements        JSONB DEFAULT '{}',
+  images              JSONB DEFAULT '[]',   -- URLs de imágenes adjuntas
+  raw_data            JSONB DEFAULT '{}',
+  -- Control
+  published           BOOLEAN NOT NULL DEFAULT FALSE,
+  uploaded_by         UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  approved_by         UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  approved_at         TIMESTAMPTZ,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- 5. ASIGNACIONES (reportes visibles para usuarios específicos)
+-- ============================================================
+CREATE TABLE report_assignments (
+  report_id   UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+  profile_id  UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (report_id, profile_id)
+);
+
+-- ============================================================
+-- 6. AUDIT LOG (inmutable — solo INSERT)
+-- ============================================================
+CREATE TABLE audit_logs (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event         TEXT NOT NULL,
+  user_id       UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  user_name     TEXT,
+  user_company  TEXT,
+  user_role     TEXT,
+  report_id     UUID REFERENCES reports(id) ON DELETE SET NULL,
+  report_no     TEXT,
+  company_id    UUID REFERENCES companies(id) ON DELETE SET NULL,
+  ip_address    TEXT,
+  user_agent    TEXT,
+  metadata      JSONB DEFAULT '{}',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+-- Solo se puede insertar, nunca modificar ni borrar
+CREATE RULE audit_log_no_update AS ON UPDATE TO audit_logs DO INSTEAD NOTHING;
+CREATE RULE audit_log_no_delete AS ON DELETE TO audit_logs DO INSTEAD NOTHING;
+
+-- ============================================================
+-- 7. TRIGGERS
+-- ============================================================
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_companies_updated_at
+  BEFORE UPDATE ON companies FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER trg_profiles_updated_at
+  BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER trg_reports_updated_at
+  BEFORE UPDATE ON reports FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Trigger: crear perfil automáticamente al registrarse
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_invite invitations%ROWTYPE;
+  v_company_id UUID;
+  v_role TEXT := 'viewer';
+  v_name TEXT;
+BEGIN
+  -- Buscar invitación válida por email
+  SELECT * INTO v_invite
+  FROM invitations
+  WHERE email = NEW.email
+    AND accepted = FALSE
+    AND expires_at > NOW()
+  ORDER BY created_at DESC
+  LIMIT 1;
+
+  IF FOUND THEN
+    v_company_id := v_invite.company_id;
+    v_role := v_invite.role;
+    v_name := v_invite.full_name;
+    -- Marcar invitación como aceptada
+    UPDATE invitations SET accepted = TRUE WHERE id = v_invite.id;
+  ELSE
+    -- Sin invitación: viewer sin empresa
+    v_company_id := NULL;
+    v_role := 'viewer';
+    v_name := COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email,'@',1));
+  END IF;
+
+  INSERT INTO profiles (id, company_id, full_name, role, must_change_password)
+  VALUES (NEW.id, v_company_id, v_name, v_role, TRUE)
+  ON CONFLICT (id) DO NOTHING;
+
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER trg_on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ============================================================
+-- 8. FUNCIONES DE SEGURIDAD (helper para RLS)
+-- ============================================================
+CREATE OR REPLACE FUNCTION current_profile()
+RETURNS profiles AS $$
+  SELECT * FROM profiles WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION is_super_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin');
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION is_admin_or_super()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('super_admin','company_admin'));
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION my_company_id()
+RETURNS UUID AS $$
+  SELECT company_id FROM profiles WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- ============================================================
+-- 9. ROW LEVEL SECURITY (RLS)
+-- ============================================================
+ALTER TABLE companies           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invitations         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reports             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE report_assignments  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs          ENABLE ROW LEVEL SECURITY;
+
+-- COMPANIES
+CREATE POLICY "companies_super_admin" ON companies FOR ALL USING (is_super_admin());
+CREATE POLICY "companies_read_own" ON companies FOR SELECT
+  USING (id = my_company_id() OR is_super_admin());
+
+-- PROFILES
+CREATE POLICY "profiles_super_admin" ON profiles FOR ALL USING (is_super_admin());
+CREATE POLICY "profiles_read_same_company" ON profiles FOR SELECT
+  USING (company_id = my_company_id() OR id = auth.uid() OR is_super_admin());
+CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE
+  USING (id = auth.uid());
+CREATE POLICY "profiles_company_admin_manage" ON profiles FOR ALL
+  USING (company_id = my_company_id() AND is_admin_or_super());
+
+-- INVITATIONS
+CREATE POLICY "invitations_super_admin" ON invitations FOR ALL USING (is_super_admin());
+CREATE POLICY "invitations_company_admin" ON invitations FOR ALL
+  USING (company_id = my_company_id() AND is_admin_or_super());
+CREATE POLICY "invitations_read_own" ON invitations FOR SELECT
+  USING (invited_by = auth.uid() OR is_super_admin());
+
+-- REPORTS
+CREATE POLICY "reports_super_admin" ON reports FOR ALL USING (is_super_admin());
+CREATE POLICY "reports_company_all" ON reports FOR ALL
+  USING (company_id = my_company_id() AND is_admin_or_super());
+CREATE POLICY "reports_inspector_create" ON reports FOR INSERT
+  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('inspector','company_admin','super_admin')));
+CREATE POLICY "reports_assigned_read" ON reports FOR SELECT
+  USING (
+    is_super_admin()
+    OR company_id = my_company_id()
+    OR EXISTS (SELECT 1 FROM report_assignments ra WHERE ra.report_id = reports.id AND ra.profile_id = auth.uid())
+  );
+
+-- REPORT ASSIGNMENTS
+CREATE POLICY "ra_super_admin" ON report_assignments FOR ALL USING (is_super_admin());
+CREATE POLICY "ra_admin_manage" ON report_assignments FOR ALL
+  USING (is_admin_or_super());
+CREATE POLICY "ra_read_own" ON report_assignments FOR SELECT
+  USING (profile_id = auth.uid() OR is_admin_or_super());
+
+-- AUDIT LOGS
+CREATE POLICY "audit_super_admin" ON audit_logs FOR ALL USING (is_super_admin());
+CREATE POLICY "audit_company_read" ON audit_logs FOR SELECT
+  USING (company_id = my_company_id() AND is_admin_or_super());
+CREATE POLICY "audit_insert_own" ON audit_logs FOR INSERT
+  WITH CHECK (user_id = auth.uid() OR is_super_admin());
+
+-- ============================================================
+-- 10. STORAGE BUCKET para imágenes de reportes
+-- ============================================================
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'report-images',
+  'report-images',
+  FALSE,
+  10485760, -- 10MB max por imagen
+  ARRAY['image/jpeg','image/png','image/webp','image/heic']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage RLS
+CREATE POLICY "report_images_upload" ON storage.objects FOR INSERT
+  WITH CHECK (bucket_id = 'report-images' AND auth.role() = 'authenticated');
+CREATE POLICY "report_images_read" ON storage.objects FOR SELECT
+  USING (bucket_id = 'report-images' AND auth.role() = 'authenticated');
+CREATE POLICY "report_images_delete" ON storage.objects FOR DELETE
+  USING (bucket_id = 'report-images' AND (auth.uid())::text = (storage.foldername(name))[1]);
+
+-- ============================================================
+-- 11. ÍNDICES
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_profiles_company   ON profiles(company_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_role      ON profiles(role);
+CREATE INDEX IF NOT EXISTS idx_reports_company    ON reports(company_id);
+CREATE INDEX IF NOT EXISTS idx_reports_result     ON reports(result);
+CREATE INDEX IF NOT EXISTS idx_reports_date       ON reports(date);
+CREATE INDEX IF NOT EXISTS idx_reports_published  ON reports(published);
+CREATE INDEX IF NOT EXISTS idx_ra_profile         ON report_assignments(profile_id);
+CREATE INDEX IF NOT EXISTS idx_invitations_email  ON invitations(email);
+CREATE INDEX IF NOT EXISTS idx_invitations_token  ON invitations(token);
+CREATE INDEX IF NOT EXISTS idx_audit_company      ON audit_logs(company_id);
+CREATE INDEX IF NOT EXISTS idx_audit_created      ON audit_logs(created_at DESC);
+
+-- ============================================================
+-- 12. ACTIVAR TU CUENTA SUPER_ADMIN
+-- Después de ejecutar este schema, registrate en el portal y
+-- luego ejecutá esto (reemplazá con tu email):
+-- ============================================================
+-- UPDATE profiles SET role = 'super_admin', company_id = '00000000-0000-0000-0000-000000000001'
+-- WHERE id = (SELECT id FROM auth.users WHERE email = 'mstallocaj@gmail.com');
+
+-- ============================================================
+-- FIN DEL SCHEMA v2.0 — Portal DS-1 GM Robótica
+-- ============================================================
