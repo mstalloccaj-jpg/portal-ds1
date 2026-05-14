@@ -3,1547 +3,1160 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal DS-1 — Informes Técnicos de Inspección</title>
+<title>Portal DS-1 — GM Robótica</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+
+<!-- ============================================================
+  PORTAL DS-1 — Versión Supabase (Backend Real)
+  
+  CONFIGURACIÓN INICIAL (obligatorio):
+  1. Creá tu proyecto gratuito en https://supabase.com
+  2. En Supabase → SQL Editor → pegá y ejecutá el archivo schema-supabase.sql
+  3. En Supabase → Settings → API → copiá "Project URL" y "anon public key"
+  4. Pegá los valores en SUPABASE_URL y SUPABASE_ANON_KEY abajo
+  5. Abrí este archivo en tu navegador
+  6. Registrate con tu email → luego en SQL Editor ejecutá:
+     UPDATE profiles SET role = 'admin' WHERE id = (
+       SELECT id FROM auth.users WHERE email = 'TU_EMAIL'
+     );
+  ============================================================ -->
+
 <style>
-/* =====================================================
-   PORTAL DS-1 — Versión producción v1.0
-   Para personalizar: busca los comentarios [CONFIG]
-   ===================================================== */
-
-:root {
-  --bg: #ffffff;
-  --bg2: #f7f8fa;
-  --bg3: #eef0f3;
-  --border: #e3e5ea;
-  --border2: #c9cdd6;
-  --text: #111827;
-  --text2: #6b7280;
-  --text3: #9ca3af;
-  --blue: #1d4ed8;
-  --blue-bg: #eff6ff;
-  --blue-text: #1e40af;
-  --green: #15803d;
-  --green-bg: #f0fdf4;
-  --green-text: #166534;
-  --red: #dc2626;
-  --red-bg: #fef2f2;
-  --red-text: #991b1b;
-  --amber: #d97706;
-  --amber-bg: #fffbeb;
-  --amber-text: #92400e;
-  --radius: 8px;
-  --radius-sm: 5px;
-  --shadow: 0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
-  --sidebar-w: 210px;
+:root{
+  --bg:#111111;--bg2:#1a1a1a;--bg3:#222222;
+  --border:#2d2d2d;--border2:#3a3a3a;
+  --text:#f0f0f0;--text2:#a0a0a0;--text3:#666666;
+  --blue:#f97316;--blue-bg:rgba(249,115,22,.15);--blue-text:#fb923c;
+  --green:#22c55e;--green-bg:rgba(34,197,94,.12);--green-text:#4ade80;
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);--red-text:#f87171;
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--amber-text:#fbbf24;
+  --radius:6px;--shadow:0 2px 12px rgba(0,0,0,.5)
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1117;
-    --bg2: #1a1d27;
-    --bg3: #252836;
-    --border: #2a2d3a;
-    --border2: #3a3d4a;
-    --text: #e8eaf0;
-    --text2: #9299ae;
-    --text3: #5a6278;
-    --blue: #3b82f6;
-    --blue-bg: #1e2d4a;
-    --blue-text: #93c5fd;
-    --green: #22c55e;
-    --green-bg: #0f2a1a;
-    --green-text: #86efac;
-    --red: #ef4444;
-    --red-bg: #2a0f0f;
-    --red-text: #fca5a5;
-    --amber: #f59e0b;
-    --amber-bg: #2a1f0a;
-    --amber-text: #fcd34d;
-  }
-}
-
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px;color:var(--text);background:var(--bg2);-webkit-font-smoothing:antialiased}
-#root{height:100%}
+html,body{height:100%;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:var(--text);background:var(--bg2)}
 button,input,select,textarea{font-family:inherit;font-size:inherit}
 button{cursor:pointer}
 
 /* Layout */
-.portal-layout{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.layout{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:210px;min-width:210px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 
 /* Sidebar */
-.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
-.sb-brand-logo{display:flex;align-items:center;gap:8px;margin-bottom:2px}
-.sb-brand-icon{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
-.sb-brand-name{font-size:14px;font-weight:600;color:var(--text);line-height:1.2}
-.sb-brand-tagline{font-size:10px;color:var(--text3);letter-spacing:.3px}
-.sb-user{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
-.sb-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;background:var(--blue-bg);color:var(--blue-text)}
-.sb-uname{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
-.sb-ucmp{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
-.sb-nav{flex:1;padding:10px 0;overflow-y:auto}
-.sb-section-label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.9px;padding:10px 16px 4px}
-.sb-link{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-left:3px solid transparent;transition:all .12s;user-select:none}
+.sb-brand{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sb-icon{width:34px;height:34px;background:linear-gradient(135deg,#f97316,#ea580c);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0}
+.sb-name{font-size:14px;font-weight:700;color:var(--text);line-height:1.2}
+.sb-tag{font-size:10px;color:var(--text3)}
+.sb-user{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sb-av{width:30px;height:30px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-ucmp{font-size:10px;color:var(--text3)}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sb-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:8px 14px 3px}
+.sb-link{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-left:3px solid transparent;transition:all .1s}
 .sb-link:hover{background:var(--bg2);color:var(--text);border-left-color:var(--border2)}
-.sb-link.active{background:var(--bg2);color:var(--blue);border-left-color:var(--blue);font-weight:600}
-.sb-link i{font-size:17px;flex-shrink:0}
-.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
-.sb-badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:100px;font-size:10px;font-weight:600;margin-left:auto}
-.sb-badge-admin{background:var(--blue-bg);color:var(--blue-text)}
-.sb-badge-client{background:var(--bg3);color:var(--text2)}
+.sb-link.active{background:rgba(249,115,22,.08);color:#f97316;border-left-color:#f97316;font-weight:700}
+.sb-link i{font-size:16px;flex-shrink:0}
+.sb-foot{padding:12px 14px;border-top:1px solid var(--border)}
 
 /* Main header */
-.main-header{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg);min-height:58px;flex-shrink:0}
-.main-header-title{font-size:15px;font-weight:600;color:var(--text)}
-.main-header-sub{font-size:11px;color:var(--text3);margin-top:1px}
-.main-content{flex:1;overflow-y:auto;padding:22px;background:var(--bg2)}
+.mhdr{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:12px;min-height:54px}
+.mhdr-title{font-size:15px;font-weight:700;color:var(--text)}
+.mhdr-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.mcontent{flex:1;overflow-y:auto;padding:20px;background:var(--bg2)}
 
 /* Buttons */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;font-size:12px;font-weight:500;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg);color:var(--text);transition:all .12s;white-space:nowrap}
-.btn:hover{background:var(--bg2);border-color:var(--border2)}
-.btn:active{transform:scale(.98)}
-.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;font-size:12px;font-weight:600;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;white-space:nowrap;transition:all .1s}
+.btn:hover{background:var(--bg2)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;border-color:#f97316}
 .btn-primary:hover{opacity:.9}
 .btn-success{background:var(--green);color:#fff;border-color:var(--green)}
 .btn-success:hover{opacity:.9}
 .btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
-.btn-danger:hover{opacity:.85}
 .btn-sm{padding:4px 10px;font-size:11px}
-.btn-xs{padding:2px 8px;font-size:10px}
-.btn-icon{padding:6px;border-radius:var(--radius-sm)}
 
 /* Inputs */
-.inp{width:100%;padding:7px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);transition:border .12s}
-.inp:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.12)}
-.inp::placeholder{color:var(--text3)}
-textarea.inp{resize:vertical;min-height:70px;line-height:1.5}
-.lbl{display:block;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.inp{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:inherit;font-size:13px}
+.inp:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(29,78,216,.1)}
+textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
+.lbl{display:block;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .form-group{margin-bottom:12px}
-.form-row{display:grid;gap:10px}
-.form-row-2{grid-template-columns:1fr 1fr}
-.form-row-3{grid-template-columns:repeat(3,1fr)}
-.form-row-4{grid-template-columns:repeat(4,1fr)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 
 /* Cards */
-.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
-.card-sm{padding:12px 14px}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
 
 /* Stats */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)}
-.stat-num{font-size:26px;font-weight:700;color:var(--text);line-height:1}
-.stat-lbl{font-size:11px;color:var(--text2);margin-top:5px}
-.stat-icon{font-size:22px;margin-bottom:6px;display:block}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
+.stat-num{font-size:26px;font-weight:700;line-height:1}
+.stat-lbl{font-size:10px;color:var(--text2);margin-top:4px}
+
+/* Alerts */
+.alert{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:var(--radius);font-size:12px;margin-bottom:12px}
+.alert-ok{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
+.alert-err{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}
+.alert-info{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue)}
+.alert i{font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700}
+.badge-pass{background:var(--green-bg);color:var(--green-text)}
+.badge-fail{background:var(--red-bg);color:var(--red-text)}
+.badge-cond{background:var(--amber-bg);color:var(--amber-text)}
+.badge-admin{background:var(--blue-bg);color:var(--blue-text)}
+.badge-grey{background:var(--bg3);color:var(--text2)}
 
 /* Table */
 .tbl-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
 .tbl{width:100%;border-collapse:collapse;font-size:12px}
 .tbl thead{background:var(--bg2)}
-.tbl th{padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;text-transform:uppercase;letter-spacing:.4px}
-.tbl td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+.tbl th{padding:9px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tbody tr:hover td{background:var(--bg2)}
-.tbl-search{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg)}
-.tbl-search input{max-width:280px}
-
-/* Badges */
-.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.2px}
-.badge-pass{background:var(--green-bg);color:var(--green-text)}
-.badge-fail{background:var(--red-bg);color:var(--red-text)}
-.badge-cond{background:var(--amber-bg);color:var(--amber-text)}
-.badge-admin{background:var(--blue-bg);color:var(--blue-text)}
-.badge-client{background:var(--bg3);color:var(--text2)}
-.badge-cat{background:var(--bg3);color:var(--text2);font-size:9px}
-
-/* Alert / messages */
-.alert{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px}
-.alert-err{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}
-.alert-ok{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
-.alert i{font-size:16px;flex-shrink:0;margin-top:1px}
+.tbl-search{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
 
 /* Login */
-.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg2);padding:20px}
-.login-card{width:100%;max-width:400px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-.login-header{text-align:center;margin-bottom:28px}
-.login-icon{width:52px;height:52px;background:var(--blue);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#fff;font-size:26px}
-.login-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
-.login-sub{font-size:13px;color:var(--text2)}
-.demo-creds{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:18px;font-size:11px;color:var(--text2);line-height:1.8}
-.demo-creds strong{color:var(--text);font-weight:600}
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 60% 40%, rgba(249,115,22,.08) 0%, #111 60%);padding:20px}
+.login-card{width:100%;max-width:400px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
 
-/* Report detail */
-.report-doc{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
-.report-doc-header{padding:18px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-.report-doc-title{font-size:16px;font-weight:700;color:var(--text)}
-.report-doc-sub{font-size:11px;color:var(--text3);margin-top:2px}
-.report-section{border-bottom:1px solid var(--border)}
-.report-section:last-child{border-bottom:none}
-.rs-header{padding:9px 18px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:6px}
-.rs-body{padding:14px 18px}
-.rs-grid{display:grid;gap:10px}
-.rs-grid-2{grid-template-columns:repeat(2,1fr)}
-.rs-grid-3{grid-template-columns:repeat(3,1fr)}
-.rs-field label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px}
-.rs-field span{font-size:13px;color:var(--text);font-weight:500}
-.rs-result{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.rs-result-verdict{font-size:22px;font-weight:700}
-.rs-result-ok{color:var(--green)}
-.rs-result-fail{color:var(--red)}
-.rs-result-cond{color:var(--amber)}
-.rs-result-desc{font-size:12px;color:var(--text2);margin-top:3px}
-
-/* Measurement cells */
-.cell-pass{background:rgba(21,128,61,.1);color:#166534;font-weight:600;border-radius:3px;padding:1px 4px;font-size:11px;font-family:monospace}
-.cell-fail{background:rgba(220,38,38,.1);color:#991b1b;font-weight:600;border-radius:3px;padding:1px 4px;font-size:11px;font-family:monospace}
-.cell-na{color:var(--text3);font-size:11px}
-
-/* Upload area */
-.upload-drop{border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px;background:var(--bg2)}
-.upload-drop:hover{border-color:var(--blue);background:var(--blue-bg)}
-.upload-drop i{font-size:28px;color:var(--text3);display:block;margin-bottom:8px}
-.upload-drop p{font-size:12px;color:var(--text2)}
+/* Drop zone */
+.dropzone{border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;background:var(--bg2);transition:all .2s;margin-bottom:12px}
+.dropzone:hover,.dropzone.drag{border-color:var(--blue);background:var(--blue-bg)}
 
 /* Empty state */
-.empty-state{text-align:center;padding:50px 20px;color:var(--text3)}
-.empty-state i{font-size:36px;display:block;margin-bottom:12px}
-.empty-state p{font-size:13px}
-.empty-state .empty-hint{font-size:11px;margin-top:6px;color:var(--text3)}
+.empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty i{font-size:34px;display:block;margin-bottom:10px}
 
-/* Divider */
-.divider{height:1px;background:var(--border);margin:16px 0}
-.divider-label{text-align:center;position:relative;margin:16px 0}
-.divider-label::before{content:"";position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border)}
-.divider-label span{position:relative;background:var(--bg);padding:0 12px;font-size:11px;color:var(--text3)}
-
-/* Actions bar */
-.actions-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.actions-bar-left{flex:1}
-
-/* Print */
-@media print {
-  .sidebar,.main-header,.no-print,.actions-bar,.tbl-search{display:none!important}
-  .portal-layout,.main-area{display:block;height:auto;overflow:visible}
-  .main-content{padding:0;overflow:visible}
-  .report-doc{box-shadow:none;border:1px solid #ccc}
-  body{background:#fff;color:#000}
-  .badge-pass::before{content:"APROBADO"}
-  .badge-fail::before{content:"RECHAZADO"}
-  @page{margin:1.5cm}
-}
-
-/* ── MOBILE ── */
-@media (max-width:768px) {
-  :root{--sidebar-w:0px}
-  .portal-layout{flex-direction:column}
-  .sidebar{display:none!important}
-  .main-area{width:100vw;height:100dvh}
-  .main-header{padding:10px 14px;gap:8px}
-  .main-title{font-size:14px}
-  .main-content{padding:10px}
-
-  /* Bottom nav bar */
-  .mob-nav{display:flex!important}
-
-  /* Stats 2 col */
-  .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
-  .stat-card{padding:10px}
-  .stat-num{font-size:20px}
-  .stat-icon{font-size:18px;margin-bottom:4px}
-
-  /* Cards instead of table */
-  .tbl-wrap{background:transparent;border:none;box-shadow:none}
-  .tbl thead{display:none}
-  .tbl{display:block}
-  .tbl tbody{display:block}
-  .tbl tbody tr{display:block;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;padding:14px;box-shadow:var(--shadow)}
-  .tbl tbody tr:hover td{background:transparent}
-  .tbl td{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border:none;font-size:13px;gap:8px}
-  .tbl td::before{content:attr(data-label);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;min-width:80px;padding-top:1px}
-  .tbl td[data-label=""]::before{display:none}
-  .tbl td:last-child{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);justify-content:stretch}
-  .tbl td:last-child .btn{width:100%;justify-content:center;padding:10px;font-size:14px}
-  .tbl-search{padding:10px;flex-wrap:wrap;gap:8px}
-  .tbl-search input{max-width:100%!important;width:100%}
-
-  /* Forms */
-  .form-row-2,.form-row-3,.form-row-4{grid-template-columns:1fr}
-
-  /* Report detail */
-  .rs-grid-2,.rs-grid-3{grid-template-columns:1fr}
-  .report-doc-header{flex-direction:column;gap:8px}
-  .actions-bar{gap:8px}
-  .actions-bar .btn{flex:1;justify-content:center;padding:10px;font-size:14px}
-
-  /* Upload / clients */
-  .card{padding:14px}
-}
-
-/* Bottom nav bar — solo mobile */
-.mob-nav{
-  display:none;
-  position:fixed;bottom:0;left:0;right:0;
-  background:var(--bg);border-top:1px solid var(--border);
-  padding:6px 0 10px;
-  z-index:200;
-  justify-content:space-around;
-  box-shadow:0 -2px 12px rgba(0,0,0,.08);
-}
-.mob-nav-item{
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  font-size:10px;font-weight:600;color:var(--text3);
-  cursor:pointer;padding:4px 16px;border-radius:8px;
-  transition:color .15s;
-  text-transform:uppercase;letter-spacing:.4px;
-}
+/* Mobile bottom nav */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:6px 0 10px;z-index:200;justify-content:space-around}
+.mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:700;color:var(--text3);cursor:pointer;padding:4px 12px;text-transform:uppercase;letter-spacing:.3px}
 .mob-nav-item i{font-size:22px}
 .mob-nav-item.active{color:var(--blue)}
-.mob-nav-spacer{height:70px} /* evita que el contenido quede bajo la nav */
+.mob-spacer{height:68px}
 
-.hamburger{display:none;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:var(--bg);color:var(--text2)}
+/* Report detail */
+.rpt-section{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;background:var(--bg)}
+.rpt-hdr{background:var(--bg2);padding:8px 14px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.rpt-body{padding:12px 14px}
+.rpt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rpt-field label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:700;display:block;margin-bottom:2px}
+.rpt-field span{font-size:12px;color:var(--text);font-weight:500}
+.cell-pass{color:var(--green);font-weight:700}
+.cell-fail{color:var(--red);font-weight:700}
+
+/* Config warning */
+.config-warning{max-width:600px;margin:60px auto;padding:30px;background:var(--bg);border:2px solid var(--amber);border-radius:12px;text-align:center}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;box-shadow:0 4px 20px rgba(0,0,0,.15);font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;max-width:340px;transform:translateY(100px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:var(--green);color:var(--green-text);background:var(--green-bg)}
+.toast.err{border-color:var(--red);color:var(--red-text);background:var(--red-bg)}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .rpt-grid{grid-template-columns:1fr 1fr}
+  .mob-nav{display:flex}
+  .mcontent{padding:12px}
+  .tbl-wrap{overflow-x:auto}
+  .mhdr{padding:10px 14px}
+}
+@media print{
+  .sidebar,.mhdr,.mob-nav,.btn,.no-print{display:none!important}
+  .layout{display:block;height:auto}
+  .main{overflow:visible}
+  .mcontent{overflow:visible;padding:0}
+  @page{margin:1.5cm}
+}
 </style>
 </head>
 <body>
-<div id="root"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+<div id="app"></div>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- pdf-lib for watermark -->
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script>
-/* =========================================================
-   PORTAL DS-1 — Informes Técnicos de Inspección
-   DS-1® Vol 3 y Addendum
-   =========================================================
 
-   [CONFIG] Personalización inicial:
-   - Cambiar COMPANY_NAME por el nombre de tu empresa
-   - Modificar DEMO_USERS para crear las cuentas reales
-   - Cambiar el favicon y el título en el <head>
+/* ============================================================
+   ⚙️  CONFIGURACIÓN — COMPLETAR CON TUS DATOS DE SUPABASE
+   ============================================================
+   1. Ir a https://supabase.com → tu proyecto → Settings → API
+   2. Copiar "Project URL" y "anon public" key
+   ============================================================ */
+const SUPABASE_URL  = 'https://ysuwpuaucfvnqlfnczlu.supabase.co';   // ← CAMBIAR
+const SUPABASE_ANON = 'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-';                  // ← CAMBIAR
 
-   Para producción con backend real:
-   - Reemplazar las funciones sGet/sSet/sDel
-     por llamadas a tu API REST (fetch / axios)
-   - Las firmas son las mismas: async sGet(key) → data
-   ========================================================= */
+// [CONFIG] Nombre de tu empresa inspectora
+const COMPANY_NAME  = 'GM Robótica';
 
-// [CONFIG] Nombre de tu empresa
-const COMPANY_NAME = "Empresa Inspectora SA";
+/* ============================================================ */
 
-const {useState, useEffect, useRef, Fragment} = React;
+const IS_CONFIGURED = !SUPABASE_URL.includes('TU_PROYECTO') && !SUPABASE_ANON.includes('TU_ANON');
+const sb = IS_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
 
-/* ---- Storage (localStorage) ---- */
-function sGet(k) {
-  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }
-  catch(e) { return null; }
-}
-function sSet(k, v) {
-  try { localStorage.setItem(k, JSON.stringify(v)); return true; }
-  catch(e) { return false; }
-}
-function sDel(k) {
-  try { localStorage.removeItem(k); return true; }
-  catch(e) { return false; }
-}
-
-/* ---- Datos de demostración ---- */
-// [CONFIG] Modificar usuarios reales aquí antes de publicar
-const DEMO_USERS = [
-  {id:"u0", name:"Administrador", email:"admin@empresa.com", password:"admin123", role:"admin", company:COMPANY_NAME},
-  {id:"u1", name:"Carlos Mendez", email:"carlos@operadora.com", password:"demo123", role:"client", company:"Operadora Mendoza SRL"},
-  {id:"u2", name:"Claudio Ríos", email:"claudio@petro.com", password:"demo123", role:"client", company:"Petro Sur SA"},
-];
-
-const DEMO_REPORTS = [
-  {
-    id:"r1", clientIds:["u1"], reportNo:"RP-2025-001",
-    date:"2025-05-10", component:"X-Over NC46 Pin × NC50 Caja, 6-1/2\" OD",
-    result:"APROBADO", inspector:"J. Rodríguez", certNo:"DS1-ARG-0142",
-    rig:"Rig Mendoza 7", well:"MM-023", company:"Operadora Mendoza SRL",
-    location:"Mendoza", category:"3", comments:"Componente en buenas condiciones generales. Listo para servicio.",
-    uploadedAt:"2025-05-10T10:00:00Z",
-    visualInspection:{pinThread:"P",boxThread:"P",pinSeal:"P",boxSeal:"P",pinNeck:"P",boxExt:"P",bodyExt:"P",hb:"NA",bb:"NA",slipG:"NA",elevG:"P",marks:"P",dye:"NA",mpi:"NA"},
-    measurements:{
-      bodyOD:{nominal:"6.500",min:"6.468",max:"6.531",m1:"6.499",m2:"6.501",m3:"6.498"},
-      pinTong:{nominal:"",min:"12",max:"",m1:"14.25",m2:"14.25",m3:""},
-      bevel:{nominal:"",min:"5.938",max:"6.500",m1:"6.215",m2:"6.217",m3:""},
-      boxTong:{nominal:"",min:"12",max:"",m1:"13.50",m2:"13.50",m3:""},
-      boxOD:{nominal:"6.500",min:"6.500",max:"",m1:"6.498",m2:"6.499",m3:""},
-    }
-  },
-  {
-    id:"r2", clientIds:["u2"], reportNo:"RP-2025-002",
-    date:"2025-05-08", component:"Sustituto NC50 Pin × NC46 Caja, 5\" OD",
-    result:"RECHAZADO", inspector:"J. Rodríguez", certNo:"DS1-ARG-0142",
-    rig:"Rig Neuquén 3", well:"NQ-017", company:"Petro Sur SA",
-    location:"Neuquén", category:"4", comments:"Desgaste excesivo en OD de caja y daño en cara de sello de caja. Componente fuera de servicio.",
-    uploadedAt:"2025-05-08T14:30:00Z",
-    visualInspection:{pinThread:"P",boxThread:"F",pinSeal:"P",boxSeal:"F",pinNeck:"P",boxExt:"P",bodyExt:"P",hb:"P",bb:"NA",slipG:"NA",elevG:"NA",marks:"P",dye:"P",mpi:"P"},
-    measurements:{
-      bodyOD:{nominal:"5.000",min:"4.968",max:"5.031",m1:"4.999",m2:"4.997",m3:""},
-      boxOD:{nominal:"6.500",min:"6.500",max:"",m1:"6.463",m2:"6.461",m3:""},
-      boxTong:{nominal:"",min:"12",max:"",m1:"11.5",m2:"11.5",m3:""},
-    }
-  },
-];
-
-/* ---- Etiquetas DS-1 ---- */
-const VIS_LABELS = {
-  pinThread:"Roscas del Pin", boxThread:"Roscas de la Caja",
-  pinSeal:"Cara de Sello del Pin", boxSeal:"Cara de Sello de la Caja",
-  pinNeck:"Cuello del Pin", boxExt:"Superficie exterior de la Caja",
-  bodyExt:"Superficie exterior del Cuerpo", hb:"Hardbanding",
-  bb:"Boreback", slipG:"Ranura de Slip",
-  elevG:"Ranura de Elevator", marks:"Marcado e Identificación",
-  dye:"Líquidos Penetrantes", mpi:"MPI (Inspección magnética)"
+/* ── State global ── */
+let state = {
+  user: null,
+  profile: null,
+  tab: 'reports',
+  selected: null,
+  toast: null,
 };
 
-const MEAS_LABELS = {
-  bodyOD:"OD del Cuerpo", bodyID:"ID del Cuerpo",
-  wallThk:"Espesor de Pared", length:"Longitud Total",
-  bow:"Curvatura / Bow", pinTong:"Tong Space del Pin",
-  pinLen:"Longitud del Pin", bevel:"Diámetro del Bisel",
-  boxTong:"Tong Space de la Caja", boxOD:"OD de la Caja",
-  cbDiam:"Diámetro Counterbore", cbDepth:"Profundidad Counterbore",
-  sealShldr:"Ancho Hombro Sello"
+/* ── Helpers ── */
+const $ = id => document.getElementById(id);
+const fmtDate = d => { try { return new Date(d).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}); } catch(e){return d||'—';} };
+const fmtDT = d => { try { return new Date(d).toLocaleString('es-AR'); } catch(e){return d||'—';} };
+const initials = n => n?.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+const resultBadge = r => {
+  const cls = r==='APROBADO'?'badge-pass':r==='RECHAZADO'?'badge-fail':'badge-cond';
+  const icon = r==='APROBADO'?'ti-circle-check':r==='RECHAZADO'?'ti-circle-x':'ti-alert-triangle';
+  return `<span class="badge ${cls}"><i class="ti ${icon}" style="font-size:10px;margin-right:2px"></i>${r||'—'}</span>`;
 };
 
-/* ---- Helpers ---- */
+const VIS_LABELS = {pinThread:'Roscas Pin',boxThread:'Roscas Caja',pinSeal:'Sello Pin',boxSeal:'Sello Caja',pinNeck:'Cuello Pin',boxExt:'Ext Caja',bodyExt:'Cuerpo',hb:'Hardbanding',bb:'Boreback',slipG:'Ranura Slip',elevG:'Ranura Elevator',marks:'Marcado',dye:'Líq. Penetrantes',mpi:'MPI'};
+const MEAS_LABELS = {bodyOD:'OD Cuerpo',bodyID:'ID Cuerpo',wallThk:'Esp. Pared',totalLen:'Longitud',bow:'Curvatura',pinTong:'Tong Space Pin',pinLen:'Long. Pin',bevel:'Bisel Pin',boxTong:'Tong Space Caja',boxOD:'OD Caja',cbDiam:'Ø Counterbore',cbDepth:'Prof. Counterbore',sealShldr:'Ancho Sello'};
+
+function showToast(msg, type='ok') {
+  const t = $('toast');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<i class="ti ti-${type==='ok'?'circle-check':'alert-circle'}"></i> ${msg}`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
 function avg3(m) {
-  const vs = [m.m1,m.m2,m.m3].filter(v=>v&&!isNaN(parseFloat(v))).map(parseFloat);
-  if (!vs.length) return "";
-  return (vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(3);
+  const vs=[m?.m1,m?.m2,m?.m3].filter(v=>v!==''&&v!=null&&!isNaN(parseFloat(v))).map(parseFloat);
+  if(!vs.length) return '';
+  return(vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(3);
+}
+function evalSt(v,mn,mx) {
+  if(v===''||v==null) return 'e';
+  const n=parseFloat(v);if(isNaN(n))return 'e';
+  const hm=mn!=null&&mn!==''&&!isNaN(parseFloat(mn));
+  const hM=mx!=null&&mx!==''&&!isNaN(parseFloat(mx));
+  if(hm&&n<parseFloat(mn))return 'f';
+  if(hM&&n>parseFloat(mx))return 'f';
+  if(hm||hM)return 'p';
+  return 'e';
 }
 
-function evalSt(v, mn, mx) {
-  if (v===undefined||v===null||v==="") return "e";
-  const n = parseFloat(v); if (isNaN(n)) return "e";
-  const hm = mn!==undefined&&mn!==null&&mn!==""&&!isNaN(parseFloat(mn));
-  const hM = mx!==undefined&&mx!==null&&mx!==""&&!isNaN(parseFloat(mx));
-  if (hm && n < parseFloat(mn)) return "f";
-  if (hM && n > parseFloat(mx)) return "f";
-  if (hm || hM) return "p";
-  return "e";
-}
-
-function initials(name) {
-  return name.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
-}
-
-function fmtDate(d) {
-  if (!d) return "—";
-  try { return new Date(d).toLocaleDateString("es-AR", {day:"2-digit",month:"2-digit",year:"numeric"}); }
-  catch(e) { return d; }
-}
-
-/* ---- ResultBadge ---- */
-function ResultBadge({result}) {
-  const cls = result==="APROBADO" ? "badge-pass" : result==="RECHAZADO" ? "badge-fail" : "badge-cond";
-  const icon = result==="APROBADO" ? "ti-circle-check" : result==="RECHAZADO" ? "ti-circle-x" : "ti-alert-triangle";
-  return React.createElement("span", {className:"badge "+cls},
-    React.createElement("i",{className:"ti "+icon, style:{marginRight:3,fontSize:11}}), result||"—"
-  );
-}
-
-/* ====================================================
-   LOGIN VIEW
-   ==================================================== */
-function LoginView({onLogin}) {
-  const [email,setEmail] = useState("");
-  const [pass,setPass] = useState("");
-  const [err,setErr] = useState("");
-  const [loading,setLoading] = useState(false);
-
-  const doLogin = async () => {
-    setErr(""); setLoading(true);
-    await new Promise(r=>setTimeout(r,300)); // UX delay
-    const users = sGet("ds1-users") || DEMO_USERS;
-    const u = users.find(x => x.email.toLowerCase()===email.toLowerCase().trim() && x.password===pass);
-    if (!u) { setErr("Email o contraseña incorrectos."); setLoading(false); return; }
-    setLoading(false);
-    onLogin(u);
-  };
-
-  return React.createElement("div", {className:"login-page"},
-    React.createElement("div", {className:"login-card"},
-      React.createElement("div", {className:"login-header"},
-        React.createElement("div", {className:"login-icon"},
-          React.createElement("i",{className:"ti ti-file-certificate"})
-        ),
-        // [CONFIG] Cambiar el nombre del portal
-        React.createElement("div",{className:"login-title"},"Portal DS-1"),
-        React.createElement("div",{className:"login-sub"},"Acceso a informes técnicos de inspección")
-      ),
-
-      React.createElement("div",{className:"demo-creds"},
-        React.createElement("strong",null,"Accesos de demostración:"), React.createElement("br"),
-        "Admin: admin@empresa.com / admin123", React.createElement("br"),
-        "Cliente 1: carlos@operadora.com / demo123", React.createElement("br"),
-        "Cliente 2: claudio@petro.com / demo123"
-      ),
-
-      err && React.createElement("div",{className:"alert alert-err"},
-        React.createElement("i",{className:"ti ti-alert-circle"}), err
-      ),
-
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Email"),
-        React.createElement("input",{
-          className:"inp", type:"email", placeholder:"usuario@empresa.com",
-          value:email, onChange:e=>setEmail(e.target.value),
-          onKeyDown:e=>e.key==="Enter"&&doLogin(), autoFocus:true
-        })
-      ),
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Contraseña"),
-        React.createElement("input",{
-          className:"inp", type:"password", placeholder:"••••••••",
-          value:pass, onChange:e=>setPass(e.target.value),
-          onKeyDown:e=>e.key==="Enter"&&doLogin()
-        })
-      ),
-      React.createElement("button",{
-        className:"btn btn-primary",
-        style:{width:"100%",padding:"10px",justifyContent:"center",fontSize:"14px"},
-        onClick:doLogin, disabled:loading
-      },
-        loading
-          ? React.createElement(Fragment,null, React.createElement("i",{className:"ti ti-loader-2"}), " Ingresando...")
-          : React.createElement(Fragment,null, React.createElement("i",{className:"ti ti-login"}), " Ingresar")
-      )
-    )
-  );
-}
-
-/* ====================================================
-   REPORT DETAIL VIEW
-   ==================================================== */
-function ReportDetailView({report, onBack}) {
-  const meas = report.measurements || {};
-  const vis  = report.visualInspection || {};
-
-  const visPairs = Object.entries(VIS_LABELS).filter(([k]) => vis[k] && vis[k]!=="NA");
-  const measPairs = Object.entries(MEAS_LABELS).filter(([k]) => meas[k] && (meas[k].m1||meas[k].m2||meas[k].m3));
-
-  const dlJson = () => {
-    const b = new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
-    const u = URL.createObjectURL(b);
-    const a = document.createElement("a"); a.href=u;
-    a.download = `DS1_${report.reportNo}.json`; a.click();
-    URL.revokeObjectURL(u);
-  };
-
-  const rCls = report.result==="APROBADO" ? "rs-result-ok" : report.result==="RECHAZADO" ? "rs-result-fail" : "rs-result-cond";
-  const rIcon= report.result==="APROBADO" ? "ti-circle-check" : "ti-circle-x";
-
-  return React.createElement("div",null,
-    React.createElement("div",{className:"actions-bar no-print"},
-      React.createElement("button",{className:"btn",onClick:onBack},
-        React.createElement("i",{className:"ti ti-arrow-left"}), " Volver a la lista"
-      ),
-      React.createElement("div",{style:{flex:1}}),
-      React.createElement("button",{className:"btn btn-success",style:{fontSize:13,padding:"8px 18px"},onClick:()=>generatePDF(report)},
-        React.createElement("i",{className:"ti ti-file-type-pdf"}), " Descargar PDF"
-      )
-    ),
-
-    React.createElement("div",{className:"report-doc"},
-      // Header
-      React.createElement("div",{className:"report-doc-header"},
-        React.createElement("div",null,
-          React.createElement("div",{className:"report-doc-title"},"Reporte de Inspección de Sustituto"),
-          React.createElement("div",{className:"report-doc-sub"},
-            "DS-1® Volumen 3 y Addendum — ",
-            React.createElement("span",{className:"badge badge-cat"},"Categoría "+report.category)
-          )
-        ),
-        React.createElement("div",{style:{textAlign:"right"}},
-          React.createElement("div",{style:{fontSize:"15px",fontWeight:"700",color:"var(--text)"}}, report.reportNo),
-          React.createElement("div",{style:{fontSize:"12px",color:"var(--text3)",marginTop:"2px"}},"Fecha: "+fmtDate(report.date))
-        )
-      ),
-
-      // Component ID
-      React.createElement("div",{className:"report-section"},
-        React.createElement("div",{className:"rs-header"},
-          React.createElement("i",{className:"ti ti-tool"}), "Identificación del Componente"
-        ),
-        React.createElement("div",{className:"rs-body"},
-          React.createElement("div",{className:"rs-grid rs-grid-2"},
-            [
-              ["Componente / Descripción", report.component],
-              ["Empresa cliente", report.company],
-              ["Equipo / Rig", report.rig],
-              ["Pozo", report.well],
-              ["Ubicación", report.location],
-              ["Inspector / N° Cert. DS-1", (report.inspector||"—")+" / "+(report.certNo||"—")],
-            ].map(([l,v])=>
-              React.createElement("div",{key:l,className:"rs-field"},
-                React.createElement("label",null,l),
-                React.createElement("span",null,v||"—")
-              )
-            )
-          )
-        )
-      ),
-
-      // Visual inspection
-      visPairs.length>0 && React.createElement("div",{className:"report-section"},
-        React.createElement("div",{className:"rs-header"},
-          React.createElement("i",{className:"ti ti-eye"}), "Inspección Visual — DS-1 Vol 3 §3.6 y Addendum"
-        ),
-        React.createElement("div",{className:"rs-body",style:{padding:0}},
-          React.createElement("table",{className:"tbl"},
-            React.createElement("thead",null,
-              React.createElement("tr",null,
-                React.createElement("th",null,"Ítem de Inspección"),
-                React.createElement("th",{style:{width:130}},"Resultado")
-              )
-            ),
-            React.createElement("tbody",null,
-              visPairs.map(([k,label])=>{
-                const v = vis[k];
-                return React.createElement("tr",{key:k},
-                  React.createElement("td",null,label),
-                  React.createElement("td",null,
-                    v==="P" ? React.createElement("span",{className:"cell-pass"},"✓ Aprobado") :
-                    v==="F" ? React.createElement("span",{className:"cell-fail"},"✗ Rechazado") :
-                    React.createElement("span",{className:"cell-na"},"N/A")
-                  )
-                );
-              })
-            )
-          )
-        )
-      ),
-
-      // Dimensional measurements
-      measPairs.length>0 && React.createElement("div",{className:"report-section"},
-        React.createElement("div",{className:"rs-header"},
-          React.createElement("i",{className:"ti ti-ruler-measure"}), "Mediciones Dimensionales — Tablas DS-1 Vol 3"
-        ),
-        React.createElement("div",{className:"rs-body",style:{padding:0}},
-          React.createElement("table",{className:"tbl"},
-            React.createElement("thead",null,
-              React.createElement("tr",null,
-                ["Parámetro","Mín","Máx","Med. 1","Med. 2","Med. 3","Promedio","Estado"].map(h=>
-                  React.createElement("th",{key:h},h)
-                )
-              )
-            ),
-            React.createElement("tbody",null,
-              measPairs.map(([k,label])=>{
-                const m = meas[k]; if(!m) return null;
-                const a = avg3(m);
-                const st = evalSt(a||m.m1, m.min, m.max);
-                return React.createElement("tr",{key:k},
-                  React.createElement("td",{style:{fontWeight:500}},label),
-                  React.createElement("td",{style:{fontFamily:"monospace",fontSize:11}},m.min||"—"),
-                  React.createElement("td",{style:{fontFamily:"monospace",fontSize:11}},m.max||"—"),
-                  ...[m.m1,m.m2,m.m3].map((v,i)=>{
-                    const s=evalSt(v,m.min,m.max);
-                    return React.createElement("td",{key:i},
-                      v ? React.createElement("span",{className:s==="p"?"cell-pass":s==="f"?"cell-fail":""},v) : React.createElement("span",{className:"cell-na"},"—")
-                    );
-                  }),
-                  React.createElement("td",null,
-                    a ? React.createElement("span",{className:st==="p"?"cell-pass":st==="f"?"cell-fail":""},a) : React.createElement("span",{className:"cell-na"},"—")
-                  ),
-                  React.createElement("td",null,
-                    st==="p" ? React.createElement("span",{className:"cell-pass"},"✓ OK") :
-                    st==="f" ? React.createElement("span",{className:"cell-fail"},"✗ Falla") :
-                    React.createElement("span",{className:"cell-na"},"—")
-                  )
-                );
-              })
-            )
-          )
-        )
-      ),
-
-      // Comments
-      report.comments && React.createElement("div",{className:"report-section"},
-        React.createElement("div",{className:"rs-header"},
-          React.createElement("i",{className:"ti ti-notes"}), "Observaciones y Comentarios"
-        ),
-        React.createElement("div",{className:"rs-body"},
-          React.createElement("p",{style:{fontSize:13,lineHeight:1.7,color:"var(--text)"}}, report.comments)
-        )
-      ),
-
-      // Result
-      React.createElement("div",{className:"report-section",style:{borderTop:"2px solid var(--border)"}},
-        React.createElement("div",{className:"rs-result"},
-          React.createElement("div",null,
-            React.createElement("div",{className:"rs-result-verdict "+rCls},
-              React.createElement("i",{className:"ti "+rIcon,style:{marginRight:6}}),
-              report.result
-            ),
-            React.createElement("div",{className:"rs-result-desc"},
-              report.result==="APROBADO"
-                ? "Componente apto para uso en sarta de perforación según DS-1 Vol 3"
-                : report.result==="RECHAZADO"
-                ? "Componente NO apto para servicio — ver observaciones para detalles"
-                : "Aprobado bajo condición — seguir instrucciones del inspector"
-            )
-          ),
-          React.createElement("div",{style:{textAlign:"right",fontSize:11,color:"var(--text3)"}},
-            "Inspector: ", React.createElement("strong",null,report.inspector||"—"), React.createElement("br"),
-            "Cert. DS-1: ", React.createElement("strong",null,report.certNo||"—"), React.createElement("br"),
-            "Generado: ", fmtDate(report.uploadedAt)
-          )
-        )
-      )
-    )
-  );
-}
-
-/* ====================================================
-   REPORTS LIST VIEW
-   ==================================================== */
-function ReportsView({reports, user, users, setSelectedReport}) {
-  const [search, setSearch] = useState("");
-  const [filterResult, setFilterResult] = useState("ALL");
-
-  const myReports = user.role==="admin"
-    ? reports
-    : reports.filter(r => r.clientIds?.includes(user.id));
-
-  const filtered = myReports.filter(r => {
-    const q = search.toLowerCase();
-    const matchText = !q ||
-      r.reportNo?.toLowerCase().includes(q) ||
-      r.component?.toLowerCase().includes(q) ||
-      r.company?.toLowerCase().includes(q) ||
-      r.well?.toLowerCase().includes(q) ||
-      r.rig?.toLowerCase().includes(q);
-    const matchResult = filterResult==="ALL" || r.result===filterResult;
-    return matchText && matchResult;
-  }).sort((a,b) => new Date(b.uploadedAt||b.date) - new Date(a.uploadedAt||a.date));
-
-  if (myReports.length===0) return React.createElement("div",{className:"empty-state"},
-    React.createElement("i",{className:"ti ti-file-off"}),
-    React.createElement("p",null,"No hay reportes disponibles"),
-    React.createElement("p",{className:"empty-hint"},
-      user.role==="admin"
-        ? "Subí el primer reporte usando la opción del menú lateral."
-        : "Tus reportes aparecerán aquí cuando sean publicados por el inspector."
-    )
-  );
-
-  return React.createElement("div",null,
-    user.role==="admin" && React.createElement("div",{className:"stats-grid"},
-      React.createElement("div",{className:"stat-card"},
-        React.createElement("i",{className:"ti ti-file-text stat-icon",style:{color:"var(--blue)"}}),
-        React.createElement("div",{className:"stat-num"},reports.length),
-        React.createElement("div",{className:"stat-lbl"},"Total reportes")
-      ),
-      React.createElement("div",{className:"stat-card"},
-        React.createElement("i",{className:"ti ti-circle-check stat-icon",style:{color:"var(--green)"}}),
-        React.createElement("div",{className:"stat-num",style:{color:"var(--green)"}}, reports.filter(r=>r.result==="APROBADO").length),
-        React.createElement("div",{className:"stat-lbl"},"Aprobados")
-      ),
-      React.createElement("div",{className:"stat-card"},
-        React.createElement("i",{className:"ti ti-circle-x stat-icon",style:{color:"var(--red)"}}),
-        React.createElement("div",{className:"stat-num",style:{color:"var(--red)"}}, reports.filter(r=>r.result==="RECHAZADO").length),
-        React.createElement("div",{className:"stat-lbl"},"Rechazados")
-      ),
-      React.createElement("div",{className:"stat-card"},
-        React.createElement("i",{className:"ti ti-users stat-icon",style:{color:"var(--amber)"}}),
-        React.createElement("div",{className:"stat-num"}, users.filter(u=>u.role==="client").length),
-        React.createElement("div",{className:"stat-lbl"},"Clientes activos")
-      )
-    ),
-
-    React.createElement("div",{className:"tbl-wrap"},
-      React.createElement("div",{className:"tbl-search"},
-        React.createElement("i",{className:"ti ti-search",style:{color:"var(--text3)",fontSize:16}}),
-        React.createElement("input",{
-          className:"inp",style:{flex:1,maxWidth:300},
-          placeholder:"Buscar por reporte, componente, pozo, empresa...",
-          value:search, onChange:e=>setSearch(e.target.value)
-        }),
-        React.createElement("select",{
-          className:"inp",style:{width:160},
-          value:filterResult, onChange:e=>setFilterResult(e.target.value)
-        },
-          React.createElement("option",{value:"ALL"},"Todos los resultados"),
-          React.createElement("option",{value:"APROBADO"},"Aprobados"),
-          React.createElement("option",{value:"RECHAZADO"},"Rechazados"),
-          React.createElement("option",{value:"CONDICIONAL"},"Condicionales")
-        )
-      ),
-      filtered.length===0
-        ? React.createElement("div",{className:"empty-state",style:{padding:30}},
-            React.createElement("i",{className:"ti ti-search-off"}),
-            React.createElement("p",null,"Sin resultados para esa búsqueda")
-          )
-        : React.createElement("table",{className:"tbl"},
-          React.createElement("thead",null,
-            React.createElement("tr",null,
-              React.createElement("th",null,"N° Reporte"),
-              React.createElement("th",null,"Fecha"),
-              React.createElement("th",null,"Componente"),
-              user.role==="admin" && React.createElement("th",null,"Cliente"),
-              React.createElement("th",null,"Pozo / Rig"),
-              React.createElement("th",null,"Cat."),
-              React.createElement("th",null,"Resultado"),
-              React.createElement("th",null,"Acciones")
-            )
-          ),
-          React.createElement("tbody",null,
-            filtered.map(r=>{
-              const clientNames = r.clientIds
-                ?.map(id=>users.find(u=>u.id===id)?.name)
-                .filter(Boolean).join(", ") || r.company || "—";
-              return React.createElement("tr",{key:r.id},
-                React.createElement("td",{"data-label":"N° Reporte",style:{fontFamily:"monospace",fontWeight:600,fontSize:12}}, r.reportNo),
-                React.createElement("td",{"data-label":"Fecha"}, fmtDate(r.date)),
-                React.createElement("td",{"data-label":"Componente",style:{maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12}}, r.component),
-                user.role==="admin" && React.createElement("td",{"data-label":"Cliente",style:{fontSize:12}}, clientNames),
-                React.createElement("td",{"data-label":"Pozo / Rig",style:{fontSize:12}}, [r.well,r.rig].filter(Boolean).join(" / ")||"—"),
-                React.createElement("td",{"data-label":"Cat."}, React.createElement("span",{className:"badge badge-cat"},"Cat "+r.category)),
-                React.createElement("td",{"data-label":"Resultado"}, React.createElement(ResultBadge,{result:r.result})),
-                React.createElement("td",{"data-label":""},
-                  React.createElement("button",{
-                    className:"btn btn-primary",style:{width:"100%",justifyContent:"center"},
-                    onClick:()=>setSelectedReport(r)
-                  },
-                    React.createElement("i",{className:"ti ti-eye"}), " Ver reporte"
-                  )
-                )
-              );
-            })
-          )
-        )
-    )
-  );
-}
-
-/* ====================================================
-   UPLOAD / IMPORT VIEW (Admin)
-   ==================================================== */
-function UploadView({users, reports, setReports, onMsg}) {
-  const [json,setJson] = useState("");
-  const [parsed,setParsed] = useState(null);
-  const [assignTo,setAssignTo] = useState([]);
-  const [err,setErr] = useState("");
-  const [form,setForm] = useState({
-    reportNo:"", date:new Date().toISOString().slice(0,10),
-    component:"", company:"", rig:"", well:"", location:"",
-    inspector:"", certNo:"", category:"3", result:"APROBADO", comments:""
-  });
-
-  const clients = users.filter(u=>u.role==="client");
-
-  const parseJson = () => {
-    setErr(""); setParsed(null);
-    try {
-      const d = JSON.parse(json);
-
-      // Detect rental report format
-      if (d.type === "rental-report") {
-        // Rental report: multiple components
-        setParsed(d);
-        setForm(p=>({...p,
-          reportNo: d.rentalNo||p.reportNo,
-          date: d.date||p.date,
-          component: `Reporte de Renta — ${d.totalComponents||'?'} componentes (${d.rig||'—'})`,
-          company: d.client||d.clientCompany||p.company,
-          rig: d.rig||p.rig,
-          well: d.well||p.well,
-          location: d.location||p.location,
-          inspector: d.inspector||p.inspector,
-          certNo: d.certNo||p.certNo,
-          category: "3",
-          result: d.overallResult||p.result,
-          comments: [
-            d.generalObs, d.finalObs,
-            `Componentes: ${d.totalComponents||0} | Aprobados: ${d.approved||0} | Rechazados: ${d.rejected||0}`
-          ].filter(Boolean).join(' — '),
-        }));
-      } else {
-        // Individual component report
-        const ri = d.reportInfo||{};
-        const co = d.component||{};
-        setParsed(d);
-        setForm(p=>({...p,
-          reportNo: ri.reportNo||p.reportNo,
-          date: ri.date||p.date,
-          component: co.description||co.type||p.component,
-          company: ri.client||p.company,
-          rig: ri.rig||p.rig,
-          well: ri.well||p.well,
-          location: ri.location||p.location,
-          inspector: ri.inspector||p.inspector,
-          certNo: ri.certNo||p.certNo,
-          category: ri.category||p.category,
-          result: d.result||p.result,
-          comments: d.comments||p.comments,
-        }));
-      }
-    } catch(e) {
-      setErr("JSON inválido. Verificá que el archivo fue exportado desde el formulario DS-1 o el Reporte de Renta.");
-    }
-  };
-
-  const fileRef = React.useRef();
-
-  const loadJsonFile = (file) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setJson(e.target.result);
-      setParsed(null);
-    };
-    reader.readAsText(file);
-  };
-
-  const save = () => {
-    setErr("");
-    if (!form.reportNo.trim()) { setErr("El N° de Reporte es obligatorio."); return; }
-    if (assignTo.length===0) { setErr("Seleccioná al menos un cliente al que asignar el reporte."); return; }
-    const newR = {
-      id: "r"+Date.now(),
-      clientIds: assignTo,
-      ...form,
-      uploadedAt: new Date().toISOString(),
-      visualInspection: parsed?.visualInspection||{},
-      measurements: parsed?.measurements||{},
-    };
-    const updated = [...reports, newR];
-    const saved = sSet("ds1-reports", updated);
-    if (saved === false) { setErr("Error al guardar. Intentá de nuevo."); return; }
-    setReports(updated);
-    setJson(""); setParsed(null); setAssignTo([]);
-    setForm({reportNo:"",date:new Date().toISOString().slice(0,10),component:"",company:"",rig:"",well:"",location:"",inspector:"",certNo:"",category:"3",result:"APROBADO",comments:""});
-    onMsg("✓ Reporte publicado y disponible para el cliente.");
-  };
-
-  const setF = (k,v) => setForm(p=>({...p,[k]:v}));
-  const togClient = id => setAssignTo(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
-
-  // File input ref
-  const fileInputRef = React.useRef();
-
-  const handleFileDrop = (e) => {
-    e.preventDefault();
-    e.currentTarget.style.borderColor = '';
-    const file = e.dataTransfer?.files[0] || e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setJson(ev.target.result);
-      setParsed(null);
-      // Auto-parse after load
-      try {
-        const d = JSON.parse(ev.target.result);
-        autoFillForm(d);
-      } catch(ex) {
-        setErr("Archivo JSON inválido.");
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const autoFillForm = (d) => {
-    setErr("");
-    if (!d || (typeof d !== 'object')) { setErr("El archivo no es un JSON válido."); return; }
-    setParsed(d);
-    if (d.type === "rental-report") {
-      setForm(p=>({...p,
-        reportNo: d.rentalNo||p.reportNo,
-        date: d.date||p.date,
-        component: "Reporte de Renta — "+(d.totalComponents||'?')+" componentes ("+( d.rig||'—')+")",
-        company: d.client||d.clientCompany||p.company,
-        rig: d.rig||p.rig,
-        well: d.well||p.well,
-        location: d.location||p.location,
-        inspector: d.inspector||p.inspector,
-        certNo: d.certNo||p.certNo,
-        category: "3",
-        result: d.overallResult||p.result,
-        comments: [d.generalObs,d.finalObs,"Componentes: "+(d.totalComponents||0)+" | Aprobados: "+(d.approved||0)+" | Rechazados: "+(d.rejected||0)].filter(Boolean).join(' — '),
-      }));
-    } else {
-      const ri = d.reportInfo||d||{};
-      const co = d.component||{};
-      const desc = co.description||co.type||ri.description||'';
-      const connTop = ri.topConnType||'';
-      const connBot = ri.botConnType||'';
-      const connStr = desc || (connTop&&connBot ? connTop+' Pin × '+connBot+' Caja' : '');
-      setForm(p=>({...p,
-        reportNo: ri.reportNo||p.reportNo,
-        date: ri.date||p.date,
-        component: connStr||p.component,
-        company: ri.client||ri.company||ri.clientCompany||p.company,
-        rig: ri.rig||p.rig,
-        well: ri.well||p.well,
-        location: ri.location||p.location,
-        inspector: ri.inspector||p.inspector,
-        certNo: ri.certNo||p.certNo,
-        category: ri.category||p.category,
-        result: d.result||p.result,
-        comments: d.comments||p.comments,
-      }));
-    }
-  };
-
-  return React.createElement("div",{className:"card"},
-    // Hidden file input
-    React.createElement("input",{
-      ref:fileInputRef, type:"file", accept:".json",
-      style:{display:"none"}, onChange:handleFileDrop
-    }),
-
-    // Drop zone
-    React.createElement("div",{
-      style:{border:"2px dashed var(--border2)",borderRadius:"var(--radius)",padding:"22px",textAlign:"center",cursor:"pointer",marginBottom:14,background:"var(--bg2)",transition:"all .2s"},
-      onClick:()=>fileInputRef.current.click(),
-      onDragOver:e=>{e.preventDefault();e.currentTarget.style.borderColor="var(--blue)";e.currentTarget.style.background="var(--blue-bg)"},
-      onDragLeave:e=>{e.currentTarget.style.borderColor='';e.currentTarget.style.background="var(--bg2)"},
-      onDrop:handleFileDrop,
-    },
-      React.createElement("i",{className:"ti ti-file-type-json",style:{fontSize:30,color:"var(--text3)",display:"block",marginBottom:8}}),
-      React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:4}},"Arrastrá el archivo JSON acá"),
-      React.createElement("div",{style:{fontSize:12,color:"var(--text2)",marginBottom:10}},"o hacé clic para buscar el archivo en tu computadora"),
-      React.createElement("button",{className:"btn btn-primary",style:{pointerEvents:"none"}},
-        React.createElement("i",{className:"ti ti-upload"}), " Seleccionar archivo .json"
-      )
-    ),
-
-    parsed && React.createElement("div",{className:"alert alert-ok",style:{marginBottom:14}},
-      React.createElement("i",{className:"ti ti-circle-check",style:{fontSize:18}}),
-      React.createElement("div",null,
-        React.createElement("strong",null,"Archivo cargado correctamente."),
-        React.createElement("div",{style:{fontSize:11,marginTop:2}},"Verificá los campos abajo y seleccioná el cliente antes de publicar.")
-      )
-    ),
-
-    React.createElement("div",{className:"divider-label"},
-      React.createElement("span",null,"Verificá y completá los datos")
-    ),
-
-    err && React.createElement("div",{className:"alert alert-err"},
-      React.createElement("i",{className:"ti ti-alert-circle"}), " ", err
-    ),
-
-    React.createElement("div",{className:"form-row form-row-4",style:{marginBottom:10}},
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"N° Reporte *"),
-        React.createElement("input",{className:"inp",value:form.reportNo,onChange:e=>setF("reportNo",e.target.value),placeholder:"RP-2025-001"})
-      ),
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Fecha"),
-        React.createElement("input",{type:"date",className:"inp",value:form.date,onChange:e=>setF("date",e.target.value)})
-      ),
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Categoría DS-1"),
-        React.createElement("select",{className:"inp",value:form.category,onChange:e=>setF("category",e.target.value)},
-          ["1","2","3","4","5"].map(c=>React.createElement("option",{key:c,value:c},"Categoría "+c))
-        )
-      ),
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Resultado"),
-        React.createElement("select",{className:"inp",value:form.result,onChange:e=>setF("result",e.target.value),
-          style:{color:form.result==="APROBADO"?"var(--green)":form.result==="RECHAZADO"?"var(--red)":"var(--amber)",fontWeight:600}},
-          ["APROBADO","RECHAZADO","CONDICIONAL"].map(r=>React.createElement("option",{key:r,value:r},r))
-        )
-      )
-    ),
-
-    React.createElement("div",{className:"form-group"},
-      React.createElement("label",{className:"lbl"},"Componente / Descripción completa"),
-      React.createElement("input",{className:"inp",value:form.component,onChange:e=>setF("component",e.target.value),placeholder:"Ej: X-Over NC46 Pin × NC50 Caja, 6-1/2\" OD"})
-    ),
-
-    React.createElement("div",{className:"form-row form-row-3",style:{marginBottom:10}},
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Empresa cliente"),
-        React.createElement("input",{className:"inp",value:form.company,onChange:e=>setF("company",e.target.value)})
-      ),
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Equipo / Rig"),
-        React.createElement("input",{className:"inp",value:form.rig,onChange:e=>setF("rig",e.target.value)})
-      ),
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Pozo"),
-        React.createElement("input",{className:"inp",value:form.well,onChange:e=>setF("well",e.target.value)})
-      )
-    ),
-
-    React.createElement("div",{className:"form-row form-row-3",style:{marginBottom:10}},
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Ubicación / Campo"),
-        React.createElement("input",{className:"inp",value:form.location,onChange:e=>setF("location",e.target.value)})
-      ),
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"Inspector"),
-        React.createElement("input",{className:"inp",value:form.inspector,onChange:e=>setF("inspector",e.target.value)})
-      ),
-      React.createElement("div",{className:"form-group"},
-        React.createElement("label",{className:"lbl"},"N° Certificado DS-1"),
-        React.createElement("input",{className:"inp",value:form.certNo,onChange:e=>setF("certNo",e.target.value)})
-      )
-    ),
-
-    React.createElement("div",{className:"form-group"},
-      React.createElement("label",{className:"lbl"},"Observaciones"),
-      React.createElement("textarea",{className:"inp",value:form.comments,onChange:e=>setF("comments",e.target.value)})
-    ),
-
-    React.createElement("div",{className:"divider-label"},
-      React.createElement("span",null,"Asignar a cliente/s *")
-    ),
-    React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}},
-      clients.length===0
-        ? React.createElement("div",{style:{color:"var(--text3)",fontSize:12}},"No hay clientes registrados. Creá uno en Gestión de clientes.")
-        : clients.map(c=>React.createElement("button",{
-            key:c.id,
-            className:"btn"+(assignTo.includes(c.id)?" btn-success":""),
-            onClick:()=>togClient(c.id),
-            style:{fontSize:12}
-          },
-            React.createElement("i",{className:"ti ti-"+(assignTo.includes(c.id)?"user-check":"user")}),
-            " ", c.name, React.createElement("span",{style:{opacity:.7,fontSize:10,marginLeft:4}},"("+c.company+")")
-          ))
-    ),
-
-    React.createElement("button",{
-      className:"btn btn-primary",
-      style:{padding:"9px 22px",fontSize:13},
-      onClick:save
-    },
-      React.createElement("i",{className:"ti ti-upload"}), " Publicar reporte"
-    )
-  );
-}
-
-/* ====================================================
-   CLIENTS VIEW (Admin)
-   ==================================================== */
-function ClientsView({users, setUsers}) {
-  const [form,setForm] = useState({name:"",email:"",password:"",company:""});
-  const [err,setErr] = useState("");
-  const [ok,setOk] = useState("");
-
-  const clients = users.filter(u=>u.role==="client");
-
-  const addClient = () => {
-    setErr(""); setOk("");
-    if (!form.name||!form.email||!form.password||!form.company) { setErr("Todos los campos son obligatorios."); return; }
-    if (users.find(u=>u.email.toLowerCase()===form.email.toLowerCase())) { setErr("Ya existe un usuario con ese email."); return; }
-    const newU = {id:"u"+Date.now(), role:"client", ...form};
-    const updated = [...users, newU];
-    sSet("ds1-users", updated);
-    setUsers(updated);
-    setForm({name:"",email:"",password:"",company:""});
-    setOk("Cliente creado. Ya puede ingresar al portal con sus credenciales.");
-  };
-
-  const delClient = (id) => {
-    if (!confirm("¿Eliminar este cliente? Sus reportes asignados no se borrarán.")) return;
-    const updated = users.filter(u=>u.id!==id);
-    sSet("ds1-users", updated);
-    setUsers(updated);
-  };
-
-  return React.createElement("div",null,
-    React.createElement("div",{className:"tbl-wrap",style:{marginBottom:20}},
-      React.createElement("table",{className:"tbl"},
-        React.createElement("thead",null,
-          React.createElement("tr",null,
-            React.createElement("th",null,"Nombre"),
-            React.createElement("th",null,"Email (login)"),
-            React.createElement("th",null,"Empresa"),
-            React.createElement("th",null,"Acciones")
-          )
-        ),
-        React.createElement("tbody",null,
-          clients.length===0
-            ? React.createElement("tr",null,React.createElement("td",{colSpan:4,style:{textAlign:"center",color:"var(--text3)",padding:24}},"No hay clientes registrados aún."))
-            : clients.map(c=>React.createElement("tr",{key:c.id},
-                React.createElement("td",{style:{fontWeight:500}},
-                  React.createElement("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:26,height:26,borderRadius:"50%",background:"var(--blue-bg)",color:"var(--blue-text)",fontSize:10,fontWeight:700,marginRight:8}},initials(c.name)),
-                  c.name
-                ),
-                React.createElement("td",{style:{fontFamily:"monospace",fontSize:12}},c.email),
-                React.createElement("td",null,c.company),
-                React.createElement("td",null,
-                  React.createElement("button",{className:"btn btn-sm btn-danger",onClick:()=>delClient(c.id)},
-                    React.createElement("i",{className:"ti ti-trash"}), " Eliminar"
-                  )
-                )
-              ))
-        )
-      )
-    ),
-
-    React.createElement("div",{className:"card"},
-      React.createElement("div",{style:{fontSize:13,fontWeight:600,marginBottom:14,color:"var(--text)"}},
-        React.createElement("i",{className:"ti ti-user-plus",style:{marginRight:6}}),
-        "Agregar nuevo cliente"
-      ),
-      err && React.createElement("div",{className:"alert alert-err"},React.createElement("i",{className:"ti ti-alert-circle"}),err),
-      ok  && React.createElement("div",{className:"alert alert-ok"}, React.createElement("i",{className:"ti ti-check"}),ok),
-      React.createElement("div",{className:"form-row form-row-2"},
-        React.createElement("div",{className:"form-group"},
-          React.createElement("label",{className:"lbl"},"Nombre completo"),
-          React.createElement("input",{className:"inp",value:form.name,onChange:e=>setForm(p=>({...p,name:e.target.value}))})
-        ),
-        React.createElement("div",{className:"form-group"},
-          React.createElement("label",{className:"lbl"},"Empresa"),
-          React.createElement("input",{className:"inp",value:form.company,onChange:e=>setForm(p=>({...p,company:e.target.value}))})
-        )
-      ),
-      React.createElement("div",{className:"form-row form-row-2"},
-        React.createElement("div",{className:"form-group"},
-          React.createElement("label",{className:"lbl"},"Email (se usa para ingresar)"),
-          React.createElement("input",{type:"email",className:"inp",value:form.email,onChange:e=>setForm(p=>({...p,email:e.target.value}))})
-        ),
-        React.createElement("div",{className:"form-group"},
-          React.createElement("label",{className:"lbl"},"Contraseña inicial"),
-          React.createElement("input",{type:"text",className:"inp",value:form.password,onChange:e=>setForm(p=>({...p,password:e.target.value})),placeholder:"El cliente puede cambiarla después"})
-        )
-      ),
-      React.createElement("button",{className:"btn btn-primary",onClick:addClient},
-        React.createElement("i",{className:"ti ti-user-plus"}), " Crear cliente"
-      )
-    )
-  );
-}
-
-/* ====================================================
-   PDF GENERATOR — funciona en celular y desktop
-   ==================================================== */
-function generatePDF(report) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const margin = 14;
-  const pageW = 210;
-  const contentW = pageW - margin * 2;
-  const lineH = 6.5;
-  let y = 0;
-
-  const checkPage = (needed=10) => {
-    if (y + needed > 278) { doc.addPage(); y = 20; }
-  };
-
-  const addSectionHeader = (title) => {
-    checkPage(12);
-    y += 3;
-    doc.setFillColor(237,242,255);
-    doc.rect(margin, y-4, contentW, 8, 'F');
-    doc.setDrawColor(180,190,230);
-    doc.rect(margin, y-4, contentW, 8, 'S');
-    doc.setFontSize(8.5); doc.setFont('helvetica','bold');
-    doc.setTextColor(30,64,175);
-    doc.text(title.toUpperCase(), margin+2, y+1);
-    doc.setTextColor(0,0,0);
-    y += 7;
-  };
-
-  const addField = (label, value, x2=margin+48) => {
-    checkPage();
-    doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.setTextColor(100,110,130);
-    doc.text(label+':', margin+2, y);
-    doc.setFont('helvetica','normal');
-    doc.setTextColor(20,20,20);
-    const lines = doc.splitTextToSize(value||'—', contentW - (x2 - margin) - 2);
-    doc.text(lines, x2, y);
-    y += Math.max(lineH, lines.length * lineH);
-  };
-
-  // ── HEADER AZUL ──
-  doc.setFillColor(29,78,216);
-  doc.rect(0,0,210,28,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(13); doc.setFont('helvetica','bold');
-  doc.text('REPORTE DE INSPECCIÓN DE SUSTITUTO', margin, 11);
-  doc.setFontSize(8.5); doc.setFont('helvetica','normal');
-  doc.text('DS-1® Volumen 3 y Addendum — Categoría '+report.category, margin, 18);
-  doc.setFontSize(9); doc.setFont('helvetica','bold');
-  doc.text(report.reportNo||'', pageW-margin, 11, {align:'right'});
-  doc.setFont('helvetica','normal'); doc.setFontSize(8);
-  doc.text(fmtDate(report.date), pageW-margin, 18, {align:'right'});
-
-  // ── RESULTADO BADGE ──
-  const rc = report.result==='APROBADO'?[21,128,61]:report.result==='RECHAZADO'?[220,38,38]:[217,119,6];
-  doc.setFillColor(...rc);
-  doc.roundedRect(pageW-margin-38, 20, 38, 9, 2, 2, 'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
-  doc.text(report.result||'—', pageW-margin-19, 25.5, {align:'center'});
-  doc.setTextColor(0,0,0);
-  y = 36;
-
-  // ── IDENTIFICACIÓN ──
-  addSectionHeader('Identificación del Componente');
-  addField('Componente', report.component);
-  addField('Empresa cliente', report.company);
-  const col2x = margin + 95;
-  checkPage();
-  doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,110,130);
-  doc.text('Equipo / Rig:', margin+2, y); doc.text('Pozo:', col2x, y);
-  doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
-  doc.text(report.rig||'—', margin+26, y); doc.text(report.well||'—', col2x+14, y);
-  y += lineH;
-  doc.setFont('helvetica','bold'); doc.setTextColor(100,110,130);
-  doc.text('Ubicación:', margin+2, y); doc.text('Inspector:', col2x, y);
-  doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
-  doc.text(report.location||'—', margin+22, y); doc.text(report.inspector||'—', col2x+20, y);
-  y += lineH;
-  doc.setFont('helvetica','bold'); doc.setTextColor(100,110,130);
-  doc.text('Cert. DS-1:', margin+2, y);
-  doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
-  doc.text(report.certNo||'—', margin+24, y);
-  y += lineH;
-
-  // ── INSPECCIÓN VISUAL ──
-  const vis = report.visualInspection||{};
-  const visPairs = Object.entries(VIS_LABELS).filter(([k])=>vis[k]&&vis[k]!=='NA');
-  if (visPairs.length>0) {
-    addSectionHeader('Inspección Visual');
-    visPairs.forEach(([k,label])=>{
-      checkPage();
-      const v = vis[k];
-      doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
-      doc.text(label, margin+2, y);
-      if (v==='P') doc.setTextColor(21,128,61);
-      else if (v==='F') doc.setTextColor(220,38,38);
-      doc.setFont('helvetica','bold');
-      doc.text(v==='P'?'✓ Aprobado':'✗ Rechazado', pageW-margin, y, {align:'right'});
-      doc.setTextColor(0,0,0);
-      y += lineH;
+/* ── Audit Log ── */
+async function logEvent(event, reportId=null, reportNo=null, meta={}) {
+  if(!sb||!state.profile) return;
+  try {
+    await sb.from('audit_logs').insert({
+      event, user_id:state.user.id,
+      user_name:state.profile.full_name,
+      user_company:state.profile.company,
+      report_id:reportId, report_no:reportNo,
+      metadata:meta,
     });
+  } catch(e) { console.warn('Audit log error:', e); }
+}
+
+/* ── PDF Watermark ── */
+async function downloadPDF(report) {
+  showToast('Generando PDF con marca de agua...', 'ok');
+  try {
+    const { PDFDocument, rgb, StandardFonts, degrees } = window.PDFLib;
+
+    // Try to load existing PDF from Supabase Storage if available
+    // Otherwise generate from report data
+    let pdfDoc;
+    const storageKey = `reports/${report.id}.pdf`;
+    let loadedFromStorage = false;
+
+    try {
+      const { data, error } = await sb.storage.from('reports').download(storageKey);
+      if (data && !error) {
+        const arrayBuffer = await data.arrayBuffer();
+        pdfDoc = await PDFDocument.load(arrayBuffer);
+        loadedFromStorage = true;
+      }
+    } catch(e) { /* generate from data */ }
+
+    if (!loadedFromStorage) {
+      pdfDoc = await generatePDFFromData(report);
+    }
+
+    // ── Add watermark to every page ──
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontLight = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const now = new Date();
+    const downloadId = Math.random().toString(36).slice(2,10).toUpperCase();
+    const wm1 = `DESCARGADO POR: ${state.profile.full_name} — ${state.profile.company}`;
+    const wm2 = `Fecha: ${now.toLocaleString('es-AR')} | ID: ${downloadId}`;
+    const wm3 = `USO CONFIDENCIAL — Prohibida su reproducción sin autorización`;
+
+    pdfDoc.getPages().forEach(page => {
+      const { width, height } = page.getSize();
+      const cx = width / 2, cy = height / 2;
+
+      // Diagonal watermark (large, transparent)
+      page.drawText(state.profile.company?.toUpperCase()||'CONFIDENCIAL', {
+        x: cx - 200, y: cy,
+        size: 52, font, color: rgb(0.7,0.7,0.7), opacity: 0.07,
+        rotate: degrees(45),
+      });
+
+      // Footer watermark bar
+      const barH = 30;
+      page.drawRectangle({ x:0, y:0, width, height:barH, color:rgb(0.13,0.31,0.85), opacity:0.08 });
+      page.drawText(wm1, { x:10, y:barH-11, size:7, font, color:rgb(0.1,0.1,0.5), opacity:0.8 });
+      page.drawText(wm2, { x:10, y:3, size:6, font:fontLight, color:rgb(0.2,0.2,0.5), opacity:0.7 });
+      page.drawText(wm3, { x:width-280, y:3, size:5.5, font:fontLight, color:rgb(0.5,0.1,0.1), opacity:0.7 });
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type:'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `DS1_${report.report_no||'informe'}_${downloadId}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Log the download
+    await logEvent('descarga_pdf', report.id, report.report_no, { downloadId });
+    showToast(`PDF descargado con marca de agua — ID: ${downloadId}`, 'ok');
+
+  } catch(err) {
+    console.error(err);
+    showToast('Error generando PDF: ' + err.message, 'err');
   }
+}
 
-  // ── MEDICIONES ──
-  const meas = report.measurements||{};
-  const measPairs = Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
-  if (measPairs.length>0) {
-    addSectionHeader('Mediciones Dimensionales');
-    checkPage(10);
-    // Cabecera tabla
-    doc.setFillColor(220,225,235);
-    doc.rect(margin, y-4, contentW, 7, 'F');
-    doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(60,70,90);
-    const cols = [margin+2, margin+56, margin+71, margin+87, margin+103, margin+119, margin+135, margin+152];
-    ['Parámetro','Mín','Máx','Med 1','Med 2','Med 3','Prom.','Estado'].forEach((h,i)=>doc.text(h,cols[i],y));
-    doc.setTextColor(0,0,0); y+=7;
+/* ── Generate PDF from JSON report data ── */
+async function generatePDFFromData(r) {
+  const { PDFDocument, rgb, StandardFonts } = window.PDFLib;
+  const doc = await PDFDocument.create();
+  const fontB = await doc.embedFont(StandardFonts.HelveticaBold);
+  const font  = await doc.embedFont(StandardFonts.Helvetica);
 
-    measPairs.forEach(([k,label])=>{
-      checkPage();
+  const addPage = () => {
+    const p = doc.addPage([595, 842]); // A4
+    let y = 820;
+    const margin = 40;
+    const W = 515;
+
+    // Header bar
+    p.drawRectangle({ x:0, y:808, width:595, height:34, color:rgb(0.11,0.31,0.85) });
+    p.drawText('REPORTE DE INSPECCIÓN DS-1 — Vol 3 y Addendum', { x:margin, y:817, size:10, font:fontB, color:rgb(1,1,1) });
+    p.drawText(`${r.report_no||'—'}  |  ${fmtDate(r.date)}`, { x:595-160, y:817, size:9, font, color:rgb(0.8,0.9,1) });
+    y = 795;
+
+    return { p, y: [y], margin, W };
+  };
+
+  const field = (p, x, y, label, value, labelColor=rgb(0.4,0.4,0.4)) => {
+    p.drawText(label+':',{ x, y:y+2, size:7, font:fontB, color:labelColor });
+    p.drawText(String(value||'—'),{ x, y:y-9, size:9, font, color:rgb(0.1,0.1,0.1) });
+  };
+
+  const secHeader = (p, y, text, W, margin) => {
+    p.drawRectangle({ x:margin, y:y-2, width:W, height:14, color:rgb(0.93,0.96,1) });
+    p.drawText(text, { x:margin+4, y:y+2, size:8, font:fontB, color:rgb(0.11,0.31,0.85) });
+    return y - 20;
+  };
+
+  // Page 1
+  let { p, y, margin, W } = addPage();
+  let cy = y[0];
+
+  // Component section
+  cy = secHeader(p, cy, 'IDENTIFICACIÓN DEL COMPONENTE', W, margin);
+  field(p, margin, cy, 'Componente', r.component); field(p, margin+180, cy, 'N° Reporte', r.report_no);
+  cy -= 22;
+  field(p, margin, cy, 'Empresa cliente', r.company); field(p, margin+180, cy, 'Equipo / Rig', r.rig); field(p, margin+340, cy, 'Pozo', r.well);
+  cy -= 22;
+  field(p, margin, cy, 'Inspector', r.inspector); field(p, margin+180, cy, 'Cert. DS-1', r.cert_no); field(p, margin+340, cy, 'Categoría', `Cat. ${r.category}`);
+  cy -= 22;
+  field(p, margin, cy, 'N° Serie', r.serial_no); field(p, margin+140, cy, 'N° Calor', r.heat_no); field(p, margin+280, cy, 'Fabricante', r.manufacturer); field(p, margin+400, cy, 'Grado', r.grade);
+  cy -= 22;
+  field(p, margin, cy, 'Conexión superior', r.conn_top); field(p, margin+220, cy, 'Conexión inferior', r.conn_bot); field(p, margin+440, cy, 'OD Nominal', r.nom_od?`${r.nom_od}"`:'—');
+  cy -= 30;
+
+  // Visual inspection
+  const vis = r.visual_inspection||{};
+  const visFail = Object.entries(vis).filter(([,v])=>v==='F');
+  const visPass = Object.entries(vis).filter(([,v])=>v==='P');
+  cy = secHeader(p, cy, 'INSPECCIÓN VISUAL', W, margin);
+  if(visFail.length===0) {
+    p.drawText('✓ Todos los ítems visuales APROBADOS', { x:margin+4, y:cy, size:9, font:fontB, color:rgb(0.09,0.5,0.24) });
+  } else {
+    p.drawText(`Ítems RECHAZADOS: ${visFail.map(([k])=>VIS_LABELS[k]||k).join(', ')}`, { x:margin+4, y:cy, size:8, font:fontB, color:rgb(0.86,0.15,0.15) });
+  }
+  cy -= 30;
+
+  // Measurements
+  const meas = r.measurements||{};
+  const measEntries = Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
+  if(measEntries.length>0) {
+    cy = secHeader(p, cy, 'MEDICIONES DIMENSIONALES', W, margin);
+    // Table header
+    const cols = [margin, margin+120, margin+175, margin+230, margin+280, margin+330, margin+385, margin+440, margin+480];
+    p.drawRectangle({ x:margin, y:cy-2, width:W, height:13, color:rgb(0.2,0.35,0.7), opacity:0.15 });
+    ['Parámetro','Un','Mín','Máx','Med 1','Med 2','Med 3','Prom.','Est.'].forEach((h,i)=>{
+      p.drawText(h,{x:cols[i]+2,y:cy+2,size:6.5,font:fontB,color:rgb(0.2,0.3,0.6)});
+    });
+    cy -= 13;
+    measEntries.forEach(([k,label]) => {
+      if(cy < 60) { /* new page if needed */ }
       const m = meas[k];
       const a = avg3(m);
       const st = evalSt(a||m.m1, m.min, m.max);
-      doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(20,20,20);
-      doc.text(label.slice(0,24), cols[0], y);
-      doc.text(m.min||'—', cols[1], y);
-      doc.text(m.max||'—', cols[2], y);
-      doc.text(m.m1||'—', cols[3], y);
-      doc.text(m.m2||'—', cols[4], y);
-      doc.text(m.m3||'—', cols[5], y);
-      if (st==='p') doc.setTextColor(21,128,61);
-      else if (st==='f') doc.setTextColor(220,38,38);
-      doc.setFont('helvetica','bold');
-      doc.text(a||'—', cols[6], y);
-      doc.text(st==='p'?'✓ OK':st==='f'?'✗ Falla':'—', cols[7], y);
-      doc.setTextColor(0,0,0);
-      y += lineH;
+      const rowColor = st==='f'?rgb(1,0.9,0.9):st==='p'?rgb(0.9,1,0.93):rgb(1,1,1);
+      p.drawRectangle({ x:margin, y:cy-1, width:W, height:12, color:rowColor, opacity:0.6 });
+      p.drawText(label.slice(0,20),{x:cols[0]+2,y:cy+2,size:6.5,font,color:rgb(0.1,0.1,0.1)});
+      p.drawText('in',{x:cols[1]+2,y:cy+2,size:6,font,color:rgb(0.5,0.5,0.5)});
+      p.drawText(m.min||'',{x:cols[2]+2,y:cy+2,size:6.5,font,color:rgb(0.2,0.2,0.7)});
+      p.drawText(m.max||'',{x:cols[3]+2,y:cy+2,size:6.5,font,color:rgb(0.2,0.2,0.7)});
+      p.drawText(m.m1||'—',{x:cols[4]+2,y:cy+2,size:6.5,font,color:rgb(0.1,0.1,0.1)});
+      p.drawText(m.m2||'—',{x:cols[5]+2,y:cy+2,size:6.5,font,color:rgb(0.1,0.1,0.1)});
+      p.drawText(m.m3||'—',{x:cols[6]+2,y:cy+2,size:6.5,font,color:rgb(0.1,0.1,0.1)});
+      if(a) p.drawText(a,{x:cols[7]+2,y:cy+2,size:6.5,font:fontB,color:st==='p'?rgb(0.09,0.5,0.24):st==='f'?rgb(0.86,0.15,0.15):rgb(0.1,0.1,0.1)});
+      if(st!=='e') p.drawText(st==='p'?'✓ OK':'✗ Falla',{x:cols[8]+2,y:cy+2,size:6,font:fontB,color:st==='p'?rgb(0.09,0.5,0.24):rgb(0.86,0.15,0.15)});
+      cy -= 12;
     });
+    cy -= 10;
   }
 
-  // ── OBSERVACIONES ──
-  if (report.comments) {
-    addSectionHeader('Observaciones');
-    doc.setFontSize(8.5); doc.setFont('helvetica','normal');
-    const lines = doc.splitTextToSize(report.comments, contentW-4);
-    checkPage(lines.length * lineH + 5);
-    doc.text(lines, margin+2, y);
-    y += lines.length * lineH + 3;
+  // Comments
+  if(r.comments) {
+    cy = secHeader(p, cy, 'OBSERVACIONES', W, margin);
+    p.drawText(r.comments.slice(0,200),{x:margin+4,y:cy,size:8,font,color:rgb(0.2,0.2,0.2),maxWidth:W-8,lineHeight:11});
+    cy -= 30;
   }
 
-  // ── RESULTADO FINAL ──
-  checkPage(20);
-  y += 4;
-  doc.setFillColor(...rc);
-  doc.roundedRect(margin, y-4, contentW, 14, 2, 2, 'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
-  doc.text((report.result==='APROBADO'?'✓ ':'✗ ')+'RESULTADO: '+(report.result||'—'), margin+5, y+5);
-  doc.setTextColor(0,0,0); y += 20;
+  // Result
+  const rc = r.result==='APROBADO'?rgb(0.09,0.5,0.24):r.result==='RECHAZADO'?rgb(0.86,0.15,0.15):rgb(0.6,0.27,0.04);
+  p.drawRectangle({ x:margin, y:cy-18, width:W, height:28, color:rc, opacity:0.12, borderColor:rc, borderOpacity:0.8, borderWidth:1 });
+  p.drawText(`RESULTADO: ${r.result||'—'}`, { x:margin+8, y:cy-6, size:13, font:fontB, color:rc });
+  cy -= 40;
 
-  // ── CERTIFICACIÓN ──
-  addSectionHeader('Certificación del Inspector');
-  doc.setFontSize(8); doc.setFont('helvetica','normal');
-  doc.text('El inspector certifica que la inspección fue realizada conforme a DS-1® Vol 3 y Addendum vigentes.', margin+2, y);
-  y += 14;
-  doc.line(margin, y, margin+55, y);
-  doc.line(margin+65, y, margin+120, y);
-  doc.line(margin+130, y, pageW-margin, y);
-  y += 4;
-  doc.setFontSize(7.5);
-  doc.text('Inspector: '+(report.inspector||'—'), margin, y);
-  doc.text('Fecha: '+fmtDate(report.date), margin+65, y);
-  doc.text('Firma cliente: ___________', margin+130, y);
-  y += 4;
-  doc.setTextColor(100,110,130);
-  doc.text('Cert. DS-1: '+(report.certNo||'—'), margin, y);
+  // Certification
+  cy = secHeader(p, cy, 'CERTIFICACIÓN — DS-1 Vol 3 §1.5', W, margin);
+  p.drawText('El inspector certifica que la inspección fue realizada conforme a DS-1® Vol 3 y Addendum vigentes.',
+    {x:margin+4,y:cy,size:7.5,font,color:rgb(0.3,0.3,0.3)});
+  cy -= 30;
+  [0,1,2].forEach(i=>{
+    p.drawLine({ start:{x:margin+i*175,y:cy}, end:{x:margin+i*175+140,y:cy}, thickness:0.5, color:rgb(0.5,0.5,0.5) });
+    const lbls=['Inspector / Firma','Supervisor / Conformidad','Cliente / Recepción'];
+    p.drawText(lbls[i],{x:margin+i*175,y:cy-12,size:6.5,font,color:rgb(0.5,0.5,0.5)});
+    if(i===0){
+      p.drawText(r.inspector||'',{x:margin,y:cy-22,size:7,font:fontB,color:rgb(0.2,0.2,0.2)});
+      p.drawText(`Cert. DS-1: ${r.cert_no||'—'}`,{x:margin,y:cy-32,size:6.5,font,color:rgb(0.4,0.4,0.4)});
+    }
+    p.drawText(`Fecha: ${fmtDate(r.date)||''}`,{x:margin+i*175,y:cy-32,size:6.5,font,color:rgb(0.4,0.4,0.4)});
+  });
 
-  // ── PIE DE PÁGINA ──
-  const totalPages = doc.getNumberOfPages();
-  for (let i=1; i<=totalPages; i++) {
-    doc.setPage(i);
-    doc.setFontSize(7); doc.setTextColor(160,160,160);
-    doc.text(COMPANY_NAME+' | Portal DS-1 | Pág. '+i+'/'+totalPages, pageW/2, 290, {align:'center'});
-    doc.line(margin, 286, pageW-margin, 286);
-  }
-
-  doc.save('DS1_'+(report.reportNo||'reporte')+'.pdf');
+  return doc;
 }
 
-/* ====================================================
-   MAIN APP
-   ==================================================== */
-function App() {
-  const [appLoading, setAppLoading] = useState(true);
-  const [users,   setUsers]   = useState([]);
-  const [reports, setReports] = useState([]);
-  const [user,    setUser]    = useState(null);
-  const [tab,     setTab]     = useState("reports");
-  const [selected,setSelected]= useState(null);
-  const [toast,   setToast]   = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  useEffect(()=>{
-    let u = sGet("ds1-users");
-    let r = sGet("ds1-reports");
-    if (!u || u.length===0) { u = DEMO_USERS; sSet("ds1-users",u); }
-    if (!r || r.length===0) { r = DEMO_REPORTS; sSet("ds1-reports",r); }
-    setUsers(u); setReports(r); setAppLoading(false);
-  },[]);
-
-  useEffect(()=>{
-    if (toast) { const t=setTimeout(()=>setToast(""),4000); return()=>clearTimeout(t); }
-  },[toast]);
-
-  if (appLoading) return React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",color:"var(--text2)"}},
-    React.createElement("i",{className:"ti ti-loader-2",style:{fontSize:24,marginRight:10}}),
-    "Cargando portal..."
-  );
-
-  if (!user) return React.createElement(LoginView,{onLogin:u=>{setUser(u);setTab("reports");}});
-
-  const navItems = user.role==="admin"
-    ? [
-        {id:"reports", icon:"ti-file-text",    label:"Reportes"},
-        {id:"clients", icon:"ti-users",         label:"Clientes"},
-        {id:"upload",  icon:"ti-cloud-upload",  label:"Subir reporte"},
-      ]
-    : [{id:"reports", icon:"ti-file-text", label:"Mis informes"}];
-
-  const headerTitle = selected
-    ? "Detalle del reporte"
-    : tab==="reports" ? (user.role==="admin"?"Todos los reportes":"Mis informes")
-    : tab==="clients" ? "Gestión de clientes"
-    : "Subir reporte";
-
-  return React.createElement("div",{className:"portal-layout"},
-    // Sidebar
-    React.createElement("div",{className:"sidebar"+(sidebarOpen?" open":"")},
-      React.createElement("div",{className:"sb-brand"},
-        React.createElement("div",{className:"sb-brand-logo"},
-          React.createElement("div",{className:"sb-brand-icon"},
-            React.createElement("i",{className:"ti ti-file-certificate"})
-          ),
-          React.createElement("div",null,
-            // [CONFIG] Nombre del portal
-            React.createElement("div",{className:"sb-brand-name"},"Portal DS-1"),
-            React.createElement("div",{className:"sb-brand-tagline"},"Informes técnicos")
-          )
-        )
-      ),
-      React.createElement("div",{className:"sb-user"},
-        React.createElement("div",{className:"sb-avatar"},initials(user.name)),
-        React.createElement("div",{style:{overflow:"hidden"}},
-          React.createElement("div",{className:"sb-uname"},user.name),
-          React.createElement("div",{className:"sb-ucmp"},user.company)
-        )
-      ),
-      React.createElement("div",{className:"sb-nav"},
-        React.createElement("div",{className:"sb-section-label"},"Navegación"),
-        navItems.map(n=>React.createElement("div",{
-          key:n.id,
-          className:"sb-link"+(tab===n.id&&!selected?" active":""),
-          onClick:()=>{setTab(n.id);setSelected(null);setSidebarOpen(false);}
-        },
-          React.createElement("i",{className:"ti "+n.icon}), n.label
-        ))
-      ),
-      React.createElement("div",{className:"sb-footer"},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text3)",marginBottom:8}},
-          React.createElement("span",{className:"sb-badge "+(user.role==="admin"?"sb-badge-admin":"sb-badge-client")},
-            user.role==="admin"?"Administrador":"Cliente"
-          )
-        ),
-        React.createElement("button",{
-          className:"btn",style:{width:"100%",fontSize:12,justifyContent:"center"},
-          onClick:()=>{setUser(null);setSelected(null);setTab("reports");}
-        },
-          React.createElement("i",{className:"ti ti-logout"}), " Cerrar sesión"
-        )
-      )
-    ),
-
-    // Main
-    React.createElement("div",{className:"mob-nav"},
-      navItems.map(n=>React.createElement("div",{
-        key:n.id,
-        className:"mob-nav-item"+(tab===n.id&&!selected?" active":""),
-        onClick:()=>{setTab(n.id);setSelected(null);}
-      },
-        React.createElement("i",{className:"ti "+n.icon}),
-        n.label
-      )),
-      React.createElement("div",{
-        className:"mob-nav-item",
-        onClick:()=>{setUser(null);setSelected(null);setTab("reports");}
-      },
-        React.createElement("i",{className:"ti ti-logout"}),
-        "Salir"
-      )
-    ),
-    React.createElement("div",{className:"main-area"},
-      React.createElement("div",{className:"main-header"},
-        React.createElement("button",{className:"hamburger",onClick:()=>setSidebarOpen(p=>!p),"aria-label":"Menú"},
-          React.createElement("i",{className:"ti ti-menu-2"})
-        ),
-        React.createElement("div",null,
-          React.createElement("div",{className:"main-header-title"},headerTitle),
-          React.createElement("div",{className:"main-header-sub"},
-            selected ? "Reporte "+selected.reportNo : user.company
-          )
-        ),
-        toast && React.createElement("div",{className:"alert alert-ok",style:{margin:0,padding:"6px 12px",fontSize:12}},
-          React.createElement("i",{className:"ti ti-check"}), toast
-        )
-      ),
-
-      React.createElement("div",{className:"main-content"},
-        selected
-          ? React.createElement(ReportDetailView,{report:selected, onBack:()=>setSelected(null)})
-          : tab==="upload"
-          ? React.createElement(UploadView,{users,reports,setReports,onMsg:m=>{setToast(m);setTab("reports");}})
-          : tab==="clients"
-          ? React.createElement(ClientsView,{users,setUsers})
-          : React.createElement(ReportsView,{reports,user,users,setSelectedReport:setSelected})
-      )
-    )
-  );
+/* ============================================================
+   RENDER ENGINE
+   ============================================================ */
+function render() {
+  const app = $('app');
+  if(!IS_CONFIGURED) { renderConfig(app); return; }
+  if(!state.user)    { renderLogin(app); return; }
+  renderPortal(app);
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+/* ── Config screen ── */
+function renderConfig(app) {
+  app.innerHTML = `
+  <div class="config-warning">
+    <i class="ti ti-settings" style="font-size:40px;color:var(--amber);display:block;margin-bottom:14px"></i>
+    <h2 style="margin-bottom:8px;color:var(--text)">Configurar Supabase</h2>
+    <p style="color:var(--text2);margin-bottom:16px;line-height:1.6">Para activar el portal, abrí este archivo con el Bloc de notas y completá <strong>SUPABASE_URL</strong> y <strong>SUPABASE_ANON</strong> con los datos de tu proyecto en <a href="https://supabase.com" target="_blank" style="color:var(--blue)">supabase.com</a>.</p>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:left;font-family:monospace;font-size:11px;color:var(--text2)">
+      const SUPABASE_URL = '<strong style="color:var(--red-text)">https://ysuwpuaucfvnqlfnczlu.supabase.co</strong>';<br>
+      const SUPABASE_ANON = '<strong style="color:var(--red-text)">sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-</strong>';
+    </div>
+    <p style="margin-top:14px;font-size:11px;color:var(--text3)">Después de configurar, ejecutá también <strong>schema-supabase.sql</strong> en Supabase → SQL Editor.</p>
+  </div>`;
+}
+
+/* ── Login ── */
+function renderLogin(app) {
+  app.innerHTML = `
+  <div class="login-page">
+    <div class="login-card">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="margin:0 auto 14px;text-align:center"><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=300,fit=crop/d95gEJ0jJgfxbzwe/recurso-1-2x-1yBLDy8iVJ2EB3go.png" style="max-height:60px;max-width:220px;object-fit:contain" alt="GM Robótica"></div>
+        <h2 style="font-size:22px;font-weight:800;margin-bottom:4px;color:#f97316">GM Robótica</h2>
+        <p style="font-size:12px;color:var(--text2)">Portal DS-1 — Informes técnicos de inspección</p>
+        <p style="font-size:11px;color:var(--text3);margin-top:4px">${COMPANY_NAME}</p>
+      </div>
+      <div id="login-err"></div>
+      <div id="login-mode">
+        <div class="form-group">
+          <label class="lbl">Email</label>
+          <input class="inp" type="email" id="l-email" placeholder="usuario@empresa.com">
+        </div>
+        <div class="form-group">
+          <label class="lbl">Contraseña</label>
+          <input class="inp" type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center;font-size:14px" onclick="doLogin()">
+          <i class="ti ti-login"></i> Ingresar
+        </button>
+        <div style="margin-top:12px;text-align:center">
+          <button onclick="showRegister()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit">
+            ¿No tenés cuenta? Registrate
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function showRegister() {
+  const mode = $('login-mode');
+  mode.innerHTML = `
+    <div class="form-group">
+      <label class="lbl">Nombre completo</label>
+      <input class="inp" id="r-name" placeholder="Juan Pérez">
+    </div>
+    <div class="form-group">
+      <label class="lbl">Empresa</label>
+      <input class="inp" id="r-company" placeholder="Operadora SA">
+    </div>
+    <div class="form-group">
+      <label class="lbl">Email</label>
+      <input class="inp" type="email" id="r-email" placeholder="juan@empresa.com">
+    </div>
+    <div class="form-group">
+      <label class="lbl">Contraseña (mínimo 6 caracteres)</label>
+      <input class="inp" type="password" id="r-pass" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center" onclick="doRegister()">
+      <i class="ti ti-user-plus"></i> Crear cuenta
+    </button>
+    <div style="margin-top:10px;text-align:center">
+      <button onclick="renderLogin($('app'))" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit">← Volver al login</button>
+    </div>`;
+}
+
+async function doLogin() {
+  const email = $('l-email')?.value?.trim();
+  const pass  = $('l-pass')?.value;
+  if(!email||!pass) return;
+  const {data,error} = await sb.auth.signInWithPassword({email,password:pass});
+  if(error) { $('login-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`; return; }
+}
+
+async function doRegister() {
+  const name = $('r-name')?.value?.trim();
+  const company = $('r-company')?.value?.trim();
+  const email = $('r-email')?.value?.trim();
+  const pass = $('r-pass')?.value;
+  if(!name||!company||!email||!pass) { showToast('Completá todos los campos','err'); return; }
+  const {data,error} = await sb.auth.signUp({ email, password:pass, options:{data:{full_name:name,company}} });
+  if(error) { showToast(error.message,'err'); return; }
+  showToast('¡Cuenta creada! Revisá tu email para confirmarla.','ok');
+  renderLogin($('app'));
+}
+
+/* ── Portal layout ── */
+function renderPortal(app) {
+  const p = state.profile;
+  const isAdmin = p?.role==='admin';
+  const navItems = isAdmin
+    ? [{id:'reports',icon:'ti-file-text',label:'Reportes'},{id:'upload',icon:'ti-cloud-upload',label:'Subir'},{id:'clients',icon:'ti-users',label:'Clientes'},{id:'auditlog',icon:'ti-shield-check',label:'Audit Log'}]
+    : [{id:'reports',icon:'ti-file-text',label:'Mis informes'}];
+
+  const t = state.tab;
+  const titleMap = {reports:isAdmin?'Todos los reportes':'Mis informes',upload:'Subir reporte',clients:'Gestión de clientes',auditlog:'Audit Log de Descargas'};
+
+  app.innerHTML = `
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-brand">
+        <div style="padding:4px 8px 0;display:flex;align-items:center"><img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=300,fit=crop/d95gEJ0jJgfxbzwe/recurso-1-2x-1yBLDy8iVJ2EB3go.png" style="max-height:32px;max-width:120px;object-fit:contain;filter:brightness(1.1)" alt="GM Robótica"></div>
+        <div><div class="sb-name" style="color:#f97316;font-weight:800">GM Robótica</div><div class="sb-tag">Portal DS-1 · Informes técnicos</div></div>
+      </div>
+      <div class="sb-user">
+        <div class="sb-av">${initials(p?.full_name)}</div>
+        <div style="overflow:hidden">
+          <div class="sb-uname">${p?.full_name||'Usuario'}</div>
+          <div class="sb-ucmp">${p?.company||''}</div>
+        </div>
+      </div>
+      <div class="sb-nav">
+        <div class="sb-lbl">Navegación</div>
+        ${navItems.map(n=>`<div class="sb-link ${t===n.id?'active':''}" onclick="setTab('${n.id}')"><i class="ti ${n.icon}"></i>${n.label}</div>`).join('')}
+        ${isAdmin?`<div class="sb-lbl" style="margin-top:8px">Sistema</div>
+        <div class="sb-link"><i class="ti ti-database"></i>Supabase</div>`:``}
+      </div>
+      <div class="sb-foot">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:8px">
+          <span class="badge ${isAdmin?'badge-admin':'badge-grey'}">${isAdmin?'Administrador':'Cliente'}</span>
+        </div>
+        <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="doLogout()">
+          <i class="ti ti-logout"></i> Cerrar sesión
+        </button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="mhdr">
+        <div>
+          <div class="mhdr-title">${state.selected?'Detalle del reporte':titleMap[t]||''}</div>
+          <div class="mhdr-sub">${state.selected?'Reporte '+state.selected.report_no:p?.company||''}</div>
+        </div>
+        <div style="margin-left:auto" id="hdr-actions"></div>
+      </div>
+      <div class="mcontent" id="main-content">
+        <div style="text-align:center;padding:40px;color:var(--text3)"><i class="ti ti-loader-2" style="font-size:28px;animation:spin 1s linear infinite"></i></div>
+      </div>
+    </div>
+
+    <div class="mob-nav">
+      ${navItems.map(n=>`<div class="mob-nav-item ${t===n.id?'active':''}" onclick="setTab('${n.id}')"><i class="ti ${n.icon}"></i>${n.label}</div>`).join('')}
+      <div class="mob-nav-item" onclick="doLogout()"><i class="ti ti-logout"></i>Salir</div>
+    </div>
+  </div>
+
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+
+  loadTab();
+}
+
+function setTab(tab) {
+  state.tab = tab;
+  state.selected = null;
+  renderPortal($('app'));
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  state.user = null; state.profile = null; state.tab='reports'; state.selected=null;
+  render();
+}
+
+/* ── Load tab content ── */
+async function loadTab() {
+  const isAdmin = state.profile?.role==='admin';
+  if(state.selected) { await renderReportDetail(state.selected); return; }
+  if(state.tab==='reports') await renderReports(isAdmin);
+  else if(state.tab==='upload' && isAdmin) await renderUpload();
+  else if(state.tab==='clients' && isAdmin) await renderClients();
+  else if(state.tab==='auditlog' && isAdmin) await renderAuditLog();
+}
+
+/* ── Reports list ── */
+async function renderReports(isAdmin) {
+  const mc = $('main-content');
+
+  // Fetch reports
+  let q = sb.from('reports').select(`*, report_assignments(client_id)`).order('created_at',{ascending:false});
+  if(!isAdmin) {
+    // Get only assigned reports
+    const {data:assigned} = await sb.from('report_assignments').select('report_id').eq('client_id',state.user.id);
+    const ids = (assigned||[]).map(a=>a.report_id);
+    if(!ids.length) {
+      mc.innerHTML=`<div class="empty"><i class="ti ti-file-off"></i><p>No tenés informes disponibles todavía.</p><p style="font-size:11px;margin-top:6px">Tus informes aparecerán aquí cuando sean publicados.</p></div>`;
+      return;
+    }
+    q = q.in('id', ids);
+  }
+
+  const {data:reports,error} = await q;
+  if(error) { mc.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`; return; }
+
+  // Stats (admin)
+  let statsHtml = '';
+  if(isAdmin) {
+    const total=reports.length, pass=reports.filter(r=>r.result==='APROBADO').length, fail=reports.filter(r=>r.result==='RECHAZADO').length;
+    statsHtml=`<div class="stats">
+      <div class="stat"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-num" style="color:var(--green)">${pass}</div><div class="stat-lbl">Aprobados</div></div>
+      <div class="stat"><div class="stat-num" style="color:var(--red)">${fail}</div><div class="stat-lbl">Rechazados</div></div>
+      <div class="stat"><div class="stat-num" style="color:var(--amber)">${total-pass-fail}</div><div class="stat-lbl">Condicionales</div></div>
+    </div>`;
+  }
+
+  mc.innerHTML = `${statsHtml}
+  <div class="tbl-wrap">
+    <div class="tbl-search">
+      <i class="ti ti-search" style="color:var(--text3);font-size:16px;flex-shrink:0"></i>
+      <input class="inp" id="srch" style="max-width:260px" placeholder="Buscar por reporte, componente, pozo..." oninput="filterTable()">
+      <select class="inp" id="fil-result" style="width:160px" onchange="filterTable()">
+        <option value="">Todos los resultados</option>
+        <option value="APROBADO">Aprobados</option>
+        <option value="RECHAZADO">Rechazados</option>
+        <option value="CONDICIONAL">Condicionales</option>
+      </select>
+      <select class="inp" id="fil-cat" style="width:130px" onchange="filterTable()">
+        <option value="">Todas las categorías</option>
+        ${[1,2,3,4,5].map(c=>`<option value="${c}">Categoría ${c}</option>`).join('')}
+      </select>
+    </div>
+    <table class="tbl" id="reports-tbl">
+      <thead><tr>
+        <th>N° Reporte</th><th>Fecha</th><th>Componente</th>
+        ${isAdmin?'<th>Cliente</th>':''}
+        <th>Pozo / Rig</th><th>Cat.</th><th>Resultado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="reports-body">
+        ${(reports||[]).map(r=>`
+        <tr data-report='${JSON.stringify(r).replace(/'/g,"&apos;")}' data-text="${(r.report_no||'')+(r.component||'')+(r.company||'')+(r.well||'')+(r.rig||'')}".toLowerCase() data-result="${r.result}" data-cat="${r.category}">
+          <td style="font-family:monospace;font-weight:700">${r.report_no||'—'}</td>
+          <td>${fmtDate(r.date)}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.component||'—'}</td>
+          ${isAdmin?`<td style="font-size:11px">${r.company||'—'}</td>`:''}
+          <td style="font-size:11px">${[r.well,r.rig].filter(Boolean).join(' / ')||'—'}</td>
+          <td><span class="badge badge-grey">Cat ${r.category||'—'}</span></td>
+          <td>${resultBadge(r.result)}</td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-sm" onclick="viewReport(this.closest('tr'))"><i class="ti ti-eye"></i> Ver</button>
+              <button class="btn btn-sm btn-success" onclick="event.stopPropagation();downloadPDFFromRow(this.closest('tr'))"><i class="ti ti-file-type-pdf"></i> PDF</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    ${!reports?.length?`<div class="empty" style="padding:30px"><i class="ti ti-file-off"></i><p>No hay reportes.</p></div>`:''}
+  </div>`;
+}
+
+function filterTable() {
+  const q=($('srch')?.value||'').toLowerCase();
+  const r=$('fil-result')?.value||'';
+  const c=$('fil-cat')?.value||'';
+  document.querySelectorAll('#reports-tbl tbody tr').forEach(tr=>{
+    const text=(tr.dataset.text||'').toLowerCase();
+    const result=tr.dataset.result||'';
+    const cat=tr.dataset.cat||'';
+    const ok=(!q||text.includes(q))&&(!r||result===r)&&(!c||cat===c);
+    tr.style.display=ok?'':'none';
+  });
+}
+
+function viewReport(tr) {
+  try { state.selected=JSON.parse(tr.dataset.report); renderPortal($('app')); } catch(e){}
+}
+
+function downloadPDFFromRow(tr) {
+  try { const r=JSON.parse(tr.dataset.report); downloadPDF(r); } catch(e){}
+}
+
+/* ── Report detail ── */
+async function renderReportDetail(r) {
+  await logEvent('ver_detalle', r.id, r.report_no);
+  const mc = $('main-content');
+  const ha = $('hdr-actions');
+  if(ha) ha.innerHTML=`<div style="display:flex;gap:8px">
+    <button class="btn" onclick="state.selected=null;renderPortal($('app'))"><i class="ti ti-arrow-left"></i> Volver</button>
+    <button class="btn btn-success" style="font-size:13px;padding:8px 18px" onclick="downloadPDF(state.selected)"><i class="ti ti-file-type-pdf"></i> Descargar PDF</button>
+  </div>`;
+
+  const vis=r.visual_inspection||{};
+  const meas=r.measurements||{};
+  const visPairs=Object.entries(VIS_LABELS).filter(([k])=>vis[k]&&vis[k]!=='NA');
+  const measPairs=Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
+
+  mc.innerHTML=`
+  <!-- Header -->
+  <div class="rpt-section" style="border-left:4px solid var(--blue)">
+    <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:16px;font-weight:700">${r.component||'Sustituto'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">DS-1® Vol 3 y Addendum — Categoría ${r.category}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:15px;font-weight:700">${r.report_no||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${fmtDate(r.date)}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component ID -->
+  <div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-tool"></i>Identificación del Componente</div>
+    <div class="rpt-body">
+      <div class="rpt-grid" style="gap:12px">
+        ${[['Empresa cliente',r.company],['Equipo / Rig',r.rig],['Pozo',r.well],['Ubicación',r.location],['Inspector',r.inspector],['N° Certificado DS-1',r.cert_no],['N° de Serie',r.serial_no],['N° de Calor',r.heat_no],['Fabricante',r.manufacturer]].map(([l,v])=>`
+        <div class="rpt-field"><label>${l}</label><span>${v||'—'}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual -->
+  ${visPairs.length?`<div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-eye"></i>Inspección Visual</div>
+    <div class="rpt-body" style="padding:0">
+      <table class="tbl">
+        <thead><tr><th>Ítem</th><th>Resultado</th></tr></thead>
+        <tbody>${visPairs.map(([k,label])=>{const v=vis[k];return`<tr><td>${label}</td><td>${v==='P'?'<span class="cell-pass">✓ Aprobado</span>':v==='F'?'<span class="cell-fail">✗ Rechazado</span>':'<span style="color:var(--text3)">N/A</span>'}</td></tr>`;}).join('')}</tbody>
+      </table>
+    </div>
+  </div>`:''}
+
+  <!-- Measurements -->
+  ${measPairs.length?`<div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-ruler-measure"></i>Mediciones Dimensionales</div>
+    <div class="rpt-body" style="padding:0;overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>Parámetro</th><th>Mín</th><th>Máx</th><th>Med 1</th><th>Med 2</th><th>Med 3</th><th>Promedio</th><th>Estado</th></tr></thead>
+        <tbody>${measPairs.map(([k,label])=>{const m=meas[k]||{};const a=avg3(m);const st=evalSt(a||m.m1,m.min,m.max);return`<tr>
+          <td style="font-weight:500">${label}</td>
+          <td style="font-family:monospace;font-size:11px">${m.min||'—'}</td>
+          <td style="font-family:monospace;font-size:11px">${m.max||'—'}</td>
+          <td class="${evalSt(m.m1,m.min,m.max)==='p'?'cell-pass':evalSt(m.m1,m.min,m.max)==='f'?'cell-fail':''}">${m.m1||'—'}</td>
+          <td class="${evalSt(m.m2,m.min,m.max)==='p'?'cell-pass':evalSt(m.m2,m.min,m.max)==='f'?'cell-fail':''}">${m.m2||'—'}</td>
+          <td class="${evalSt(m.m3,m.min,m.max)==='p'?'cell-pass':evalSt(m.m3,m.min,m.max)==='f'?'cell-fail':''}">${m.m3||'—'}</td>
+          <td class="${st==='p'?'cell-pass':st==='f'?'cell-fail':''}" style="font-family:monospace;font-weight:600">${a||'—'}</td>
+          <td>${st==='p'?'<span class="cell-pass">✓ OK</span>':st==='f'?'<span class="cell-fail">✗ Falla</span>':'—'}</td>
+        </tr>`;}).join('')}</tbody>
+      </table>
+    </div>
+  </div>`:''}
+
+  <!-- Comments -->
+  ${r.comments?`<div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-notes"></i>Observaciones</div>
+    <div class="rpt-body"><p style="font-size:13px;line-height:1.7;color:var(--text)">${r.comments}</p></div>
+  </div>`:''}
+
+  <!-- Result -->
+  <div class="rpt-section" style="border:2px solid ${r.result==='APROBADO'?'var(--green)':r.result==='RECHAZADO'?'var(--red)':'var(--amber)'}">
+    <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:22px;font-weight:700;color:${r.result==='APROBADO'?'var(--green)':r.result==='RECHAZADO'?'var(--red)':'var(--amber)'}">
+          ${r.result==='APROBADO'?'✓':'✗'} ${r.result||'—'}
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">
+          ${r.result==='APROBADO'?'Componente apto para servicio según DS-1 Vol 3':'Componente NO apto para servicio — ver observaciones'}
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--text3)">
+        Inspector: <strong>${r.inspector||'—'}</strong><br>
+        Cert. DS-1: <strong>${r.cert_no||'—'}</strong>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Upload ── */
+async function renderUpload() {
+  const mc=$('main-content');
+  // Load clients for assignment
+  const {data:clients}=await sb.from('profiles').select('*').eq('role','client').eq('active',true);
+  const clientOpts=(clients||[]);
+
+  mc.innerHTML=`
+  <div class="card">
+    <input type="file" id="json-file" accept=".json" style="display:none" onchange="loadJsonFile(this.files[0])">
+    <div class="dropzone" id="dropzone" onclick="$('json-file').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="event.preventDefault();this.classList.remove('drag');loadJsonFile(event.dataTransfer.files[0])">
+      <i class="ti ti-file-type-json" style="font-size:32px;color:var(--text3);display:block;margin-bottom:8px"></i>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">Arrastrá el JSON del formulario DS-1</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">o hacé clic para seleccionar el archivo</div>
+      <button class="btn btn-primary" style="pointer-events:none"><i class="ti ti-upload"></i> Seleccionar archivo .json</button>
+    </div>
+    <div id="parse-result"></div>
+    <div id="upload-form" style="display:none">
+      <div style="margin-bottom:12px;padding:10px;background:var(--green-bg);border:1px solid var(--green);border-radius:6px;font-size:12px;color:var(--green-text);display:flex;align-items:center;gap:8px">
+        <i class="ti ti-circle-check" style="font-size:16px"></i>
+        <strong>Archivo cargado.</strong> Verificá los campos y asigná al cliente antes de publicar.
+      </div>
+
+      <div class="grid4" style="margin-bottom:10px">
+        <div class="form-group"><label class="lbl">N° Reporte *</label><input class="inp" id="u-reportno" placeholder="RP-2026-001"></div>
+        <div class="form-group"><label class="lbl">Fecha</label><input class="inp" type="date" id="u-date"></div>
+        <div class="form-group"><label class="lbl">Categoría DS-1</label>
+          <select class="inp" id="u-category">${[1,2,3,4,5].map(c=>`<option value="${c}">Categoría ${c}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="lbl">Resultado</label>
+          <select class="inp" id="u-result" style="font-weight:700">
+            <option value="APROBADO" style="color:var(--green)">APROBADO</option>
+            <option value="RECHAZADO" style="color:var(--red)">RECHAZADO</option>
+            <option value="CONDICIONAL" style="color:var(--amber)">CONDICIONAL</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="lbl">Componente / Descripción</label><input class="inp" id="u-component" placeholder="X-Over NC46 Pin × NC50 Caja, 6-1/2&quot; OD"></div>
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="form-group"><label class="lbl">Empresa cliente</label><input class="inp" id="u-company"></div>
+        <div class="form-group"><label class="lbl">Equipo / Rig</label><input class="inp" id="u-rig"></div>
+        <div class="form-group"><label class="lbl">Pozo</label><input class="inp" id="u-well"></div>
+      </div>
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="form-group"><label class="lbl">Ubicación</label><input class="inp" id="u-location"></div>
+        <div class="form-group"><label class="lbl">Inspector</label><input class="inp" id="u-inspector"></div>
+        <div class="form-group"><label class="lbl">N° Certificado DS-1</label><input class="inp" id="u-certno"></div>
+      </div>
+      <div class="grid3" style="margin-bottom:10px">
+        <div class="form-group"><label class="lbl">N° Serie</label><input class="inp" id="u-serialno"></div>
+        <div class="form-group"><label class="lbl">N° Calor</label><input class="inp" id="u-heatno"></div>
+        <div class="form-group"><label class="lbl">Fabricante</label><input class="inp" id="u-manufacturer"></div>
+      </div>
+      <div class="form-group"><label class="lbl">Observaciones</label><textarea class="inp" id="u-comments"></textarea></div>
+
+      <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+        <label class="lbl" style="margin-bottom:8px">Asignar a cliente/s *</label>
+        <div id="client-btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          ${clientOpts.length===0
+            ?'<div style="color:var(--text3);font-size:12px">No hay clientes registrados. Creá uno en la sección Clientes.</div>'
+            :clientOpts.map(c=>`<button type="button" class="btn" id="cb-${c.id}" onclick="toggleClient('${c.id}')"><i class="ti ti-user"></i> ${c.full_name} (${c.company})</button>`).join('')}
+        </div>
+        <div id="upload-err"></div>
+        <button class="btn btn-primary" style="padding:9px 22px;font-size:13px" onclick="submitReport()">
+          <i class="ti ti-upload"></i> Publicar reporte
+        </button>
+      </div>
+    </div>
+  </div>`;
+
+  window._selectedClients=[];
+  window._parsedReport=null;
+}
+
+window.toggleClient=function(id){
+  const sc=window._selectedClients;
+  const idx=sc.indexOf(id);
+  if(idx>=0){sc.splice(idx,1);}else{sc.push(id);}
+  const btn=document.getElementById('cb-'+id);
+  if(btn){
+    btn.className='btn'+(sc.includes(id)?' btn-success':'');
+    btn.innerHTML=`<i class="ti ti-${sc.includes(id)?'user-check':'user'}"></i> ${btn.textContent.replace(/✓?\s*/,'').trim()}`;
+  }
+};
+
+window.loadJsonFile=function(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      const ri=d.reportInfo||d||{};
+      const co=d.component||{};
+      const connTop=(ri.topConnType||'')+(ri.topConnConfig?' '+ri.topConnConfig:'');
+      const connBot=(ri.botConnType||'')+(ri.botConnConfig?' '+ri.botConnConfig:'');
+      window._parsedReport={...d,_connTop:connTop,_connBot:connBot};
+
+      // Fill form
+      const set=(id,v)=>{if($(id)&&v)$(id).value=v;};
+      set('u-reportno',ri.reportNo);
+      set('u-date',ri.date);
+      set('u-category',ri.category||'3');
+      set('u-result',d.result||'APROBADO');
+      set('u-component',co.description||co.type||ri.description||`${connTop} × ${connBot}`);
+      set('u-company',ri.client||ri.company||'');
+      set('u-rig',ri.rig||'');
+      set('u-well',ri.well||'');
+      set('u-location',ri.location||'');
+      set('u-inspector',ri.inspector||'');
+      set('u-certno',ri.certNo||'');
+      set('u-serialno',co.serialNo||'');
+      set('u-heatno',co.heatNo||'');
+      set('u-manufacturer',co.manufacturer||'');
+      set('u-comments',d.comments||'');
+
+      $('upload-form').style.display='block';
+      $('parse-result').innerHTML='';
+    }catch(ex){
+      $('parse-result').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>JSON inválido: ${ex.message}</div>`;
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.submitReport=async function(){
+  const err=$('upload-err');
+  const reportNo=$('u-reportno')?.value?.trim();
+  if(!reportNo){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>El N° de Reporte es obligatorio.</div>';return;}
+  if(!window._selectedClients?.length){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Seleccioná al menos un cliente.</div>';return;}
+
+  const d=window._parsedReport||{};
+  const ri=d.reportInfo||{};
+  const co=d.component||{};
+
+  const reportData={
+    report_no:$('u-reportno').value.trim(),
+    date:$('u-date').value||null,
+    revision:ri.revision||'0',
+    component:$('u-component').value,
+    type:co.type||'Sustituto',
+    company:$('u-company').value,
+    rig:$('u-rig').value,
+    well:$('u-well').value,
+    location:$('u-location').value,
+    inspector:$('u-inspector').value,
+    cert_no:$('u-certno').value,
+    category:$('u-category').value,
+    result:$('u-result').value,
+    conn_top:d._connTop||ri.topConnType||'',
+    conn_bot:d._connBot||ri.botConnType||'',
+    serial_no:$('u-serialno').value,
+    heat_no:$('u-heatno').value,
+    manufacturer:$('u-manufacturer').value,
+    material:co.material||'',
+    grade:co.grade||'',
+    nom_od:co.nomOD||'',
+    nom_id:co.nomID||'',
+    comp_length:co.length||co.compLength||'',
+    weight:co.weight||'',
+    makeup_torque:co.makeupTorque||'',
+    comments:$('u-comments').value,
+    visual_inspection:d.visualInspection||{},
+    measurements:d.measurements||{},
+    raw_data:d,
+    uploaded_by:state.user.id,
+    published:true,
+  };
+
+  const {data:rpt,error}=await sb.from('reports').insert(reportData).select().single();
+  if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+
+  // Assign to clients
+  const assigns=window._selectedClients.map(cid=>({report_id:rpt.id,client_id:cid}));
+  await sb.from('report_assignments').insert(assigns);
+
+  // Log
+  await logEvent('reporte_publicado',rpt.id,rpt.report_no,{clientCount:assigns.length});
+
+  showToast(`Reporte ${rpt.report_no} publicado correctamente.`,'ok');
+  setTab('reports');
+};
+
+/* ── Clients ── */
+async function renderClients() {
+  const mc=$('main-content');
+  const {data:clients}=await sb.from('profiles').select('*').eq('role','client').order('created_at',{ascending:false});
+
+  mc.innerHTML=`
+  <div class="tbl-wrap" style="margin-bottom:16px">
+    <table class="tbl">
+      <thead><tr><th>Nombre</th><th>Email</th><th>Empresa</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+      ${(clients||[]).length===0?`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">No hay clientes registrados.</td></tr>`:
+        (clients||[]).map(c=>`<tr>
+          <td style="font-weight:500"><div style="width:24px;height:24px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-right:8px">${initials(c.full_name)}</div>${c.full_name}</td>
+          <td style="font-family:monospace;font-size:11px">${c.id.slice(0,8)}…</td>
+          <td>${c.company||'—'}</td>
+          <td><span class="badge ${c.active?'badge-pass':'badge-grey'}">${c.active?'Activo':'Inactivo'}</span></td>
+          <td>
+            <button class="btn btn-sm btn-danger" onclick="toggleClient_active('${c.id}',${!c.active})">
+              <i class="ti ti-${c.active?'user-x':'user-check'}"></i> ${c.active?'Desactivar':'Activar'}
+            </button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text)"><i class="ti ti-user-plus" style="margin-right:6px"></i>Invitar nuevo cliente</div>
+    <div class="alert alert-info"><i class="ti ti-info-circle"></i>El cliente debe registrarse en el portal con su email. Después aparecerá en esta lista y podrás asignarle informes.</div>
+    <p style="font-size:12px;color:var(--text2);margin-top:8px">URL del portal para compartir con el cliente:</p>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;font-family:monospace;font-size:12px;color:var(--blue-text);margin-top:6px;cursor:pointer" onclick="navigator.clipboard.writeText(window.location.href).then(()=>showToast('URL copiada','ok'))">
+      ${window.location.href} &nbsp; <i class="ti ti-copy" style="vertical-align:-2px"></i>
+    </div>
+  </div>`;
+}
+
+window.toggleClient_active=async function(id,active){
+  const {error}=await sb.from('profiles').update({active}).eq('id',id);
+  if(error){showToast(error.message,'err');return;}
+  showToast(`Cliente ${active?'activado':'desactivado'}.`,'ok');
+  renderClients();
+};
+
+/* ── Audit Log ── */
+async function renderAuditLog() {
+  const mc=$('main-content');
+  const {data:logs}=await sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
+
+  mc.innerHTML=`
+  <div class="tbl-wrap">
+    <div class="tbl-search">
+      <i class="ti ti-shield-check" style="color:var(--text3);font-size:16px"></i>
+      <span style="font-size:12px;color:var(--text2);font-weight:600">Registro de actividad — últimas 200 acciones</span>
+      <div style="margin-left:auto">
+        <button class="btn btn-sm" onclick="exportAuditCSV()"><i class="ti ti-download"></i> Exportar CSV</button>
+      </div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Fecha / Hora</th><th>Evento</th><th>Usuario</th><th>Empresa</th><th>Informe</th><th>Detalles</th></tr></thead>
+      <tbody>
+      ${(logs||[]).length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Sin registros todavía.</td></tr>`:
+        (logs||[]).map(l=>{
+          const evtColor=l.event==='descarga_pdf'?'var(--green-text)':l.event==='login'?'var(--blue-text)':'var(--text2)';
+          const evtBg=l.event==='descarga_pdf'?'var(--green-bg)':l.event==='login'?'var(--blue-bg)':'var(--bg3)';
+          return`<tr>
+            <td style="font-size:11px;white-space:nowrap">${fmtDT(l.created_at)}</td>
+            <td><span style="background:${evtBg};color:${evtColor};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700">${l.event}</span></td>
+            <td style="font-size:11px">${l.user_name||'—'}</td>
+            <td style="font-size:11px">${l.user_company||'—'}</td>
+            <td style="font-family:monospace;font-size:11px">${l.report_no||'—'}</td>
+            <td style="font-size:10px;color:var(--text3)">${l.metadata?.downloadId?`ID: ${l.metadata.downloadId}`:''}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+window.exportAuditCSV=function(){
+  const rows=document.querySelectorAll('#main-content .tbl tbody tr');
+  let csv='Fecha,Evento,Usuario,Empresa,Informe,Detalles\n';
+  rows.forEach(tr=>{
+    const cols=[...tr.querySelectorAll('td')].map(td=>'"'+td.textContent.trim().replace(/"/g,'""')+'"');
+    csv+=cols.join(',')+'\n';
+  });
+  const b=new Blob([csv],{type:'text/csv'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download='audit_log.csv';a.click();URL.revokeObjectURL(u);
+};
+
+/* ============================================================
+   AUTH STATE LISTENER
+   ============================================================ */
+async function init() {
+  if(!IS_CONFIGURED) { render(); return; }
+
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session?.user) {
+      state.user = session.user;
+      // Load profile
+      const {data:profile} = await sb.from('profiles').select('*').eq('id',session.user.id).single();
+      state.profile = profile;
+      if(event==='SIGNED_IN') await logEvent('login');
+      render();
+    } else {
+      state.user = null;
+      state.profile = null;
+      render();
+    }
+  });
+
+  // Check existing session
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session) render();
+}
+
+init();
 </script>
 </body>
 </html>
