@@ -1,355 +1,1314 @@
--- ============================================================
---  PORTAL DS-1 — GM Robótica — Schema v2.0
---  NOVEDADES: Empresas, Roles por empresa, Sistema de invitaciones
---  Ejecutar en Supabase → SQL Editor (reemplaza el schema anterior)
--- ============================================================
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="referrer" content="strict-origin">
+<title>Portal DS-1 — GM Robótica</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* GM Robótica — Negro industrial + Naranja */
+:root{
+  --bg:#111111;--bg2:#1a1a1a;--bg3:#222222;
+  --border:#2d2d2d;--border2:#3a3a3a;
+  --text:#f0f0f0;--text2:#a0a0a0;--text3:#666666;
+  --orange:#f97316;--orange2:#ea580c;--orange-bg:rgba(249,115,22,.12);--orange-text:#fb923c;
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.12);--blue-text:#60a5fa;
+  --green:#22c55e;--green-bg:rgba(34,197,94,.12);--green-text:#4ade80;
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);--red-text:#f87171;
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);--amber-text:#fbbf24;
+  --purple:#a855f7;--purple-bg:rgba(168,85,247,.12);--purple-text:#c084fc;
+  --radius:6px;--shadow:0 2px 12px rgba(0,0,0,.5)
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',-apple-system,sans-serif;font-size:13px;color:var(--text);background:var(--bg2)}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button{cursor:pointer}
+a{color:var(--orange);text-decoration:none}
 
--- ── Limpiar tablas anteriores si existen ──
-DROP TABLE IF EXISTS audit_logs CASCADE;
-DROP TABLE IF EXISTS report_assignments CASCADE;
-DROP TABLE IF EXISTS reports CASCADE;
-DROP TABLE IF EXISTS profiles CASCADE;
-DROP TABLE IF EXISTS invitations CASCADE;
-DROP TABLE IF EXISTS companies CASCADE;
-DROP FUNCTION IF EXISTS handle_new_user CASCADE;
-DROP FUNCTION IF EXISTS is_admin CASCADE;
-DROP FUNCTION IF EXISTS is_company_admin CASCADE;
-DROP FUNCTION IF EXISTS update_updated_at CASCADE;
+/* Layout */
+.layout{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;min-width:220px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 
--- ============================================================
--- 1. EMPRESAS
--- ============================================================
-CREATE TABLE companies (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        TEXT NOT NULL,
-  rut_cuit    TEXT,
-  address     TEXT,
-  city        TEXT,
-  country     TEXT DEFAULT 'Argentina',
-  phone       TEXT,
-  email       TEXT,
-  logo_url    TEXT,
-  active      BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+/* Sidebar */
+.sb-logo{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.sb-logo img{max-height:36px;max-width:140px;object-fit:contain}
+.sb-user{padding:10px 14px;border-bottom:1px solid var(--border)}
+.sb-user-row{display:flex;align-items:center;gap:8px}
+.sb-av{width:30px;height:30px;border-radius:50%;background:var(--orange-bg);border:1px solid var(--orange);color:var(--orange-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.sb-ucmp{font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.sb-role-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-top:2px;display:inline-block}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0}
+.sb-lbl{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;padding:8px 14px 3px}
+.sb-link{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-left:3px solid transparent;transition:all .12s;user-select:none}
+.sb-link:hover{background:var(--bg2);color:var(--text);border-left-color:var(--border2)}
+.sb-link.active{background:rgba(249,115,22,.08);color:var(--orange);border-left-color:var(--orange);font-weight:700}
+.sb-link i{font-size:16px;flex-shrink:0}
+.sb-link .badge-count{margin-left:auto;background:var(--orange);color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700}
+.sb-foot{padding:10px 14px;border-top:1px solid var(--border)}
 
--- Empresa inicial: GM Robótica (la inspectora)
-INSERT INTO companies (id, name, city, email, active)
-VALUES ('00000000-0000-0000-0000-000000000001', 'GM Robótica', 'Mendoza', 'info@gmrobotica.ar', TRUE);
+/* Main */
+.mhdr{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:10px;min-height:52px;flex-shrink:0}
+.mhdr-title{font-size:15px;font-weight:700;color:var(--text)}
+.mhdr-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.mcontent{flex:1;overflow-y:auto;padding:18px;background:var(--bg2)}
 
--- ============================================================
--- 2. PERFILES DE USUARIO
--- Roles del sistema:
---   super_admin  → GM Robótica, acceso total
---   company_admin → admin de una empresa cliente
---   inspector    → puede crear y subir reportes
---   supervisor   → aprueba reportes, ve todo de su empresa
---   viewer       → solo lee/descarga reportes asignados
--- ============================================================
-CREATE TABLE profiles (
-  id           UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  company_id   UUID REFERENCES companies(id) ON DELETE SET NULL,
-  full_name    TEXT NOT NULL DEFAULT '',
-  position     TEXT,                          -- cargo / posición
-  phone        TEXT,
-  role         TEXT NOT NULL DEFAULT 'viewer'
-                 CHECK (role IN ('super_admin','company_admin','inspector','supervisor','viewer')),
-  active       BOOLEAN NOT NULL DEFAULT TRUE,
-  must_change_password BOOLEAN NOT NULL DEFAULT FALSE,  -- fuerza cambio de contraseña
-  last_login   TIMESTAMPTZ,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;font-size:12px;font-weight:600;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;white-space:nowrap;transition:all .12s}
+.btn:hover{background:var(--bg2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;border-color:var(--orange)}
+.btn-primary:hover{opacity:.9}
+.btn-success{background:var(--green-bg);color:var(--green-text);border-color:var(--green)}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
+.btn-info{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-xs{padding:2px 8px;font-size:10px}
 
--- ============================================================
--- 3. INVITACIONES (sistema seguro de incorporación)
--- El admin crea la invitación → el sistema manda el email
--- El usuario usa el token para activar su cuenta y poner contraseña
--- ============================================================
-CREATE TABLE invitations (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email        TEXT NOT NULL,
-  full_name    TEXT NOT NULL,
-  company_id   UUID REFERENCES companies(id) ON DELETE CASCADE,
-  role         TEXT NOT NULL DEFAULT 'viewer'
-                 CHECK (role IN ('company_admin','inspector','supervisor','viewer')),
-  token        TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(32), 'hex'),
-  invited_by   UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  accepted     BOOLEAN NOT NULL DEFAULT FALSE,
-  expires_at   TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+/* Inputs */
+.inp{width:100%;padding:7px 11px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg3);color:var(--text);font-family:inherit;font-size:13px;transition:border .12s}
+.inp:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 2px rgba(249,115,22,.15)}
+.inp::placeholder{color:var(--text3)}
+textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
+.lbl{display:block;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.form-group{margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 
--- ============================================================
--- 4. REPORTES DE INSPECCIÓN
--- ============================================================
-CREATE TABLE reports (
-  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  -- Identificación
-  report_no           TEXT NOT NULL,
-  date                DATE,
-  revision            TEXT DEFAULT '0',
-  -- Componente
-  component           TEXT,
-  type                TEXT,
-  serial_no           TEXT,
-  heat_no             TEXT,
-  manufacturer        TEXT,
-  material            TEXT,
-  grade               TEXT,
-  nom_od              TEXT,
-  nom_id              TEXT,
-  comp_length         TEXT,
-  weight              TEXT,
-  makeup_torque       TEXT,
-  conn_top            TEXT,
-  conn_bot            TEXT,
-  -- Contexto operativo
-  company_id          UUID REFERENCES companies(id) ON DELETE SET NULL,  -- empresa CLIENTE
-  client_company_name TEXT,
-  rig                 TEXT,
-  well                TEXT,
-  location            TEXT,
-  -- Inspector
-  inspector           TEXT,
-  cert_no             TEXT,
-  category            TEXT DEFAULT '3',
-  -- Resultado
-  result              TEXT DEFAULT 'APROBADO'
-                        CHECK (result IN ('APROBADO','RECHAZADO','CONDICIONAL')),
-  comments            TEXT,
-  -- Datos estructurados DS-1
-  visual_inspection   JSONB DEFAULT '{}',
-  measurements        JSONB DEFAULT '{}',
-  images              JSONB DEFAULT '[]',   -- URLs de imágenes adjuntas
-  raw_data            JSONB DEFAULT '{}',
-  -- Control
-  published           BOOLEAN NOT NULL DEFAULT FALSE,
-  uploaded_by         UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  approved_by         UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  approved_at         TIMESTAMPTZ,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+/* Cards */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 
--- ============================================================
--- 5. ASIGNACIONES (reportes visibles para usuarios específicos)
--- ============================================================
-CREATE TABLE report_assignments (
-  report_id   UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
-  profile_id  UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (report_id, profile_id)
-);
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
+.stat-num{font-size:26px;font-weight:800;line-height:1}
+.stat-lbl{font-size:10px;color:var(--text2);margin-top:4px}
+.stat-icon{font-size:20px;margin-bottom:4px;display:block}
 
--- ============================================================
--- 6. AUDIT LOG (inmutable — solo INSERT)
--- ============================================================
-CREATE TABLE audit_logs (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event         TEXT NOT NULL,
-  user_id       UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  user_name     TEXT,
-  user_company  TEXT,
-  user_role     TEXT,
-  report_id     UUID REFERENCES reports(id) ON DELETE SET NULL,
-  report_no     TEXT,
-  company_id    UUID REFERENCES companies(id) ON DELETE SET NULL,
-  ip_address    TEXT,
-  user_agent    TEXT,
-  metadata      JSONB DEFAULT '{}',
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
--- Solo se puede insertar, nunca modificar ni borrar
-CREATE RULE audit_log_no_update AS ON UPDATE TO audit_logs DO INSTEAD NOTHING;
-CREATE RULE audit_log_no_delete AS ON DELETE TO audit_logs DO INSTEAD NOTHING;
+/* Alerts */
+.alert{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:var(--radius);font-size:12px;margin-bottom:12px;line-height:1.5}
+.alert-ok{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green)}
+.alert-err{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red)}
+.alert-info{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue)}
+.alert-warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber)}
+.alert i{font-size:16px;flex-shrink:0;margin-top:1px}
 
--- ============================================================
--- 7. TRIGGERS
--- ============================================================
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
-$$ LANGUAGE plpgsql;
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;white-space:nowrap}
+.badge-pass{background:var(--green-bg);color:var(--green-text)}
+.badge-fail{background:var(--red-bg);color:var(--red-text)}
+.badge-cond{background:var(--amber-bg);color:var(--amber-text)}
+.badge-super{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff}
+.badge-cadmin{background:var(--orange-bg);color:var(--orange-text);border:1px solid var(--orange)}
+.badge-inspector{background:var(--blue-bg);color:var(--blue-text)}
+.badge-supervisor{background:var(--purple-bg);color:var(--purple-text)}
+.badge-viewer{background:var(--bg3);color:var(--text2)}
+.badge-grey{background:var(--bg3);color:var(--text2)}
 
-CREATE TRIGGER trg_companies_updated_at
-  BEFORE UPDATE ON companies FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_profiles_updated_at
-  BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_reports_updated_at
-  BEFORE UPDATE ON reports FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+/* Table */
+.tbl-wrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl thead{background:var(--bg3)}
+.tbl th{padding:9px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:rgba(249,115,22,.04)}
+.tbl-toolbar{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 
--- Trigger: crear perfil automáticamente al registrarse
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-DECLARE
-  v_invite invitations%ROWTYPE;
-  v_company_id UUID;
-  v_role TEXT := 'viewer';
-  v_name TEXT;
-BEGIN
-  -- Buscar invitación válida por email
-  SELECT * INTO v_invite
-  FROM invitations
-  WHERE email = NEW.email
-    AND accepted = FALSE
-    AND expires_at > NOW()
-  ORDER BY created_at DESC
-  LIMIT 1;
+/* Drop zone */
+.dropzone{border:2px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;background:var(--bg3);transition:all .2s}
+.dropzone:hover,.dropzone.drag{border-color:var(--orange);background:var(--orange-bg)}
 
-  IF FOUND THEN
-    v_company_id := v_invite.company_id;
-    v_role := v_invite.role;
-    v_name := v_invite.full_name;
-    -- Marcar invitación como aceptada
-    UPDATE invitations SET accepted = TRUE WHERE id = v_invite.id;
-  ELSE
-    -- Sin invitación: viewer sin empresa
-    v_company_id := NULL;
-    v_role := 'viewer';
-    v_name := COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email,'@',1));
-  END IF;
+/* Image grid */
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:8px}
+.img-thumb{position:relative;aspect-ratio:1;border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.img-thumb img{width:100%;height:100%;object-fit:cover}
+.img-thumb .img-del{position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(239,68,68,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;cursor:pointer;border:none;line-height:1}
 
-  INSERT INTO profiles (id, company_id, full_name, role, must_change_password)
-  VALUES (NEW.id, v_company_id, v_name, v_role, TRUE)
-  ON CONFLICT (id) DO NOTHING;
+/* Login */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 60% 40%,rgba(249,115,22,.07) 0%,#111 60%);padding:20px}
+.login-card{width:100%;max-width:400px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:30px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
 
-  RETURN NEW;
-EXCEPTION WHEN OTHERS THEN
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+/* Password strength */
+.pw-strength{height:4px;border-radius:2px;margin-top:4px;transition:all .3s}
+.pw-hint{font-size:10px;color:var(--text3);margin-top:3px}
 
-CREATE OR REPLACE TRIGGER trg_on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+/* Report detail */
+.rpt-section{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;background:var(--bg)}
+.rpt-hdr{background:var(--bg3);padding:8px 14px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.rpt-body{padding:12px 14px}
+.rpt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rpt-field label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-weight:700;display:block;margin-bottom:2px}
+.rpt-field span{font-size:12px;color:var(--text);font-weight:500}
+.cell-pass{color:var(--green-text);font-weight:700}
+.cell-fail{color:var(--red-text);font-weight:700}
 
--- ============================================================
--- 8. FUNCIONES DE SEGURIDAD (helper para RLS)
--- ============================================================
-CREATE OR REPLACE FUNCTION current_profile()
-RETURNS profiles AS $$
-  SELECT * FROM profiles WHERE id = auth.uid();
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;box-shadow:0 4px 24px rgba(0,0,0,.5);font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;max-width:360px;transform:translateY(100px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:var(--green);color:var(--green-text);background:var(--bg)}
+.toast.err{border-color:var(--red);color:var(--red-text);background:var(--bg)}
+.toast.info{border-color:var(--orange);color:var(--orange-text);background:var(--bg)}
 
-CREATE OR REPLACE FUNCTION is_super_admin()
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin');
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
+/* Config */
+.cfg-warning{max-width:560px;margin:60px auto;padding:28px;background:var(--bg);border:2px solid var(--amber);border-radius:10px;text-align:center}
 
-CREATE OR REPLACE FUNCTION is_admin_or_super()
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('super_admin','company_admin'));
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
+/* Mobile */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:6px 0 10px;z-index:200;justify-content:space-around}
+.mob-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:700;color:var(--text3);cursor:pointer;padding:4px 10px;text-transform:uppercase}
+.mob-item i{font-size:22px}
+.mob-item.active{color:var(--orange)}
 
-CREATE OR REPLACE FUNCTION my_company_id()
-RETURNS UUID AS $$
-  SELECT company_id FROM profiles WHERE id = auth.uid();
-$$ LANGUAGE sql SECURITY DEFINER STABLE;
+/* Tabs */
+.tab-bar{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.tab-item{padding:8px 16px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s}
+.tab-item:hover{color:var(--text)}
+.tab-item.active{color:var(--orange);border-bottom-color:var(--orange)}
 
--- ============================================================
--- 9. ROW LEVEL SECURITY (RLS)
--- ============================================================
-ALTER TABLE companies           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invitations         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reports             ENABLE ROW LEVEL SECURITY;
-ALTER TABLE report_assignments  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs          ENABLE ROW LEVEL SECURITY;
+/* Role descriptions */
+.role-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .12s}
+.role-card:hover,.role-card.selected{border-color:var(--orange);background:var(--orange-bg)}
+.role-card.selected .role-check{display:flex}
+.role-check{display:none;width:16px;height:16px;border-radius:50%;background:var(--orange);color:#fff;font-size:10px;align-items:center;justify-content:center;flex-shrink:0}
 
--- COMPANIES
-CREATE POLICY "companies_super_admin" ON companies FOR ALL USING (is_super_admin());
-CREATE POLICY "companies_read_own" ON companies FOR SELECT
-  USING (id = my_company_id() OR is_super_admin());
+/* Empty */
+.empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty i{font-size:34px;display:block;margin-bottom:10px}
 
--- PROFILES
-CREATE POLICY "profiles_super_admin" ON profiles FOR ALL USING (is_super_admin());
-CREATE POLICY "profiles_read_same_company" ON profiles FOR SELECT
-  USING (company_id = my_company_id() OR id = auth.uid() OR is_super_admin());
-CREATE POLICY "profiles_update_own" ON profiles FOR UPDATE
-  USING (id = auth.uid());
-CREATE POLICY "profiles_company_admin_manage" ON profiles FOR ALL
-  USING (company_id = my_company_id() AND is_admin_or_super());
+@media(max-width:768px){
+  .sidebar{display:none}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .grid2,.grid3,.grid4{grid-template-columns:1fr}
+  .rpt-grid{grid-template-columns:1fr 1fr}
+  .mob-nav{display:flex}
+  .mcontent{padding:12px;padding-bottom:80px}
+  .tbl-wrap{overflow-x:auto}
+}
+@media print{
+  .sidebar,.mhdr,.mob-nav,.btn,.no-print{display:none!important}
+  .layout,.main{display:block;height:auto;overflow:visible}
+  .mcontent{overflow:visible;padding:0}
+  @page{margin:1.5cm}
+}
+</style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<div id="app"></div>
 
--- INVITATIONS
-CREATE POLICY "invitations_super_admin" ON invitations FOR ALL USING (is_super_admin());
-CREATE POLICY "invitations_company_admin" ON invitations FOR ALL
-  USING (company_id = my_company_id() AND is_admin_or_super());
-CREATE POLICY "invitations_read_own" ON invitations FOR SELECT
-  USING (invited_by = auth.uid() OR is_super_admin());
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- pdf-lib para marca de agua -->
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
--- REPORTS
-CREATE POLICY "reports_super_admin" ON reports FOR ALL USING (is_super_admin());
-CREATE POLICY "reports_company_all" ON reports FOR ALL
-  USING (company_id = my_company_id() AND is_admin_or_super());
-CREATE POLICY "reports_inspector_create" ON reports FOR INSERT
-  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('inspector','company_admin','super_admin')));
-CREATE POLICY "reports_assigned_read" ON reports FOR SELECT
-  USING (
-    is_super_admin()
-    OR company_id = my_company_id()
-    OR EXISTS (SELECT 1 FROM report_assignments ra WHERE ra.report_id = reports.id AND ra.profile_id = auth.uid())
-  );
+<script>
+/* ============================================================
+   ⚙️  CONFIGURACIÓN — COMPLETAR CON TUS DATOS DE SUPABASE
+   ============================================================ */
+const SUPABASE_URL  = 'https://ysuwpuaucfvnqlfnczlu.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-';
+const COMPANY_NAME  = 'GM Robótica';
+const LOGO_URL      = 'https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=300,fit=crop/d95gEJ0jJgfxbzwe/recurso-1-2x-1yBLDy8iVJ2EB3go.png';
+/* ============================================================ */
 
--- REPORT ASSIGNMENTS
-CREATE POLICY "ra_super_admin" ON report_assignments FOR ALL USING (is_super_admin());
-CREATE POLICY "ra_admin_manage" ON report_assignments FOR ALL
-  USING (is_admin_or_super());
-CREATE POLICY "ra_read_own" ON report_assignments FOR SELECT
-  USING (profile_id = auth.uid() OR is_admin_or_super());
+const IS_OK = !SUPABASE_URL.includes('TU_PROYECTO');
+const sb = IS_OK ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { persistSession: true, autoRefreshToken: true }
+}) : null;
 
--- AUDIT LOGS
-CREATE POLICY "audit_super_admin" ON audit_logs FOR ALL USING (is_super_admin());
-CREATE POLICY "audit_company_read" ON audit_logs FOR SELECT
-  USING (company_id = my_company_id() AND is_admin_or_super());
-CREATE POLICY "audit_insert_own" ON audit_logs FOR INSERT
-  WITH CHECK (user_id = auth.uid() OR is_super_admin());
+/* ── State ── */
+let S = { user:null, profile:null, company:null, tab:'dashboard', sub:'', selected:null, toast:null };
 
--- ============================================================
--- 10. STORAGE BUCKET para imágenes de reportes
--- ============================================================
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'report-images',
-  'report-images',
-  FALSE,
-  10485760, -- 10MB max por imagen
-  ARRAY['image/jpeg','image/png','image/webp','image/heic']
-)
-ON CONFLICT (id) DO NOTHING;
+/* ── Helpers ── */
+const $ = id => document.getElementById(id);
+const fmtDate = d => { try{return new Date(d).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}catch(e){return d||'—'} };
+const fmtDT = d => { try{return new Date(d).toLocaleString('es-AR')}catch(e){return d||'—'} };
+const initials = n => (n||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const isSuper  = () => S.profile?.role === 'super_admin';
+const isCAdmin = () => ['super_admin','company_admin'].includes(S.profile?.role);
+const isInspector = () => ['super_admin','company_admin','inspector'].includes(S.profile?.role);
+const canApprove = () => ['super_admin','company_admin','supervisor'].includes(S.profile?.role);
 
--- Storage RLS
-CREATE POLICY "report_images_upload" ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'report-images' AND auth.role() = 'authenticated');
-CREATE POLICY "report_images_read" ON storage.objects FOR SELECT
-  USING (bucket_id = 'report-images' AND auth.role() = 'authenticated');
-CREATE POLICY "report_images_delete" ON storage.objects FOR DELETE
-  USING (bucket_id = 'report-images' AND (auth.uid())::text = (storage.foldername(name))[1]);
+const ROLES = {
+  super_admin:   { label:'Super Admin',    cls:'badge-super',      desc:'Acceso total al sistema. Solo GM Robótica.' },
+  company_admin: { label:'Admin Empresa',  cls:'badge-cadmin',     desc:'Gestiona usuarios y reportes de su empresa.' },
+  inspector:     { label:'Inspector DS-1', cls:'badge-inspector',  desc:'Crea y sube reportes de inspección.' },
+  supervisor:    { label:'Supervisor',     cls:'badge-supervisor', desc:'Revisa y aprueba reportes de su empresa.' },
+  viewer:        { label:'Visor',          cls:'badge-viewer',     desc:'Solo puede ver y descargar reportes asignados.' },
+};
 
--- ============================================================
--- 11. ÍNDICES
--- ============================================================
-CREATE INDEX IF NOT EXISTS idx_profiles_company   ON profiles(company_id);
-CREATE INDEX IF NOT EXISTS idx_profiles_role      ON profiles(role);
-CREATE INDEX IF NOT EXISTS idx_reports_company    ON reports(company_id);
-CREATE INDEX IF NOT EXISTS idx_reports_result     ON reports(result);
-CREATE INDEX IF NOT EXISTS idx_reports_date       ON reports(date);
-CREATE INDEX IF NOT EXISTS idx_reports_published  ON reports(published);
-CREATE INDEX IF NOT EXISTS idx_ra_profile         ON report_assignments(profile_id);
-CREATE INDEX IF NOT EXISTS idx_invitations_email  ON invitations(email);
-CREATE INDEX IF NOT EXISTS idx_invitations_token  ON invitations(token);
-CREATE INDEX IF NOT EXISTS idx_audit_company      ON audit_logs(company_id);
-CREATE INDEX IF NOT EXISTS idx_audit_created      ON audit_logs(created_at DESC);
+const resultBadge = r => {
+  const cls = r==='APROBADO'?'badge-pass':r==='RECHAZADO'?'badge-fail':'badge-cond';
+  const icon = r==='APROBADO'?'ti-circle-check':r==='RECHAZADO'?'ti-circle-x':'ti-alert-triangle';
+  return `<span class="badge ${cls}"><i class="ti ${icon}"></i>${r||'—'}</span>`;
+};
+const roleBadge = r => `<span class="badge ${ROLES[r]?.cls||'badge-grey'}">${ROLES[r]?.label||r}</span>`;
 
--- ============================================================
--- 12. ACTIVAR TU CUENTA SUPER_ADMIN
--- Después de ejecutar este schema, registrate en el portal y
--- luego ejecutá esto (reemplazá con tu email):
--- ============================================================
--- UPDATE profiles SET role = 'super_admin', company_id = '00000000-0000-0000-0000-000000000001'
--- WHERE id = (SELECT id FROM auth.users WHERE email = 'mstallocaj@gmail.com');
+const VIS_LABELS = {pinThread:'Roscas Pin',boxThread:'Roscas Caja',pinSeal:'Sello Pin',boxSeal:'Sello Caja',pinNeck:'Cuello Pin',boxExt:'Ext Caja',bodyExt:'Cuerpo',hb:'Hardbanding',bb:'Boreback',slipG:'Ranura Slip',elevG:'Ranura Elevator',marks:'Marcado',dye:'Liq. Penetrantes',mpi:'MPI'};
+const MEAS_LABELS = {bodyOD:'OD Cuerpo',bodyID:'ID Cuerpo',wallThk:'Esp. Pared',totalLen:'Longitud',bow:'Curvatura',pinTong:'Tong Space Pin',pinLen:'Long. Pin',bevel:'Bisel Pin',boxTong:'Tong Space Caja',boxOD:'OD Caja',cbDiam:'Ø Counterbore',cbDepth:'Prof. Counterbore',sealShldr:'Ancho Sello'};
 
--- ============================================================
--- FIN DEL SCHEMA v2.0 — Portal DS-1 GM Robótica
--- ============================================================
+function avg3(m){const v=[m?.m1,m?.m2,m?.m3].filter(x=>x!=null&&x!==''&&!isNaN(parseFloat(x))).map(parseFloat);if(!v.length)return '';return(v.reduce((a,b)=>a+b,0)/v.length).toFixed(3);}
+function evalSt(v,mn,mx){if(v==null||v==='')return'e';const n=parseFloat(v);if(isNaN(n))return'e';const hm=mn!=null&&mn!==''&&!isNaN(parseFloat(mn));const hM=mx!=null&&mx!==''&&!isNaN(parseFloat(mx));if(hm&&n<parseFloat(mn))return'f';if(hM&&n>parseFloat(mx))return'f';return(hm||hM)?'p':'e';}
+
+function showToast(msg,type='ok'){
+  const t=$('toast');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<i class="ti ti-${type==='ok'?'circle-check':type==='err'?'alert-circle':'bell'}"></i><span>${msg}</span>`;
+  t.classList.add('show');
+  clearTimeout(S.toast);
+  S.toast=setTimeout(()=>t.classList.remove('show'),5000);
+}
+
+/* ── Audit Log ── */
+async function logEvent(event,reportId=null,reportNo=null,meta={}){
+  if(!sb||!S.profile)return;
+  try{
+    await sb.from('audit_logs').insert({
+      event,user_id:S.user.id,user_name:S.profile.full_name,
+      user_company:S.company?.name||S.profile.company_id,
+      user_role:S.profile.role,
+      report_id:reportId,report_no:reportNo,
+      company_id:S.profile.company_id,
+      metadata:meta,
+    });
+  }catch(e){console.warn('audit',e);}
+}
+
+/* ── PDF con marca de agua ── */
+async function downloadPDF(report){
+  showToast('Generando PDF con marca de agua...','info');
+  try{
+    const {PDFDocument,rgb,StandardFonts,degrees}=window.PDFLib;
+    const pdfDoc=await generateReportPDF(report);
+    const fontB=await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontL=await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const now=new Date();
+    const dlId=Math.random().toString(36).slice(2,10).toUpperCase();
+
+    pdfDoc.getPages().forEach(page=>{
+      const {width,height}=page.getSize();
+      // Marca diagonal
+      page.drawText(S.company?.name||S.profile.full_name||'CONFIDENCIAL',{
+        x:width/2-180,y:height/2,size:48,font:fontB,
+        color:rgb(0.97,0.45,0.09),opacity:.05,rotate:degrees(42)
+      });
+      // Barra inferior
+      page.drawRectangle({x:0,y:0,width,height:24,color:rgb(0.07,0.07,0.07)});
+      page.drawText(`DESCARGADO POR: ${S.profile.full_name} — ${S.company?.name||''}`,
+        {x:8,y:14,size:6.5,font:fontB,color:rgb(0.97,0.45,0.09)});
+      page.drawText(`Fecha: ${now.toLocaleString('es-AR')} | ID descarga: ${dlId} | CONFIDENCIAL`,
+        {x:8,y:5,size:5.5,font:fontL,color:rgb(0.6,0.6,0.6)});
+    });
+
+    const bytes=await pdfDoc.save();
+    const blob=new Blob([bytes],{type:'application/pdf'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=`DS1_${report.report_no||'informe'}_${dlId}.pdf`;
+    a.click();URL.revokeObjectURL(url);
+    await logEvent('descarga_pdf',report.id,report.report_no,{downloadId:dlId});
+    showToast(`PDF descargado — ID: ${dlId}`,'ok');
+  }catch(err){showToast('Error: '+err.message,'err');}
+}
+
+async function generateReportPDF(r){
+  const {PDFDocument,rgb,StandardFonts}=window.PDFLib;
+  const doc=await PDFDocument.create();
+  const fB=await doc.embedFont(StandardFonts.HelveticaBold);
+  const fN=await doc.embedFont(StandardFonts.Helvetica);
+  const p=doc.addPage([595,842]);
+  const{width,height}=p.getSize();
+  const m=38,W=width-m*2;let y=height-m;
+
+  // Header
+  p.drawRectangle({x:0,y:height-44,width,height:44,color:rgb(0.07,0.07,0.07)});
+  p.drawRectangle({x:0,y:height-48,width,height:4,color:rgb(0.97,0.45,0.09)});
+  p.drawText('REPORTE DE INSPECCIÓN DS-1 — Vol 3 y Addendum',{x:m,y:height-24,size:9,font:fB,color:rgb(0.97,0.45,0.09)});
+  p.drawText(`${r.report_no||'—'}  |  ${fmtDate(r.date)}  |  Cat. ${r.category}`,{x:width-m,y:height-24,size:8,font:fN,color:rgb(0.7,0.7,0.7),xSkewAngle:0,ySkewAngle:0,maxWidth:200,x:width-180-m+m,y:height-24});
+  y=height-60;
+
+  const sec=(title)=>{p.drawRectangle({x:m,y:y-2,width:W,height:14,color:rgb(0.13,0.13,0.13)});p.drawText(title,{x:m+4,y:y+2,size:8,font:fB,color:rgb(0.97,0.45,0.09)});y-=20;};
+  const fld=(lbl,val,x2=m+48)=>{if(y<50)return;p.drawText(lbl+':',{x:m+2,y:y+1,size:6.5,font:fB,color:rgb(0.5,0.5,0.5)});p.drawText(String(val||'—'),{x:x2,y:y+1,size:8,font:fN,color:rgb(0.9,0.9,0.9)});y-=13;};
+  const row3=(pairs)=>{if(y<50)return;const cw=(W-6)/3;pairs.forEach(([l,v],i)=>{const x=m+i*(cw+3);p.drawText(l+':',{x,y:y+1,size:6,font:fB,color:rgb(0.5,0.5,0.5)});p.drawText(String(v||'—'),{x,y:y-8,size:7.5,font:fN,color:rgb(0.9,0.9,0.9)});});y-=22;};
+
+  sec('IDENTIFICACIÓN DEL COMPONENTE');
+  fld('Componente',r.component);
+  row3([['Empresa',r.client_company_name||''],['Equipo / Rig',r.rig||''],['Pozo',r.well||'']]);
+  row3([['Inspector',r.inspector||''],['Cert. DS-1',r.cert_no||''],['Categoría','Cat. '+(r.category||'3')]]);
+  row3([['N° Serie',r.serial_no||''],['N° Calor',r.heat_no||''],['Fabricante',r.manufacturer||'']]);
+  row3([['Conexión Sup.',r.conn_top||''],['Conexión Inf.',r.conn_bot||''],['OD Nominal',(r.nom_od||'')+(r.nom_od?'"':'')]]);
+  y-=4;
+
+  // Visual
+  const vis=r.visual_inspection||{};
+  const visFails=Object.entries(vis).filter(([,v])=>v==='F').map(([k])=>VIS_LABELS[k]||k);
+  const visOk=Object.entries(vis).filter(([,v])=>v==='P').length;
+  sec('INSPECCIÓN VISUAL — DS-1 Vol 3 §3.6 y Addendum');
+  if(visFails.length===0){p.drawText('✓ TODOS LOS ÍTEMS VISUALES APROBADOS ('+visOk+' ítems)',{x:m+4,y,size:8,font:fB,color:rgb(0.13,0.77,0.37)});y-=14;}
+  else{p.drawText('✗ ÍTEMS RECHAZADOS: '+visFails.join(', '),{x:m+4,y,size:7.5,font:fB,color:rgb(0.94,0.27,0.27)});y-=14;}
+  y-=6;
+
+  // Measurements
+  const meas=r.measurements||{};
+  const measPairs=Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
+  if(measPairs.length){
+    sec('MEDICIONES DIMENSIONALES — Tablas DS-1 Vol 3');
+    const cols=[m,m+88,m+130,m+175,m+225,m+270,m+315,m+362,m+405];
+    p.drawRectangle({x:m,y:y-2,width:W,height:12,color:rgb(0.18,0.18,0.18)});
+    ['Parámetro','Un','Mín','Máx','Med 1','Med 2','Med 3','Prom.','Est.'].forEach((h,i)=>p.drawText(h,{x:cols[i]+2,y:y+1,size:6,font:fB,color:rgb(0.6,0.6,0.6)}));
+    y-=12;
+    measPairs.forEach(([k,label])=>{
+      if(y<50)return;
+      const mm=meas[k];const a=avg3(mm);const st=evalSt(a||mm.m1,mm.min,mm.max);
+      const rc=st==='f'?rgb(0.94,0.27,0.27):st==='p'?rgb(0.13,0.77,0.37):rgb(0.6,0.6,0.6);
+      p.drawRectangle({x:m,y:y-1,width:W,height:10,color:rgb(0.1,0.1,0.1),opacity:0.5});
+      p.drawText(label.slice(0,20),{x:cols[0]+2,y:y+1,size:6,font:fN,color:rgb(0.85,0.85,0.85)});
+      p.drawText('in',{x:cols[1]+2,y:y+1,size:5.5,font:fN,color:rgb(0.5,0.5,0.5)});
+      p.drawText(mm.min||'',{x:cols[2]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
+      p.drawText(mm.max||'',{x:cols[3]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
+      [mm.m1,mm.m2,mm.m3].forEach((v,i)=>p.drawText(v||'—',{x:cols[4+i]+2,y:y+1,size:6,font:fN,color:rgb(0.85,0.85,0.85)}));
+      if(a)p.drawText(a,{x:cols[7]+2,y:y+1,size:6,font:fB,color:rc});
+      if(st!=='e')p.drawText(st==='p'?'✓ OK':'✗ Falla',{x:cols[8]+2,y:y+1,size:5.5,font:fB,color:rc});
+      y-=10;
+    });
+    y-=6;
+  }
+
+  // Images embedded
+  const images=r.images||[];
+  if(images.length>0&&y>150){
+    sec('EVIDENCIA FOTOGRÁFICA');
+    p.drawText(`${images.length} imagen(es) adjunta(s). Ver versión digital del informe.`,{x:m+4,y,size:7.5,font:fN,color:rgb(0.6,0.6,0.6)});
+    y-=14;
+  }
+
+  // Comments
+  if(r.comments&&y>80){sec('OBSERVACIONES');const lines=r.comments.match(/.{1,110}/g)||[r.comments];lines.slice(0,3).forEach(l=>{if(y<50)return;p.drawText(l,{x:m+4,y,size:7.5,font:fN,color:rgb(0.85,0.85,0.85)});y-=11;});y-=4;}
+
+  // Result
+  const rc=r.result==='APROBADO'?rgb(0.08,0.62,0.24):r.result==='RECHAZADO'?rgb(0.86,0.15,0.15):rgb(0.6,0.27,0.04);
+  y=Math.min(y,120);
+  p.drawRectangle({x:m,y:y-20,width:W,height:28,color:rgb(0.07,0.07,0.07),borderColor:rc[0]?rc:rgb(0.3,0.3,0.3),borderWidth:1});
+  p.drawRectangle({x:m,y:y+6,width:4,height:22,color:rc});
+  p.drawText(`RESULTADO: ${r.result||'—'}`,{x:m+12,y:y-8,size:13,font:fB,color:rc});
+  p.drawText(`Inspector: ${r.inspector||'—'} | Cert: ${r.cert_no||'—'} | ${fmtDate(r.date)}`,{x:width-m,y:y-8,size:7,font:fN,color:rgb(0.5,0.5,0.5),x:m+12,y:y-22,});
+  y-=40;
+
+  // Signatures
+  [['Inspector / Firma',''],['Supervisor / Conformidad',''],['Cliente / Recepción','']].forEach(([l],i)=>{
+    const x=m+i*(W/3+2);
+    p.drawLine({start:{x,y:30},end:{x:x+W/3-8,y:30},thickness:.5,color:rgb(0.3,0.3,0.3)});
+    p.drawText(l,{x,y:20,size:6,font:fN,color:rgb(0.5,0.5,0.5)});
+    p.drawText('Fecha: ____________',{x,y:11,size:6,font:fN,color:rgb(0.4,0.4,0.4)});
+  });
+
+  return doc;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  const app=$('app');
+  if(!IS_OK){app.innerHTML=`<div class="cfg-warning"><i class="ti ti-settings" style="font-size:36px;color:var(--amber);display:block;margin-bottom:12px"></i><h2 style="margin-bottom:8px">Configurar Supabase</h2><p style="color:var(--text2)">Abrí este archivo con el Bloc de notas y completá SUPABASE_URL y SUPABASE_ANON con los datos de tu proyecto.</p></div>`;return;}
+  if(!S.user){renderLogin(app);return;}
+  if(S.profile?.must_change_password){renderChangePassword(app);return;}
+  renderPortal(app);
+}
+
+/* ── Change Password ── */
+function renderChangePassword(app){
+  app.innerHTML=`
+  <div class="login-page">
+    <div class="login-card">
+      <div style="text-align:center;margin-bottom:20px">
+        <img src="${LOGO_URL}" style="max-height:50px;margin-bottom:12px" alt="Logo">
+        <h2 style="color:var(--orange);font-size:18px">Crear tu contraseña</h2>
+        <p style="color:var(--text2);font-size:12px;margin-top:4px">Por seguridad, creá tu contraseña personal antes de continuar.</p>
+      </div>
+      <div class="alert alert-info"><i class="ti ti-shield-lock"></i>Tu contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial.</div>
+      <div id="cp-err"></div>
+      <div class="form-group">
+        <label class="lbl">Nueva contraseña</label>
+        <input class="inp" type="password" id="cp-pass1" placeholder="Mínimo 8 caracteres" oninput="checkPwStrength(this.value)">
+        <div class="pw-strength" id="pw-bar" style="background:var(--border2)"></div>
+        <div class="pw-hint" id="pw-hint">Ingresá tu nueva contraseña</div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Confirmar contraseña</label>
+        <input class="inp" type="password" id="cp-pass2" placeholder="Repetí la contraseña" onkeydown="if(event.key==='Enter')doChangePassword()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center;font-size:14px" onclick="doChangePassword()">
+        <i class="ti ti-lock-check"></i> Guardar contraseña y continuar
+      </button>
+    </div>
+  </div>`;
+}
+
+function checkPwStrength(pw){
+  const bar=$('pw-bar');const hint=$('pw-hint');if(!bar)return;
+  let score=0;
+  if(pw.length>=8)score++;if(/[A-Z]/.test(pw))score++;if(/[0-9]/.test(pw))score++;if(/[^a-zA-Z0-9]/.test(pw))score++;if(pw.length>=12)score++;
+  const colors=['#ef4444','#f97316','#eab308','#22c55e','#16a34a'];
+  const msgs=['Muy débil','Débil','Regular','Fuerte','Muy fuerte'];
+  bar.style.background=colors[score-1]||'var(--border2)';
+  bar.style.width=(score*20)+'%';
+  hint.textContent=msgs[score-1]||'Ingresá tu nueva contraseña';
+  hint.style.color=colors[score-1]||'var(--text3)';
+}
+
+async function doChangePassword(){
+  const p1=$('cp-pass1').value;const p2=$('cp-pass2').value;
+  if(p1.length<8){$('cp-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Mínimo 8 caracteres.</div>';return;}
+  if(!/[A-Z]/.test(p1)){$('cp-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Necesita al menos una mayúscula.</div>';return;}
+  if(!/[0-9]/.test(p1)){$('cp-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Necesita al menos un número.</div>';return;}
+  if(!/[^a-zA-Z0-9]/.test(p1)){$('cp-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Necesita al menos un carácter especial (!, @, #, etc.)</div>';return;}
+  if(p1!==p2){$('cp-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contraseñas no coinciden.</div>';return;}
+  const{error}=await sb.auth.updateUser({password:p1});
+  if(error){$('cp-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+  await sb.from('profiles').update({must_change_password:false}).eq('id',S.user.id);
+  S.profile.must_change_password=false;
+  await logEvent('cambio_contrasena');
+  showToast('¡Contraseña actualizada! Bienvenido al portal.','ok');
+  render();
+}
+
+/* ── Login ── */
+function renderLogin(app){
+  app.innerHTML=`
+  <div class="login-page">
+    <div class="login-card">
+      <div style="text-align:center;margin-bottom:22px">
+        <img src="${LOGO_URL}" style="max-height:56px;margin-bottom:12px" alt="GM Robótica">
+        <h2 style="color:var(--orange);font-size:22px;font-weight:800">Portal DS-1</h2>
+        <p style="color:var(--text2);font-size:12px;margin-top:3px">Informes técnicos de inspección · ${COMPANY_NAME}</p>
+      </div>
+      <div id="login-err"></div>
+      <div class="form-group">
+        <label class="lbl">Email</label>
+        <input class="inp" type="email" id="l-email" placeholder="usuario@empresa.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Contraseña</label>
+        <input class="inp" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button onclick="showForgot()" style="background:none;border:none;color:var(--orange);font-size:11px;cursor:pointer;font-family:inherit">¿Olvidaste tu contraseña?</button>
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center;font-size:14px" onclick="doLogin()">
+        <i class="ti ti-login"></i> Ingresar
+      </button>
+      <p style="margin-top:14px;text-align:center;font-size:11px;color:var(--text3)">
+        ¿No tenés cuenta? Contactá a tu administrador para recibir una invitación.
+      </p>
+    </div>
+  </div>`;
+}
+
+async function showForgot(){
+  const email=prompt('Ingresá tu email para recuperar la contraseña:');
+  if(!email)return;
+  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
+  if(error)showToast(error.message,'err');
+  else showToast('Se envió un email para restablecer tu contraseña.','ok');
+}
+
+async function doLogin(){
+  const email=$('l-email')?.value?.trim();
+  const pass=$('l-pass')?.value;
+  if(!email||!pass)return;
+  $('login-err').innerHTML='';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){
+    $('login-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message==='Invalid login credentials'?'Email o contraseña incorrectos.':error.message}</div>`;
+    return;
+  }
+  await logEvent('login');
+}
+
+/* ── Portal ── */
+function renderPortal(app){
+  const p=S.profile;const t=S.tab;
+  const navAdmin=[
+    {id:'dashboard',icon:'ti-dashboard',label:'Dashboard'},
+    {id:'reports',icon:'ti-file-text',label:'Reportes'},
+    {id:'upload',icon:'ti-cloud-upload',label:'Subir reporte'},
+  ];
+  const navSuper=[
+    ...navAdmin,
+    {id:'companies',icon:'ti-building',label:'Empresas'},
+    {id:'users',icon:'ti-users',label:'Usuarios'},
+    {id:'invitations',icon:'ti-mail',label:'Invitaciones'},
+    {id:'auditlog',icon:'ti-shield-check',label:'Audit Log'},
+  ];
+  const navCAdmin=[
+    ...navAdmin,
+    {id:'users',icon:'ti-users',label:'Mi equipo'},
+    {id:'invitations',icon:'ti-mail',label:'Invitar usuario'},
+    {id:'auditlog',icon:'ti-shield-check',label:'Actividad'},
+  ];
+  const navInspector=[
+    {id:'reports',icon:'ti-file-text',label:'Reportes'},
+    {id:'upload',icon:'ti-cloud-upload',label:'Nuevo reporte'},
+  ];
+  const navUser=[{id:'reports',icon:'ti-file-text',label:'Mis informes'}];
+
+  const navItems=isSuper()?navSuper:isCAdmin()?navCAdmin:isInspector()?navInspector:navUser;
+
+  const titleMap={
+    dashboard:'Dashboard',reports:isInspector()?'Reportes':'Mis informes',
+    upload:'Subir reporte',companies:'Gestión de Empresas',
+    users:isCAdmin()&&!isSuper()?'Mi equipo':'Usuarios',
+    invitations:'Invitaciones',auditlog:'Audit Log'
+  };
+
+  app.innerHTML=`
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-logo">
+        <img src="${LOGO_URL}" alt="${COMPANY_NAME}">
+      </div>
+      <div class="sb-user">
+        <div class="sb-user-row">
+          <div class="sb-av">${initials(p?.full_name)}</div>
+          <div style="overflow:hidden;flex:1">
+            <div class="sb-uname">${p?.full_name||'Usuario'}</div>
+            <div class="sb-ucmp">${S.company?.name||''}</div>
+          </div>
+        </div>
+        <div style="margin-top:5px">${roleBadge(p?.role)}</div>
+      </div>
+      <div class="sb-nav">
+        <div class="sb-lbl">Menú</div>
+        ${navItems.map(n=>`<div class="sb-link ${t===n.id&&!S.selected?'active':''}" onclick="setTab('${n.id}')"><i class="ti ${n.icon}"></i>${n.label}</div>`).join('')}
+      </div>
+      <div class="sb-foot">
+        <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="doLogout()">
+          <i class="ti ti-logout"></i> Cerrar sesión
+        </button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="mhdr">
+        ${S.selected?`<button class="btn btn-sm" onclick="S.selected=null;loadTab()"><i class="ti ti-arrow-left"></i></button>`:''}
+        <div>
+          <div class="mhdr-title">${S.selected?'Detalle del reporte':titleMap[t]||''}</div>
+          <div class="mhdr-sub">${S.selected?'Rep. '+S.selected.report_no:S.company?.name||COMPANY_NAME}</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px" id="hdr-actions"></div>
+      </div>
+      <div class="mcontent" id="mc">
+        <div style="text-align:center;padding:40px;color:var(--text3)"><i class="ti ti-loader-2" style="font-size:28px;animation:spin 1s linear infinite"></i></div>
+      </div>
+    </div>
+
+    <div class="mob-nav">
+      ${navItems.slice(0,4).map(n=>`<div class="mob-item ${t===n.id?'active':''}" onclick="setTab('${n.id}')"><i class="ti ${n.icon}"></i>${n.label}</div>`).join('')}
+      <div class="mob-item" onclick="doLogout()"><i class="ti ti-logout"></i>Salir</div>
+    </div>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+
+  loadTab();
+}
+
+function setTab(tab){S.tab=tab;S.selected=null;renderPortal($('app'));}
+
+async function doLogout(){
+  await logEvent('logout');
+  await sb.auth.signOut();
+  S={user:null,profile:null,company:null,tab:'dashboard',sub:'',selected:null};
+  render();
+}
+
+async function loadTab(){
+  if(S.selected){await renderReportDetail();return;}
+  const tabs={
+    dashboard:renderDashboard,
+    reports:renderReports,
+    upload:renderUpload,
+    companies:renderCompanies,
+    users:renderUsers,
+    invitations:renderInvitations,
+    auditlog:renderAuditLog,
+  };
+  const fn=tabs[S.tab];
+  if(fn)await fn();
+}
+
+/* ── Dashboard ── */
+async function renderDashboard(){
+  const mc=$('mc');
+  const[rptRes,usrRes]=await Promise.all([
+    sb.from('reports').select('result,published,created_at',{count:'exact'}),
+    sb.from('profiles').select('id,role',{count:'exact'}),
+  ]);
+  const rpts=rptRes.data||[];
+  const usrs=usrRes.data||[];
+
+  mc.innerHTML=`
+  <div class="stats">
+    <div class="stat"><i class="ti ti-file-text stat-icon" style="color:var(--orange)"></i><div class="stat-num">${rpts.length}</div><div class="stat-lbl">Total reportes</div></div>
+    <div class="stat"><i class="ti ti-circle-check stat-icon" style="color:var(--green-text)"></i><div class="stat-num" style="color:var(--green-text)">${rpts.filter(r=>r.result==='APROBADO').length}</div><div class="stat-lbl">Aprobados</div></div>
+    <div class="stat"><i class="ti ti-circle-x stat-icon" style="color:var(--red-text)"></i><div class="stat-num" style="color:var(--red-text)">${rpts.filter(r=>r.result==='RECHAZADO').length}</div><div class="stat-lbl">Rechazados</div></div>
+    <div class="stat"><i class="ti ti-users stat-icon" style="color:var(--blue-text)"></i><div class="stat-num">${usrs.length}</div><div class="stat-lbl">Usuarios activos</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title"><i class="ti ti-clock"></i>Últimos 5 reportes</div>
+    ${rpts.slice(0,5).length===0?'<div class="empty" style="padding:20px"><i class="ti ti-inbox"></i><p>Sin reportes aún.</p></div>':
+    `<table class="tbl">
+      <thead><tr><th>N° Reporte</th><th>Fecha</th><th>Resultado</th></tr></thead>
+      <tbody>${rpts.slice(-5).reverse().map(r=>`<tr><td style="font-family:monospace;font-weight:700">${r.report_no||'—'}</td><td>${fmtDate(r.created_at)}</td><td>${resultBadge(r.result)}</td></tr>`).join('')}</tbody>
+    </table>`}
+  </div>
+
+  <div class="alert alert-info" style="margin-bottom:0"><i class="ti ti-info-circle"></i>
+    Portal DS-1 · ${COMPANY_NAME} · Conforme DS-1® Vol 3 y Addendum · ISO 9001:2015
+  </div>`;
+}
+
+/* ── Reports List ── */
+async function renderReports(){
+  const mc=$('mc');
+  let q=sb.from('reports').select('*').order('created_at',{ascending:false});
+  if(!isInspector()){
+    const{data:assigned}=await sb.from('report_assignments').select('report_id').eq('profile_id',S.user.id);
+    const ids=(assigned||[]).map(a=>a.report_id);
+    if(!ids.length){mc.innerHTML=`<div class="empty"><i class="ti ti-file-off"></i><p>No tenés informes asignados aún.</p><p style="font-size:11px;margin-top:6px">Tus informes aparecerán aquí cuando sean publicados.</p></div>`;return;}
+    q=q.in('id',ids);
+  }
+  const{data:reports}=await q;
+
+  mc.innerHTML=`
+  <div class="tbl-wrap">
+    <div class="tbl-toolbar">
+      <i class="ti ti-search" style="color:var(--text3);font-size:16px"></i>
+      <input class="inp" id="srch" style="max-width:250px" placeholder="Buscar..." oninput="filterTbl()">
+      <select class="inp" id="fil-res" style="width:150px" onchange="filterTbl()">
+        <option value="">Todos los resultados</option>
+        <option value="APROBADO">Aprobados</option>
+        <option value="RECHAZADO">Rechazados</option>
+        <option value="CONDICIONAL">Condicionales</option>
+      </select>
+      <div style="margin-left:auto;font-size:11px;color:var(--text3)">${(reports||[]).length} reportes</div>
+    </div>
+    <table class="tbl" id="rpt-tbl">
+      <thead><tr>
+        <th>N° Reporte</th><th>Fecha</th><th>Componente</th>
+        ${isInspector()?'<th>Empresa</th>':''}
+        <th>Pozo / Rig</th><th>Cat.</th><th>Resultado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>
+      ${(reports||[]).map(r=>`
+      <tr data-text="${[r.report_no,r.component,r.client_company_name,r.well,r.rig].join(' ').toLowerCase()}" data-result="${r.result}">
+        <td style="font-family:monospace;font-weight:700;color:var(--orange-text)">${r.report_no||'—'}</td>
+        <td>${fmtDate(r.date)}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.component||'—'}</td>
+        ${isInspector()?`<td style="font-size:11px">${r.client_company_name||'—'}</td>`:''}
+        <td style="font-size:11px">${[r.well,r.rig].filter(Boolean).join(' / ')||'—'}</td>
+        <td><span class="badge badge-grey">Cat ${r.category||'—'}</span></td>
+        <td>${resultBadge(r.result)}</td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-sm" onclick='viewReport(${JSON.stringify(r).replace(/'/g,"&#39;")})'>
+              <i class="ti ti-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-success" onclick='downloadPDF(${JSON.stringify(r).replace(/'/g,"&#39;")})'>
+              <i class="ti ti-file-type-pdf"></i>
+            </button>
+          </div>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+    ${!(reports||[]).length?`<div class="empty" style="padding:24px"><i class="ti ti-inbox"></i><p>Sin reportes.</p></div>`:''}
+  </div>`;
+}
+
+function filterTbl(){
+  const q=($('srch')?.value||'').toLowerCase();
+  const r=$('fil-res')?.value||'';
+  document.querySelectorAll('#rpt-tbl tbody tr').forEach(tr=>{
+    const ok=(!q||tr.dataset.text?.includes(q))&&(!r||tr.dataset.result===r);
+    tr.style.display=ok?'':'none';
+  });
+}
+
+function viewReport(r){S.selected=r;renderPortal($('app'));}
+
+/* ── Report Detail ── */
+async function renderReportDetail(){
+  const r=S.selected;
+  await logEvent('ver_reporte',r.id,r.report_no);
+  const ha=$('hdr-actions');
+  if(ha)ha.innerHTML=`
+    <button class="btn btn-success" style="font-size:13px;padding:8px 16px" onclick='downloadPDF(${JSON.stringify(r).replace(/'/g,"&#39;")})'>
+      <i class="ti ti-file-type-pdf"></i> Descargar PDF
+    </button>`;
+
+  const vis=r.visual_inspection||{};
+  const meas=r.measurements||{};
+  const images=r.images||[];
+  const visPairs=Object.entries(VIS_LABELS).filter(([k])=>vis[k]&&vis[k]!=='NA');
+  const measPairs=Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
+
+  $('mc').innerHTML=`
+  <div class="rpt-section" style="border-left:3px solid var(--orange)">
+    <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+      <div><div style="font-size:16px;font-weight:700">${r.component||'Sustituto'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">DS-1® Vol 3 — Cat. ${r.category}</div></div>
+      <div style="text-align:right">
+        <div style="font-size:15px;font-weight:700;color:var(--orange-text)">${r.report_no||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${fmtDate(r.date)}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-tool"></i>Identificación del Componente</div>
+    <div class="rpt-body">
+      <div class="rpt-grid">
+        ${[['Empresa cliente',r.client_company_name],['Equipo / Rig',r.rig],['Pozo',r.well],
+           ['Ubicación',r.location],['Inspector',r.inspector],['Cert. DS-1',r.cert_no],
+           ['N° Serie',r.serial_no],['N° Calor',r.heat_no],['Fabricante',r.manufacturer]].map(([l,v])=>
+          `<div class="rpt-field"><label>${l}</label><span>${v||'—'}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  ${visPairs.length?`<div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-eye"></i>Inspección Visual</div>
+    <div class="rpt-body" style="padding:0">
+      <table class="tbl">
+        <thead><tr><th>Ítem</th><th>Resultado</th></tr></thead>
+        <tbody>${visPairs.map(([k,l])=>`<tr><td>${l}</td><td>${vis[k]==='P'?'<span class="cell-pass">✓ Aprobado</span>':'<span class="cell-fail">✗ Rechazado</span>'}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+  </div>`:''}
+
+  ${measPairs.length?`<div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-ruler-measure"></i>Mediciones Dimensionales</div>
+    <div class="rpt-body" style="padding:0;overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>Parámetro</th><th>Mín</th><th>Máx</th><th>Med 1</th><th>Med 2</th><th>Med 3</th><th>Promedio</th><th>Estado</th></tr></thead>
+        <tbody>${measPairs.map(([k,l])=>{const m=meas[k]||{};const a=avg3(m);const st=evalSt(a||m.m1,m.min,m.max);return`<tr>
+          <td style="font-weight:500">${l}</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--blue-text)">${m.min||'—'}</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--blue-text)">${m.max||'—'}</td>
+          ${[m.m1,m.m2,m.m3].map(v=>{const s=evalSt(v,m.min,m.max);return`<td class="${s==='p'?'cell-pass':s==='f'?'cell-fail':''}">${v||'—'}</td>`;}).join('')}
+          <td class="${st==='p'?'cell-pass':st==='f'?'cell-fail':''}" style="font-family:monospace;font-weight:600">${a||'—'}</td>
+          <td>${st==='p'?'<span class="cell-pass">✓ OK</span>':st==='f'?'<span class="cell-fail">✗ Falla</span>':'—'}</td>
+        </tr>`;}).join('')}</tbody>
+      </table>
+    </div>
+  </div>`:''}
+
+  ${images.length?`<div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-photo"></i>Evidencia fotográfica (${images.length})</div>
+    <div class="rpt-body">
+      <div class="img-grid">${images.map(url=>`<div class="img-thumb"><img src="${url}" loading="lazy" onclick="window.open('${url}')"></div>`).join('')}</div>
+    </div>
+  </div>`:''}
+
+  ${r.comments?`<div class="rpt-section">
+    <div class="rpt-hdr"><i class="ti ti-notes"></i>Observaciones</div>
+    <div class="rpt-body"><p style="font-size:13px;line-height:1.7">${r.comments}</p></div>
+  </div>`:''}
+
+  <div class="rpt-section" style="border:2px solid ${r.result==='APROBADO'?'var(--green)':r.result==='RECHAZADO'?'var(--red)':'var(--amber)'}">
+    <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:22px;font-weight:800;color:${r.result==='APROBADO'?'var(--green-text)':r.result==='RECHAZADO'?'var(--red-text)':'var(--amber-text)'}">
+          ${r.result==='APROBADO'?'✓':'✗'} ${r.result||'—'}
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">
+          ${r.result==='APROBADO'?'Componente apto para servicio según DS-1 Vol 3':'Componente NO apto — ver observaciones'}
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--text3)">
+        Inspector: <strong style="color:var(--text)">${r.inspector||'—'}</strong><br>
+        Cert. DS-1: <strong style="color:var(--text)">${r.cert_no||'—'}</strong>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Upload ── */
+async function renderUpload(){
+  const mc=$('mc');
+  window._imgs=[];window._parsed=null;
+
+  // Cargar empresas cliente
+  let companiesHtml='';
+  if(isSuper()){
+    const{data:cos}=await sb.from('companies').select('id,name').eq('active',true).neq('id','00000000-0000-0000-0000-000000000001');
+    companiesHtml=`<div class="form-group">
+      <label class="lbl">Empresa cliente *</label>
+      <select class="inp" id="u-company-id">
+        <option value="">— Seleccionar empresa —</option>
+        ${(cos||[]).map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+
+  mc.innerHTML=`
+  <div class="card">
+    <input type="file" id="json-file" accept=".json" style="display:none" onchange="loadJsonFile(this.files[0])">
+    <input type="file" id="img-file" accept="image/jpeg,image/png,image/webp,image/heic" multiple style="display:none" onchange="addImages(this.files)">
+
+    <div class="dropzone" id="dz" onclick="$('json-file').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="event.preventDefault();this.classList.remove('drag');loadJsonFile(event.dataTransfer.files[0])">
+      <i class="ti ti-file-type-json" style="font-size:30px;color:var(--text3);display:block;margin-bottom:8px"></i>
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">Arrastrá el JSON del formulario DS-1</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">o hacé clic para buscar el archivo</div>
+      <button class="btn btn-primary" style="pointer-events:none"><i class="ti ti-upload"></i> Seleccionar .json</button>
+    </div>
+
+    <div id="parse-msg"></div>
+    <div id="upload-form" style="display:none">
+      <div class="alert alert-ok" style="margin-bottom:14px"><i class="ti ti-circle-check"></i><strong>JSON cargado.</strong> Verificá los datos y subí las imágenes si corresponde.</div>
+
+      <div class="grid4">
+        <div class="form-group"><label class="lbl">N° Reporte *</label><input class="inp" id="u-rno" placeholder="RP-2026-001"></div>
+        <div class="form-group"><label class="lbl">Fecha</label><input class="inp" type="date" id="u-date"></div>
+        <div class="form-group"><label class="lbl">Categoría DS-1</label>
+          <select class="inp" id="u-cat">${[1,2,3,4,5].map(c=>`<option value="${c}"${c===3?' selected':''}>Cat. ${c}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="lbl">Resultado</label>
+          <select class="inp" id="u-result" style="font-weight:700">
+            <option value="APROBADO">✓ APROBADO</option>
+            <option value="RECHAZADO">✗ RECHAZADO</option>
+            <option value="CONDICIONAL">~ CONDICIONAL</option>
+          </select></div>
+      </div>
+
+      <div class="form-group"><label class="lbl">Componente / Descripción</label><input class="inp" id="u-comp" placeholder="X-Over NC46 Pin × NC50 Caja, 6-1/2&quot; OD"></div>
+
+      ${companiesHtml}
+
+      <div class="grid3">
+        <div class="form-group"><label class="lbl">Empresa cliente (nombre)</label><input class="inp" id="u-cname"></div>
+        <div class="form-group"><label class="lbl">Equipo / Rig</label><input class="inp" id="u-rig"></div>
+        <div class="form-group"><label class="lbl">Pozo</label><input class="inp" id="u-well"></div>
+      </div>
+      <div class="grid3">
+        <div class="form-group"><label class="lbl">Inspector</label><input class="inp" id="u-insp"></div>
+        <div class="form-group"><label class="lbl">N° Cert. DS-1</label><input class="inp" id="u-cert"></div>
+        <div class="form-group"><label class="lbl">N° Serie</label><input class="inp" id="u-sn"></div>
+      </div>
+
+      <div class="form-group"><label class="lbl">Observaciones</label><textarea class="inp" id="u-obs"></textarea></div>
+
+      <!-- Imágenes -->
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+          <i class="ti ti-camera"></i> Imágenes de evidencia (opcional)
+          <button class="btn btn-sm" onclick="$('img-file').click()"><i class="ti ti-plus"></i> Agregar fotos</button>
+        </div>
+        <div id="img-preview" class="img-grid"></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">JPG, PNG, WEBP — máx. 10 MB por imagen. Las imágenes quedan vinculadas al reporte.</div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:12px">
+        <div id="upload-err"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" style="padding:9px 22px;font-size:13px" onclick="submitReport()">
+            <i class="ti ti-upload"></i> Publicar reporte
+          </button>
+          <div style="font-size:11px;color:var(--text3)">El reporte quedará disponible para los usuarios con acceso.</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.addImages=function(files){
+  Array.from(files).forEach(file=>{
+    if(file.size>10*1024*1024){showToast(`${file.name} supera 10MB`,'err');return;}
+    const url=URL.createObjectURL(file);
+    window._imgs.push({file,url});
+    const grid=$('img-preview');
+    const div=document.createElement('div');div.className='img-thumb';
+    div.innerHTML=`<img src="${url}"><button class="img-del" onclick="removeImg(${window._imgs.length-1},this.closest('.img-thumb'))">×</button>`;
+    grid.appendChild(div);
+  });
+};
+window.removeImg=function(i,el){window._imgs[i]=null;el.remove();};
+
+window.loadJsonFile=function(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      window._parsed=d;
+      const ri=d.reportInfo||d||{};const co=d.component||{};
+      const set=(id,v)=>{if($(id)&&v!=null)$(id).value=v;};
+      set('u-rno',ri.reportNo);set('u-date',ri.date);set('u-cat',ri.category||'3');
+      set('u-result',d.result||'APROBADO');
+      set('u-comp',co.description||co.type||(ri.topConnType&&ri.botConnType?`${ri.topConnType} Pin × ${ri.botConnType} Caja`:''));
+      set('u-cname',ri.client||ri.company||'');set('u-rig',ri.rig||'');set('u-well',ri.well||'');
+      set('u-insp',ri.inspector||'');set('u-cert',ri.certNo||'');set('u-sn',co.serialNo||'');
+      set('u-obs',d.comments||'');
+      $('upload-form').style.display='block';
+      $('parse-msg').innerHTML='';
+    }catch(ex){$('parse-msg').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>JSON inválido: ${ex.message}</div>`;}
+  };
+  r.readAsText(file);
+};
+
+window.submitReport=async function(){
+  const err=$('upload-err');
+  const rno=$('u-rno')?.value?.trim();
+  if(!rno){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>El N° de Reporte es obligatorio.</div>';return;}
+
+  // Subir imágenes a Supabase Storage
+  const imgUrls=[];
+  const validImgs=(window._imgs||[]).filter(Boolean);
+  for(const img of validImgs){
+    try{
+      const ext=img.file.name.split('.').pop();
+      const path=`${S.user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const{data,error}=await sb.storage.from('report-images').upload(path,img.file,{contentType:img.file.type});
+      if(error)throw error;
+      const{data:{publicUrl}}=sb.storage.from('report-images').getPublicUrl(path);
+      imgUrls.push(publicUrl);
+    }catch(e){showToast('Error subiendo imagen: '+e.message,'err');}
+  }
+
+  const d=window._parsed||{};const ri=d.reportInfo||{};const co=d.component||{};
+  const companyId=$('u-company-id')?.value||S.profile.company_id;
+
+  const rptData={
+    report_no:rno,date:$('u-date')?.value||null,revision:ri.revision||'0',
+    component:$('u-comp')?.value||'',type:co.type||'Sustituto',
+    serial_no:$('u-sn')?.value||'',heat_no:co.heatNo||'',
+    manufacturer:co.manufacturer||'',material:co.material||'',
+    grade:co.grade||'',nom_od:co.nomOD||'',nom_id:co.nomID||'',
+    comp_length:co.length||co.compLength||'',weight:co.weight||'',
+    makeup_torque:co.makeupTorque||'',
+    conn_top:(ri.topConnType||'')+(ri.topConnConfig?' '+ri.topConnConfig:''),
+    conn_bot:(ri.botConnType||'')+(ri.botConnConfig?' '+ri.botConnConfig:''),
+    company_id:companyId||null,
+    client_company_name:$('u-cname')?.value||'',
+    rig:$('u-rig')?.value||'',well:$('u-well')?.value||'',
+    inspector:$('u-insp')?.value||'',cert_no:$('u-cert')?.value||'',
+    category:$('u-cat')?.value||'3',result:$('u-result')?.value||'APROBADO',
+    comments:$('u-obs')?.value||'',
+    visual_inspection:d.visualInspection||{},measurements:d.measurements||{},
+    images:imgUrls,raw_data:d,uploaded_by:S.user.id,published:true,
+  };
+
+  const{data:rpt,error}=await sb.from('reports').insert(rptData).select().single();
+  if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+
+  await logEvent('reporte_publicado',rpt.id,rpt.report_no,{images:imgUrls.length});
+  showToast(`Reporte ${rpt.report_no} publicado.${imgUrls.length?' '+imgUrls.length+' imagen(es) adjunta(s).':''}`,'ok');
+  setTab('reports');
+};
+
+/* ── Companies (super admin) ── */
+async function renderCompanies(){
+  const mc=$('mc');
+  const{data:cos}=await sb.from('companies').select('*').order('name');
+
+  mc.innerHTML=`
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+    <button class="btn btn-primary" onclick="showAddCompany()"><i class="ti ti-plus"></i> Nueva empresa</button>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Empresa</th><th>Ciudad</th><th>Email</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+      ${(cos||[]).map(c=>`<tr>
+        <td style="font-weight:700">${c.name}</td>
+        <td>${c.city||'—'}</td>
+        <td style="font-size:11px">${c.email||'—'}</td>
+        <td><span class="badge ${c.active?'badge-pass':'badge-fail'}">${c.active?'Activa':'Inactiva'}</span></td>
+        <td>
+          <button class="btn btn-xs btn-danger" onclick="toggleCompany('${c.id}',${!c.active})">
+            <i class="ti ti-${c.active?'pause':'play'}"></i>${c.active?'Desactivar':'Activar'}
+          </button>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div id="company-form" style="display:none;margin-top:14px" class="card">
+    <div class="card-title"><i class="ti ti-building"></i>Agregar empresa</div>
+    <div id="co-err"></div>
+    <div class="grid2">
+      <div class="form-group"><label class="lbl">Nombre *</label><input class="inp" id="co-name"></div>
+      <div class="form-group"><label class="lbl">CUIT</label><input class="inp" id="co-cuit" placeholder="30-00000000-0"></div>
+    </div>
+    <div class="grid3">
+      <div class="form-group"><label class="lbl">Ciudad</label><input class="inp" id="co-city"></div>
+      <div class="form-group"><label class="lbl">Teléfono</label><input class="inp" id="co-phone"></div>
+      <div class="form-group"><label class="lbl">Email</label><input class="inp" type="email" id="co-email"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveCompany()"><i class="ti ti-check"></i> Guardar empresa</button>
+    <button class="btn" style="margin-left:8px" onclick="$('company-form').style.display='none'">Cancelar</button>
+  </div>`;
+}
+
+window.showAddCompany=()=>$('company-form').style.display='block';
+window.toggleCompany=async(id,active)=>{
+  await sb.from('companies').update({active}).eq('id',id);
+  showToast(active?'Empresa activada.':'Empresa desactivada.','ok');
+  renderCompanies();
+};
+window.saveCompany=async()=>{
+  const name=$('co-name')?.value?.trim();
+  if(!name){$('co-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>El nombre es obligatorio.</div>';return;}
+  const{error}=await sb.from('companies').insert({name,rut_cuit:$('co-cuit')?.value||null,city:$('co-city')?.value||null,phone:$('co-phone')?.value||null,email:$('co-email')?.value||null});
+  if(error){$('co-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+  showToast('Empresa creada.','ok');renderCompanies();
+};
+
+/* ── Users ── */
+async function renderUsers(){
+  const mc=$('mc');
+  let q=sb.from('profiles').select('*,companies(name)').order('created_at',{ascending:false});
+  if(!isSuper())q=q.eq('company_id',S.profile.company_id);
+  const{data:users}=await q;
+
+  mc.innerHTML=`
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Nombre</th><th>Empresa</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+      ${(users||[]).map(u=>`<tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:26px;height:26px;border-radius:50%;background:var(--orange-bg);border:1px solid var(--orange);color:var(--orange-text);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${initials(u.full_name)}</div>
+            <div><div style="font-weight:600">${u.full_name||'—'}</div><div style="font-size:10px;color:var(--text3)">${u.position||''}</div></div>
+          </div>
+        </td>
+        <td style="font-size:12px">${u.companies?.name||'—'}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td><span class="badge ${u.active?'badge-pass':'badge-fail'}">${u.active?'Activo':'Inactivo'}</span></td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <select class="inp" style="width:130px;font-size:11px" onchange="changeRole('${u.id}',this.value)">
+              ${['super_admin','company_admin','inspector','supervisor','viewer'].map(r=>`<option value="${r}"${r===u.role?' selected':''}>${ROLES[r]?.label||r}</option>`).join('')}
+            </select>
+            <button class="btn btn-xs btn-danger" onclick="toggleUser('${u.id}',${!u.active})">
+              <i class="ti ti-${u.active?'user-x':'user-check'}"></i>
+            </button>
+          </div>
+        </td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+window.changeRole=async(id,role)=>{
+  const{error}=await sb.from('profiles').update({role}).eq('id',id);
+  if(error)showToast(error.message,'err');
+  else showToast('Rol actualizado.','ok');
+};
+window.toggleUser=async(id,active)=>{
+  await sb.from('profiles').update({active}).eq('id',id);
+  showToast(active?'Usuario activado.':'Usuario desactivado.','ok');
+  renderUsers();
+};
+
+/* ── Invitations ── */
+async function renderInvitations(){
+  const mc=$('mc');
+  let cosData=[];
+  if(isSuper()){const{data}=await sb.from('companies').select('id,name').eq('active',true).neq('id','00000000-0000-0000-0000-000000000001');cosData=data||[];}
+
+  const{data:invites}=await sb.from('invitations').select('*,companies(name)').order('created_at',{ascending:false}).limit(50);
+
+  mc.innerHTML=`
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title"><i class="ti ti-mail-plus"></i>Invitar nuevo usuario</div>
+    <div class="alert alert-info"><i class="ti ti-info-circle"></i>
+      El sistema genera un enlace de invitación. El usuario hace clic, crea su contraseña y queda activo automáticamente con el rol asignado.
+    </div>
+    <div id="inv-err"></div>
+    <div id="inv-ok"></div>
+    <div class="grid3">
+      <div class="form-group"><label class="lbl">Nombre completo *</label><input class="inp" id="inv-name" placeholder="Juan Pérez"></div>
+      <div class="form-group"><label class="lbl">Email *</label><input class="inp" type="email" id="inv-email" placeholder="juan@empresa.com"></div>
+      ${isSuper()?`<div class="form-group"><label class="lbl">Empresa *</label><select class="inp" id="inv-co"><option value="">— Seleccionar —</option>${cosData.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>`:
+      `<div class="form-group"><label class="lbl">Empresa</label><input class="inp" value="${S.company?.name||''}" disabled></div>`}
+    </div>
+    <div class="form-group">
+      <label class="lbl">Rol del usuario</label>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+        ${['company_admin','inspector','supervisor','viewer'].map(r=>`
+        <div class="role-card ${r==='viewer'?'selected':''}" onclick="selectRole('${r}',this)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="role-check"><i class="ti ti-check" style="font-size:10px"></i></div>
+            <div>
+              <div style="font-weight:700;font-size:12px">${roleBadge(r)}</div>
+              <div style="font-size:11px;color:var(--text2);margin-top:3px">${ROLES[r]?.desc}</div>
+            </div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <input type="hidden" id="inv-role" value="viewer">
+    <button class="btn btn-primary" style="padding:9px 22px" onclick="sendInvitation()">
+      <i class="ti ti-send"></i> Enviar invitación
+    </button>
+  </div>
+
+  <div class="card-title" style="margin-bottom:8px"><i class="ti ti-history"></i>Invitaciones enviadas</div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>Nombre</th><th>Email</th><th>Empresa</th><th>Rol</th><th>Estado</th><th>Vence</th></tr></thead>
+      <tbody>
+      ${(invites||[]).length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Sin invitaciones.</td></tr>`:
+      (invites||[]).map(inv=>{
+        const expired=new Date(inv.expires_at)<new Date();
+        return`<tr>
+          <td style="font-weight:500">${inv.full_name}</td>
+          <td style="font-size:11px;font-family:monospace">${inv.email}</td>
+          <td>${inv.companies?.name||'—'}</td>
+          <td>${roleBadge(inv.role)}</td>
+          <td><span class="badge ${inv.accepted?'badge-pass':expired?'badge-fail':'badge-grey'}">${inv.accepted?'Aceptada':expired?'Vencida':'Pendiente'}</span></td>
+          <td style="font-size:11px">${fmtDate(inv.expires_at)}</td>
+        </tr>`;}).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+window.selectRole=function(role,el){
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  $('inv-role').value=role;
+};
+
+window.sendInvitation=async function(){
+  const name=$('inv-name')?.value?.trim();
+  const email=$('inv-email')?.value?.trim();
+  const role=$('inv-role')?.value||'viewer';
+  const coId=$('inv-co')?.value||S.profile.company_id;
+
+  $('inv-err').innerHTML='';$('inv-ok').innerHTML='';
+  if(!name||!email){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Nombre y email son obligatorios.</div>';return;}
+  if(!coId){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Seleccioná una empresa.</div>';return;}
+
+  // Crear invitación en DB
+  const{data:inv,error}=await sb.from('invitations').insert({
+    email,full_name:name,company_id:coId,role,invited_by:S.user.id
+  }).select().single();
+
+  if(error){$('inv-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+
+  // Enviar invitación via Supabase Auth
+  const{error:authErr}=await sb.auth.signInWithOtp({email,options:{
+    emailRedirectTo:window.location.href,
+    data:{full_name:name,company:coId,role}
+  }});
+
+  const link=`${window.location.href}?invite=${inv.token}`;
+  $('inv-ok').innerHTML=`
+    <div class="alert alert-ok"><i class="ti ti-circle-check"></i>
+      <div><strong>Invitación creada para ${name}.</strong>
+      <div style="margin-top:6px;font-size:11px">
+        ${authErr?'El email mágico no se pudo enviar. Enviá este link manualmente:':' Se envió un email de acceso a '+email+'. También podés compartir este link:'}
+        <br><code style="background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:10px;word-break:break-all">${link}</code>
+        <button onclick="navigator.clipboard.writeText('${link}').then(()=>showToast('Link copiado','ok'))" class="btn btn-xs" style="margin-left:6px"><i class="ti ti-copy"></i></button>
+      </div></div>
+    </div>`;
+
+  await logEvent('invitacion_enviada',null,null,{email,role,company:coId});
+};
+
+/* ── Audit Log ── */
+async function renderAuditLog(){
+  const mc=$('mc');
+  let q=sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
+  if(!isSuper())q=q.eq('company_id',S.profile.company_id);
+  const{data:logs}=await q;
+
+  mc.innerHTML=`
+  <div class="tbl-wrap">
+    <div class="tbl-toolbar">
+      <i class="ti ti-shield-check" style="font-size:16px;color:var(--orange-text)"></i>
+      <span style="font-size:12px;font-weight:600">Audit Log — últimas 200 acciones</span>
+      <div style="margin-left:auto">
+        <button class="btn btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button>
+      </div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Fecha / Hora</th><th>Evento</th><th>Usuario</th><th>Rol</th><th>Empresa</th><th>Informe</th></tr></thead>
+      <tbody>
+      ${(logs||[]).length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Sin registros.</td></tr>`:
+      (logs||[]).map(l=>{
+        const ec=l.event==='descarga_pdf'?'var(--green-text)':l.event.includes('login')?'var(--orange-text)':l.event.includes('error')?'var(--red-text)':'var(--text2)';
+        return`<tr>
+          <td style="font-size:11px;white-space:nowrap;font-family:monospace">${fmtDT(l.created_at)}</td>
+          <td><span style="color:${ec};font-size:11px;font-weight:700">${l.event}</span></td>
+          <td style="font-size:11px">${l.user_name||'—'}</td>
+          <td>${l.user_role?roleBadge(l.user_role):''}</td>
+          <td style="font-size:11px">${l.user_company||'—'}</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--orange-text)">${l.report_no||'—'}</td>
+        </tr>`;}).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+window.exportCSV=function(){
+  const rows=document.querySelectorAll('#mc .tbl tbody tr');
+  let csv='Fecha,Evento,Usuario,Rol,Empresa,Informe\n';
+  rows.forEach(tr=>{
+    const cols=[...tr.querySelectorAll('td')].map(td=>'"'+td.textContent.trim().replace(/"/g,'""')+'"');
+    csv+=cols.join(',')+'\n';
+  });
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=`audit_log_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+};
+
+/* ============================================================
+   AUTH STATE
+   ============================================================ */
+async function init(){
+  if(!IS_OK){render();return;}
+
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(session?.user){
+      S.user=session.user;
+      const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+      S.profile=profile;
+      if(profile?.company_id){
+        const{data:co}=await sb.from('companies').select('*').eq('id',profile.company_id).single();
+        S.company=co;
+      }
+      if(event==='SIGNED_IN'){
+        await sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',session.user.id);
+        await logEvent('login');
+      }
+      render();
+    }else{
+      S={user:null,profile:null,company:null,tab:'dashboard',sub:'',selected:null};
+      render();
+    }
+  });
+
+  const{data:{session}}=await sb.auth.getSession();
+  if(!session)render();
+}
+
+init();
+</script>
+</body>
+</html>
