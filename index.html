@@ -1297,15 +1297,14 @@ async function init(){
         await sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',session.user.id);
         await logEvent('login');
       }
-      render();
+     
     }else{
       S={user:null,profile:null,company:null,tab:'dashboard',sub:'',selected:null};
       render();
     }
   });
 
-  const{data:{session}}=await sb.auth.getSession();
-  if(!session)render();
+ try{const r=await Promise.race([sb.auth.getSession(),new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),5000))]);if(!r?.data?.session)render();}catch(e){render();}
 }
 
 init();
@@ -1313,7 +1312,7 @@ init();
 try{
   const{data:{session},error}=await sb.auth.getSession();
   if(error)throw error;
-  if(!session)render();
+  render();
 }catch(e){
   console.error('Supabase error:',e);
   render();
