@@ -294,12 +294,10 @@ async function downloadPDF(report){
 
     pdfDoc.getPages().forEach(page=>{
       const {width,height}=page.getSize();
-      // Marca diagonal
       page.drawText(S.company?.name||S.profile.full_name||'CONFIDENCIAL',{
         x:width/2-180,y:height/2,size:48,font:fontB,
         color:rgb(0.97,0.45,0.09),opacity:.05,rotate:degrees(42)
       });
-      // Barra inferior
       page.drawRectangle({x:0,y:0,width,height:24,color:rgb(0.07,0.07,0.07)});
       page.drawText(`DESCARGADO POR: ${S.profile.full_name} — ${S.company?.name||''}`,
         {x:8,y:14,size:6.5,font:fontB,color:rgb(0.97,0.45,0.09)});
@@ -327,11 +325,10 @@ async function generateReportPDF(r){
   const{width,height}=p.getSize();
   const m=38,W=width-m*2;let y=height-m;
 
-  // Header
   p.drawRectangle({x:0,y:height-44,width,height:44,color:rgb(0.07,0.07,0.07)});
   p.drawRectangle({x:0,y:height-48,width,height:4,color:rgb(0.97,0.45,0.09)});
   p.drawText('REPORTE DE INSPECCIÓN DS-1 — Vol 3 y Addendum',{x:m,y:height-24,size:9,font:fB,color:rgb(0.97,0.45,0.09)});
-  p.drawText(`${r.report_no||'—'}  |  ${fmtDate(r.date)}  |  Cat. ${r.category}`,{x:width-m,y:height-24,size:8,font:fN,color:rgb(0.7,0.7,0.7),xSkewAngle:0,ySkewAngle:0,maxWidth:200,x:width-180-m+m,y:height-24});
+  p.drawText(`${r.report_no||'—'}  |  ${fmtDate(r.date)}  |  Cat. ${r.category}`,{x:width-180-m+m,y:height-24,size:8,font:fN,color:rgb(0.7,0.7,0.7)});
   y=height-60;
 
   const sec=(title)=>{p.drawRectangle({x:m,y:y-2,width:W,height:14,color:rgb(0.13,0.13,0.13)});p.drawText(title,{x:m+4,y:y+2,size:8,font:fB,color:rgb(0.97,0.45,0.09)});y-=20;};
@@ -346,7 +343,6 @@ async function generateReportPDF(r){
   row3([['Conexión Sup.',r.conn_top||''],['Conexión Inf.',r.conn_bot||''],['OD Nominal',(r.nom_od||'')+(r.nom_od?'"':'')]]);
   y-=4;
 
-  // Visual
   const vis=r.visual_inspection||{};
   const visFails=Object.entries(vis).filter(([,v])=>v==='F').map(([k])=>VIS_LABELS[k]||k);
   const visOk=Object.entries(vis).filter(([,v])=>v==='P').length;
@@ -355,7 +351,6 @@ async function generateReportPDF(r){
   else{p.drawText('✗ ÍTEMS RECHAZADOS: '+visFails.join(', '),{x:m+4,y,size:7.5,font:fB,color:rgb(0.94,0.27,0.27)});y-=14;}
   y-=6;
 
-  // Measurements
   const meas=r.measurements||{};
   const measPairs=Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
   if(measPairs.length){
@@ -381,7 +376,6 @@ async function generateReportPDF(r){
     y-=6;
   }
 
-  // Images embedded
   const images=r.images||[];
   if(images.length>0&&y>150){
     sec('EVIDENCIA FOTOGRÁFICA');
@@ -389,19 +383,16 @@ async function generateReportPDF(r){
     y-=14;
   }
 
-  // Comments
   if(r.comments&&y>80){sec('OBSERVACIONES');const lines=r.comments.match(/.{1,110}/g)||[r.comments];lines.slice(0,3).forEach(l=>{if(y<50)return;p.drawText(l,{x:m+4,y,size:7.5,font:fN,color:rgb(0.85,0.85,0.85)});y-=11;});y-=4;}
 
-  // Result
   const rc=r.result==='APROBADO'?rgb(0.08,0.62,0.24):r.result==='RECHAZADO'?rgb(0.86,0.15,0.15):rgb(0.6,0.27,0.04);
   y=Math.min(y,120);
-  p.drawRectangle({x:m,y:y-20,width:W,height:28,color:rgb(0.07,0.07,0.07),borderColor:rc[0]?rc:rgb(0.3,0.3,0.3),borderWidth:1});
+  p.drawRectangle({x:m,y:y-20,width:W,height:28,color:rgb(0.07,0.07,0.07)});
   p.drawRectangle({x:m,y:y+6,width:4,height:22,color:rc});
   p.drawText(`RESULTADO: ${r.result||'—'}`,{x:m+12,y:y-8,size:13,font:fB,color:rc});
-  p.drawText(`Inspector: ${r.inspector||'—'} | Cert: ${r.cert_no||'—'} | ${fmtDate(r.date)}`,{x:width-m,y:y-8,size:7,font:fN,color:rgb(0.5,0.5,0.5),x:m+12,y:y-22,});
+  p.drawText(`Inspector: ${r.inspector||'—'} | Cert: ${r.cert_no||'—'} | ${fmtDate(r.date)}`,{x:m+12,y:y-22,size:7,font:fN,color:rgb(0.5,0.5,0.5)});
   y-=40;
 
-  // Signatures
   [['Inspector / Firma',''],['Supervisor / Conformidad',''],['Cliente / Recepción','']].forEach(([l],i)=>{
     const x=m+i*(W/3+2);
     p.drawLine({start:{x,y:30},end:{x:x+W/3-8,y:30},thickness:.5,color:rgb(0.3,0.3,0.3)});
@@ -847,7 +838,6 @@ async function renderUpload(){
   const mc=$('mc');
   window._imgs=[];window._parsed=null;
 
-  // Cargar empresas cliente
   let companiesHtml='';
   if(isSuper()){
     const{data:cos}=await sb.from('companies').select('id,name').eq('active',true).neq('id','00000000-0000-0000-0000-000000000001');
@@ -909,14 +899,13 @@ async function renderUpload(){
 
       <div class="form-group"><label class="lbl">Observaciones</label><textarea class="inp" id="u-obs"></textarea></div>
 
-      <!-- Imágenes -->
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
         <div style="font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px">
           <i class="ti ti-camera"></i> Imágenes de evidencia (opcional)
           <button class="btn btn-sm" onclick="$('img-file').click()"><i class="ti ti-plus"></i> Agregar fotos</button>
         </div>
         <div id="img-preview" class="img-grid"></div>
-        <div style="font-size:10px;color:var(--text3);margin-top:4px">JPG, PNG, WEBP — máx. 10 MB por imagen. Las imágenes quedan vinculadas al reporte.</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">JPG, PNG, WEBP — máx. 10 MB por imagen.</div>
       </div>
 
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:12px">
@@ -972,7 +961,6 @@ window.submitReport=async function(){
   const rno=$('u-rno')?.value?.trim();
   if(!rno){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>El N° de Reporte es obligatorio.</div>';return;}
 
-  // Subir imágenes a Supabase Storage
   const imgUrls=[];
   const validImgs=(window._imgs||[]).filter(Boolean);
   for(const img of validImgs){
@@ -1017,7 +1005,7 @@ window.submitReport=async function(){
   setTab('reports');
 };
 
-/* ── Companies (super admin) ── */
+/* ── Companies ── */
 async function renderCompanies(){
   const mc=$('mc');
   const{data:cos}=await sb.from('companies').select('*').order('name');
@@ -1204,14 +1192,12 @@ window.sendInvitation=async function(){
   if(!name||!email){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Nombre y email son obligatorios.</div>';return;}
   if(!coId){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Seleccioná una empresa.</div>';return;}
 
-  // Crear invitación en DB
   const{data:inv,error}=await sb.from('invitations').insert({
     email,full_name:name,company_id:coId,role,invited_by:S.user.id
   }).select().single();
 
   if(error){$('inv-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
 
-  // Enviar invitación via Supabase Auth
   const{error:authErr}=await sb.auth.signInWithOtp({email,options:{
     emailRedirectTo:window.location.href,
     data:{full_name:name,company:coId,role}
@@ -1297,23 +1283,24 @@ async function init(){
         await sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',session.user.id);
         await logEvent('login');
       }
-     
+      render();
     }else{
       S={user:null,profile:null,company:null,tab:'dashboard',sub:'',selected:null};
       render();
     }
   });
 
- try{const r=await Promise.race([sb.auth.getSession(),new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),5000))]);if(!r?.data?.session)render();}catch(e){render();}
+  try{
+    const{data:{session},error}=await sb.auth.getSession();
+    if(error)throw error;
+    if(!session)render();
+  }catch(e){
+    console.error('Supabase error:',e);
+    render();
+  }
 }
 
 init();
 </script>
-try{
-  const{data:{session},error}=await sb.auth.getSession();
-  if(error)throw error;
-  render();
-}catch(e){
-  console.error('Supabase error:',e);
-  render();
-}
+</body>
+</html>
