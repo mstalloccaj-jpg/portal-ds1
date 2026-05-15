@@ -831,6 +831,9 @@ async function renderReports(){
             <button class="btn btn-sm btn-success" onclick='downloadPDF(${JSON.stringify(r).replace(/'/g,"&#39;")})'>
               <i class="ti ti-file-type-pdf"></i>
             </button>
+            ${isSuper()?`<button class="btn btn-sm btn-danger" onclick='deleteReport("${r.id}","${r.report_no}")'>
+              <i class="ti ti-trash"></i>
+            </button>`:''}
           </div>
         </td>
       </tr>`).join('')}
@@ -1366,6 +1369,15 @@ async function renderAuditLog(){
     </table>
   </div>`;
 }
+
+window.deleteReport=async function(id,reportNo){
+  if(!confirm('Eliminar reporte '+reportNo+'? Esta accion no se puede deshacer.'))return;
+  const{error}=await sb.from('reports').delete().eq('id',id);
+  if(error){showToast('Error: '+error.message,'err');return;}
+  await logEvent('reporte_eliminado',id,reportNo);
+  showToast('Reporte '+reportNo+' eliminado.','ok');
+  renderReports();
+};
 
 window.exportCSV=function(){
   const rows=document.querySelectorAll('#mc .tbl tbody tr');
