@@ -500,15 +500,26 @@ async function generateReportPDF(r){
         for(let j=0;j<binStr.length;j++)buf[j]=binStr.charCodeAt(j);
         const embedded=await doc.embedJpg(buf.buffer);
         const dims=embedded.scale(1);
-        // Maintain aspect ratio within box
+        // Fit image within fixed box keeping aspect ratio
+        const maxW=imgW;
+        const maxH=70;
         const ratio=dims.height/dims.width;
-        const drawW=imgW;
-        const drawH=Math.min(imgW*ratio,120);
+        let drawW,drawH;
+        if(ratio>maxH/maxW){
+          drawH=maxH;drawW=maxH/ratio;
+        } else {
+          drawW=maxW;drawH=maxW*ratio;
+        }
+        drawW=Math.min(drawW,maxW);
+        drawH=Math.min(drawH,maxH);
         maxRowH=Math.max(maxRowH,drawH);
         if(y-drawH<40)break;
-        page.drawImage(embedded,{x:imgX,y:y-drawH,width:drawW,height:drawH});
-        page.drawRectangle({x:imgX,y:y-drawH,width:drawW,height:drawH,borderColor:dark2,borderWidth:0.5});
-        page.drawText('Foto '+(i+1),{x:imgX+2,y:y-drawH+3,size:5,font:fN,color:grey});
+        // Center image in box
+        const offX=(maxW-drawW)/2;
+        page.drawRectangle({x:imgX,y:y-maxH,width:maxW,height:maxH,color:dark3});
+        page.drawImage(embedded,{x:imgX+offX,y:y-maxH+(maxH-drawH)/2,width:drawW,height:drawH});
+        page.drawRectangle({x:imgX,y:y-maxH,width:maxW,height:maxH,borderColor:dark2,borderWidth:0.5});
+        page.drawText('Foto '+(i+1),{x:imgX+2,y:y-maxH+3,size:5,font:fN,color:grey});
       }catch(e){
         page.drawRectangle({x:imgX,y:y-80,width:imgW,height:80,color:dark3});
         page.drawText('[Imagen '+(i+1)+']',{x:imgX+4,y:y-40,size:6,font:fN,color:grey});
@@ -516,7 +527,7 @@ async function generateReportPDF(r){
       }
       imgX+=imgW+6;
     }
-    y-=(maxRowH||80)+8;
+    y-=78;
     if(images.length>4){
       page.drawText('+ '+(images.length-4)+' imagen(es) adicional(es). Ver portal digital.',{x:mg,y,size:6,font:fN,color:grey});
       y-=10;
