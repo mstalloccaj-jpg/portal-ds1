@@ -213,7 +213,7 @@ textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
    ⚙️  CONFIGURACIÓN — COMPLETAR CON TUS DATOS DE SUPABASE
    ============================================================ */
 const SUPABASE_URL  = 'https://ysuwpuaucfvnqlfnczlu.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzdXdwdWF1Y2Z2bnFsZm5jemx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3Njk5NDIsImV4cCI6MjA5NDM0NTk0Mn0.cp-PpDnHeb-F73217TkzFkN46-3MsuqzbSwCXtceqFw';
+const SUPABASE_ANON = 'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-';
 const COMPANY_NAME  = 'GM Robótica';
 const LOGO_URL      = 'https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=300,fit=crop/d95gEJ0jJgfxbzwe/recurso-1-2x-1yBLDy8iVJ2EB3go.png';
 /* ============================================================ */
@@ -327,26 +327,26 @@ async function generateReportPDF(r){
 
   p.drawRectangle({x:0,y:height-44,width,height:44,color:rgb(0.07,0.07,0.07)});
   p.drawRectangle({x:0,y:height-48,width,height:4,color:rgb(0.97,0.45,0.09)});
-  p.drawText('REPORTE DE INSPECCIÓN DS-1 — Vol 3 y Addendum',{x:m,y:height-24,size:9,font:fB,color:rgb(0.97,0.45,0.09)});
-  p.drawText(`${r.report_no||'—'}  |  ${fmtDate(r.date)}  |  Cat. ${r.category}`,{x:width-180-m+m,y:height-24,size:8,font:fN,color:rgb(0.7,0.7,0.7)});
+  p.drawText('REPORTE DE INSPECCION DS-1 ? Vol 3 y Addendum',{x:m,y:height-24,size:9,font:fB,color:rgb(0.97,0.45,0.09)});
+  p.drawText(`${r.report_no||'-'}  |  ${fmtDate(r.date)}  |  Cat. ${r.category}`,{x:width-180-m+m,y:height-24,size:8,font:fN,color:rgb(0.7,0.7,0.7)});
   y=height-60;
 
   const sec=(title)=>{p.drawRectangle({x:m,y:y-2,width:W,height:14,color:rgb(0.13,0.13,0.13)});p.drawText(title,{x:m+4,y:y+2,size:8,font:fB,color:rgb(0.97,0.45,0.09)});y-=20;};
-  const fld=(lbl,val,x2=m+48)=>{if(y<50)return;p.drawText(lbl+':',{x:m+2,y:y+1,size:6.5,font:fB,color:rgb(0.5,0.5,0.5)});p.drawText(String(val||'—'),{x:x2,y:y+1,size:8,font:fN,color:rgb(0.9,0.9,0.9)});y-=13;};
-  const row3=(pairs)=>{if(y<50)return;const cw=(W-6)/3;pairs.forEach(([l,v],i)=>{const x=m+i*(cw+3);p.drawText(l+':',{x,y:y+1,size:6,font:fB,color:rgb(0.5,0.5,0.5)});p.drawText(String(v||'—'),{x,y:y-8,size:7.5,font:fN,color:rgb(0.9,0.9,0.9)});});y-=22;};
+  const fld=(lbl,val,x2=m+48)=>{if(y<50)return;p.drawText(lbl+':',{x:m+2,y:y+1,size:6.5,font:fB,color:rgb(0.5,0.5,0.5)});p.drawText(String(val||'-'),{x:x2,y:y+1,size:8,font:fN,color:rgb(0.9,0.9,0.9)});y-=13;};
+  const row3=(pairs)=>{if(y<50)return;const cw=(W-6)/3;pairs.forEach(([l,v],i)=>{const x=m+i*(cw+3);p.drawText(l+':',{x,y:y+1,size:6,font:fB,color:rgb(0.5,0.5,0.5)});p.drawText(String(v||'-'),{x,y:y-8,size:7.5,font:fN,color:rgb(0.9,0.9,0.9)});});y-=22;};
 
-  sec('IDENTIFICACIÓN DEL COMPONENTE');
+  sec('IDENTIFICACION DEL COMPONENTE');
   fld('Componente',r.component);
   row3([['Empresa',r.client_company_name||''],['Equipo / Rig',r.rig||''],['Pozo',r.well||'']]);
-  row3([['Inspector',r.inspector||''],['Cert. DS-1',r.cert_no||''],['Categoría','Cat. '+(r.category||'3')]]);
-  row3([['N° Serie',r.serial_no||''],['N° Calor',r.heat_no||''],['Fabricante',r.manufacturer||'']]);
-  row3([['Conexión Sup.',r.conn_top||''],['Conexión Inf.',r.conn_bot||''],['OD Nominal',(r.nom_od||'')+(r.nom_od?'"':'')]]);
+  row3([['Inspector',r.inspector||''],['Cert. DS-1',r.cert_no||''],['Categoria','Cat. '+(r.category||'3')]]);
+  row3([['N# Serie',r.serial_no||''],['N# Calor',r.heat_no||''],['Fabricante',r.manufacturer||'']]);
+  row3([['Conexion Sup.',r.conn_top||''],['Conexion Inf.',r.conn_bot||''],['OD Nominal',(r.nom_od||'')+(r.nom_od?'"':'')]]);
   y-=4;
 
   const vis=r.visual_inspection||{};
   const visFails=Object.entries(vis).filter(([,v])=>v==='F').map(([k])=>VIS_LABELS[k]||k);
   const visOk=Object.entries(vis).filter(([,v])=>v==='P').length;
-  sec('INSPECCIÓN VISUAL — DS-1 Vol 3 §3.6 y Addendum');
+  sec('INSPECCION VISUAL ? DS-1 Vol 3 S3.6 y Addendum');
   if(visFails.length===0){p.drawText('TODOS LOS ITEMS VISUALES APROBADOS ('+visOk+' items)',{x:m+4,y,size:8,font:fB,color:rgb(0.13,0.77,0.37)});y-=14;}
   else{p.drawText('ITEMS RECHAZADOS: '+visFails.join(', '),{x:m+4,y,size:7.5,font:fB,color:rgb(0.94,0.27,0.27)});y-=14;}
   y-=6;
@@ -354,10 +354,10 @@ async function generateReportPDF(r){
   const meas=r.measurements||{};
   const measPairs=Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
   if(measPairs.length){
-    sec('MEDICIONES DIMENSIONALES — Tablas DS-1 Vol 3');
+    sec('MEDICIONES DIMENSIONALES - Tablas DS-1 Vol 3');
     const cols=[m,m+88,m+130,m+175,m+225,m+270,m+315,m+362,m+405];
     p.drawRectangle({x:m,y:y-2,width:W,height:12,color:rgb(0.18,0.18,0.18)});
-    ['Parámetro','Un','Mín','Máx','Med 1','Med 2','Med 3','Prom.','Est.'].forEach((h,i)=>p.drawText(h,{x:cols[i]+2,y:y+1,size:6,font:fB,color:rgb(0.6,0.6,0.6)}));
+    ['Parametro','Un','Min','Max','Med 1','Med 2','Med 3','Prom.','Est.'].forEach((h,i)=>p.drawText(h,{x:cols[i]+2,y:y+1,size:6,font:fB,color:rgb(0.6,0.6,0.6)}));
     y-=12;
     measPairs.forEach(([k,label])=>{
       if(y<50)return;
@@ -368,7 +368,7 @@ async function generateReportPDF(r){
       p.drawText('in',{x:cols[1]+2,y:y+1,size:5.5,font:fN,color:rgb(0.5,0.5,0.5)});
       p.drawText(mm.min||'',{x:cols[2]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
       p.drawText(mm.max||'',{x:cols[3]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
-      [mm.m1,mm.m2,mm.m3].forEach((v,i)=>p.drawText(v||'—',{x:cols[4+i]+2,y:y+1,size:6,font:fN,color:rgb(0.85,0.85,0.85)}));
+      [mm.m1,mm.m2,mm.m3].forEach((v,i)=>p.drawText(v||'-',{x:cols[4+i]+2,y:y+1,size:6,font:fN,color:rgb(0.85,0.85,0.85)}));
       if(a)p.drawText(a,{x:cols[7]+2,y:y+1,size:6,font:fB,color:rc});
       if(st!=='e')p.drawText(st==='p'?'OK':'FALLA',{x:cols[8]+2,y:y+1,size:5.5,font:fB,color:rc});
       y-=10;
@@ -378,8 +378,8 @@ async function generateReportPDF(r){
 
   const images=r.images||[];
   if(images.length>0&&y>150){
-    sec('EVIDENCIA FOTOGRÁFICA');
-    p.drawText(`${images.length} imagen(es) adjunta(s). Ver versión digital del informe.`,{x:m+4,y,size:7.5,font:fN,color:rgb(0.6,0.6,0.6)});
+    sec('EVIDENCIA FOTOGRAFICA');
+    p.drawText(`${images.length} imagen(es) adjunta(s). Ver version digital del informe.`,{x:m+4,y,size:7.5,font:fN,color:rgb(0.6,0.6,0.6)});
     y-=14;
   }
 
@@ -390,10 +390,10 @@ async function generateReportPDF(r){
   p.drawRectangle({x:m,y:y-20,width:W,height:28,color:rgb(0.07,0.07,0.07)});
   p.drawRectangle({x:m,y:y+6,width:4,height:22,color:rc});
   p.drawText(`RESULTADO: ${r.result||'-'}`,{x:m+12,y:y-8,size:13,font:fB,color:rc});
-  p.drawText(`Inspector: ${r.inspector||'—'} | Cert: ${r.cert_no||'—'} | ${fmtDate(r.date)}`,{x:m+12,y:y-22,size:7,font:fN,color:rgb(0.5,0.5,0.5)});
+  p.drawText(`Inspector: ${r.inspector||'-'} | Cert: ${r.cert_no||'-'} | ${fmtDate(r.date)}`,{x:m+12,y:y-22,size:7,font:fN,color:rgb(0.5,0.5,0.5)});
   y-=40;
 
-  [['Inspector / Firma',''],['Supervisor / Conformidad',''],['Cliente / Recepción','']].forEach(([l],i)=>{
+  [['Inspector / Firma',''],['Supervisor / Conformidad',''],['Cliente / Recepcion','']].forEach(([l],i)=>{
     const x=m+i*(W/3+2);
     p.drawLine({start:{x,y:30},end:{x:x+W/3-8,y:30},thickness:.5,color:rgb(0.3,0.3,0.3)});
     p.drawText(l,{x,y:20,size:6,font:fN,color:rgb(0.5,0.5,0.5)});
@@ -819,10 +819,10 @@ async function renderReportDetail(){
     <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
         <div style="font-size:22px;font-weight:800;color:${r.result==='APROBADO'?'var(--green-text)':r.result==='RECHAZADO'?'var(--red-text)':'var(--amber-text)'}">
-          ${r.result==='APROBADO'?'OK':'NO'} ${r.result||'—'}
+          ${r.result==='APROBADO'?'+':'-'} ${r.result||'-'}
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:3px">
-          ${r.result==='APROBADO'?'Componente apto para servicio según DS-1 Vol 3':'Componente NO apto — ver observaciones'}
+          ${r.result==='APROBADO'?'Componente apto para servicio segun DS-1 Vol 3':'Componente NO apto - ver observaciones'}
         </div>
       </div>
       <div style="text-align:right;font-size:11px;color:var(--text3)">
@@ -1290,7 +1290,14 @@ async function init(){
     }
   });
 
-  render();
+  try{
+    const{data:{session},error}=await sb.auth.getSession();
+    if(error)throw error;
+    if(!session)render();
+  }catch(e){
+    console.error('Supabase error:',e);
+    render();
+  }
 }
 
 init();
