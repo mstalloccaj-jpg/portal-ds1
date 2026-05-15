@@ -1324,4 +1324,91 @@ window.sendInvitation=async function(){
       <div><strong>Invitación creada para ${name}.</strong>
       <div style="margin-top:6px;font-size:11px">
         ${authErr?'El email mágico no se pudo enviar. Enviá este link manualmente:':' Se envió un email de acceso a '+email+'. También podés compartir este link:'}
-        <br><code style="background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:10
+        <br><code style="background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:10px;word-break:break-all">${link}</code>
+        <button onclick="navigator.clipboard.writeText('${link}').then(()=>showToast('Link copiado','ok'))" class="btn btn-xs" style="margin-left:6px"><i class="ti ti-copy"></i></button>
+      </div></div>
+    </div>`;
+
+  await logEvent('invitacion_enviada',null,null,{email,role,company:coId});
+};
+
+/* ── Audit Log ── */
+async function renderAuditLog(){
+  const mc=$('mc');
+  let q=sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
+  if(!isSuper())q=q.eq('company_id',S.profile.company_id);
+  const{data:logs}=await q;
+
+  mc.innerHTML=`
+  <div class="tbl-wrap">
+    <div class="tbl-toolbar">
+      <i class="ti ti-shield-check" style="font-size:16px;color:var(--orange-text)"></i>
+      <span style="font-size:12px;font-weight:600">Audit Log — últimas 200 acciones</span>
+      <div style="margin-left:auto">
+        <button class="btn btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button>
+      </div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Fecha / Hora</th><th>Evento</th><th>Usuario</th><th>Rol</th><th>Empresa</th><th>Informe</th></tr></thead>
+      <tbody>
+      ${(logs||[]).length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Sin registros.</td></tr>`:
+      (logs||[]).map(l=>{
+        const ec=l.event==='descarga_pdf'?'var(--green-text)':l.event.includes('login')?'var(--orange-text)':l.event.includes('error')?'var(--red-text)':'var(--text2)';
+        return`<tr>
+          <td style="font-size:11px;white-space:nowrap;font-family:monospace">${fmtDT(l.created_at)}</td>
+          <td><span style="color:${ec};font-size:11px;font-weight:700">${l.event}</span></td>
+          <td style="font-size:11px">${l.user_name||'—'}</td>
+          <td>${l.user_role?roleBadge(l.user_role):''}</td>
+          <td style="font-size:11px">${l.user_company||'—'}</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--orange-text)">${l.report_no||'—'}</td>
+        </tr>`;}).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+window.exportCSV=function(){
+  const rows=document.querySelectorAll('#mc .tbl tbody tr');
+  let csv='Fecha,Evento,Usuario,Rol,Empresa,Informe\n';
+  rows.forEach(tr=>{
+    const cols=[...tr.querySelectorAll('td')].map(td=>'"'+td.textContent.trim().replace(/"/g,'""')+'"');
+    csv+=cols.join(',')+'\n';
+  });
+  const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=`audit_log_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+};
+
+/* ============================================================
+   AUTH STATE
+   ============================================================ */
+async function init(){
+  if(!IS_OK){render();return;}
+
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(session?.user){
+      S.user=session.user;
+      const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+      S.profile=profile;
+      if(profile?.company_id){
+        const{data:co}=await sb.from('companies').select('*').eq('id',profile.company_id).single();
+        S.company=co;
+      }
+      if(event==='SIGNED_IN'){
+        await sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',session.user.id);
+        await logEvent('login');
+      }
+      render();
+    }else{
+      S={user:null,profile:null,company:null,tab:'dashboard',sub:'',selected:null};
+      render();
+    }
+  });
+
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
