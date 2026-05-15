@@ -317,88 +317,203 @@ async function downloadPDF(report){
 }
 
 async function generateReportPDF(r){
-  const {PDFDocument,rgb,StandardFonts}=window.PDFLib;
+  const {PDFDocument,rgb,StandardFonts,degrees}=window.PDFLib;
   const doc=await PDFDocument.create();
   const fB=await doc.embedFont(StandardFonts.HelveticaBold);
   const fN=await doc.embedFont(StandardFonts.Helvetica);
-  const p=doc.addPage([595,842]);
-  const{width,height}=p.getSize();
-  const m=38,W=width-m*2;let y=height-m;
+  const page=doc.addPage([595,842]);
+  const {width,height}=page.getSize();
+  const mg=36, W=width-mg*2;
+  let y=height-mg;
 
-  p.drawRectangle({x:0,y:height-44,width,height:44,color:rgb(0.07,0.07,0.07)});
-  p.drawRectangle({x:0,y:height-48,width,height:4,color:rgb(0.97,0.45,0.09)});
-  p.drawText('REPORTE DE INSPECCION DS-1 ? Vol 3 y Addendum',{x:m,y:height-24,size:9,font:fB,color:rgb(0.97,0.45,0.09)});
-  p.drawText(`${r.report_no||'-'}  |  ${fmtDate(r.date)}  |  Cat. ${r.category}`,{x:width-180-m+m,y:height-24,size:8,font:fN,color:rgb(0.7,0.7,0.7)});
-  y=height-60;
+  const orange=rgb(0.976,0.451,0.086);
+  const dark=rgb(0.07,0.07,0.07);
+  const dark2=rgb(0.13,0.13,0.13);
+  const dark3=rgb(0.18,0.18,0.18);
+  const white=rgb(1,1,1);
+  const grey=rgb(0.6,0.6,0.6);
+  const grey2=rgb(0.85,0.85,0.85);
+  const green=rgb(0.133,0.773,0.369);
+  const red=rgb(0.937,0.267,0.267);
 
-  const sec=(title)=>{p.drawRectangle({x:m,y:y-2,width:W,height:14,color:rgb(0.13,0.13,0.13)});p.drawText(title,{x:m+4,y:y+2,size:8,font:fB,color:rgb(0.97,0.45,0.09)});y-=20;};
-  const fld=(lbl,val,x2=m+48)=>{if(y<50)return;p.drawText(lbl+':',{x:m+2,y:y+1,size:6.5,font:fB,color:rgb(0.5,0.5,0.5)});p.drawText(String(val||'-'),{x:x2,y:y+1,size:8,font:fN,color:rgb(0.9,0.9,0.9)});y-=13;};
-  const row3=(pairs)=>{if(y<50)return;const cw=(W-6)/3;pairs.forEach(([l,v],i)=>{const x=m+i*(cw+3);p.drawText(l+':',{x,y:y+1,size:6,font:fB,color:rgb(0.5,0.5,0.5)});p.drawText(String(v||'-'),{x,y:y-8,size:7.5,font:fN,color:rgb(0.9,0.9,0.9)});});y-=22;};
+  // -- HEADER BLOCK --
+  page.drawRectangle({x:0,y:height-52,width,height:52,color:dark});
+  page.drawRectangle({x:0,y:height-56,width,height:4,color:orange});
+  page.drawText('GM ROBOTICA',{x:mg,y:height-22,size:11,font:fB,color:orange});
+  page.drawText('Automatizacion Industrial',{x:mg,y:height-35,size:7,font:fN,color:grey});
+  page.drawText('REPORTE DE INSPECCION DS-1 Vol.3 + Addendum',{x:mg+130,y:height-22,size:9,font:fB,color:white});
+  page.drawText('Conforme DS-1(R) Quinta Edicion + Addenda | ISO 9001:2015',{x:mg+130,y:height-35,size:7,font:fN,color:grey});
+  const rno=r.report_no||'-';
+  page.drawText(rno,{x:width-mg-fB.widthOfTextAtSize(rno,10),y:height-22,size:10,font:fB,color:orange});
+  page.drawText((r.date||'-')+' | Cat. '+(r.category||'3'),{x:width-mg-90,y:height-35,size:7,font:fN,color:grey});
+  y=height-68;
 
-  sec('IDENTIFICACION DEL COMPONENTE');
-  fld('Componente',r.component);
-  row3([['Empresa',r.client_company_name||''],['Equipo / Rig',r.rig||''],['Pozo',r.well||'']]);
-  row3([['Inspector',r.inspector||''],['Cert. DS-1',r.cert_no||''],['Categoria','Cat. '+(r.category||'3')]]);
-  row3([['N# Serie',r.serial_no||''],['N# Calor',r.heat_no||''],['Fabricante',r.manufacturer||'']]);
-  row3([['Conexion Sup.',r.conn_top||''],['Conexion Inf.',r.conn_bot||''],['OD Nominal',(r.nom_od||'')+(r.nom_od?'"':'')]]);
+  // -- RESULT BANNER --
+  const resColor=r.result==='APROBADO'?green:r.result==='RECHAZADO'?red:rgb(0.96,0.62,0.04);
+  const resLabel=r.result==='APROBADO'?'APROBADO':r.result==='RECHAZADO'?'RECHAZADO':'CONDICIONAL';
+  page.drawRectangle({x:mg,y:y-20,width:W,height:26,color:dark2,borderColor:resColor,borderWidth:1.5});
+  page.drawRectangle({x:mg,y:y-20,width:5,height:26,color:resColor});
+  page.drawText('RESULTADO:',{x:mg+12,y:y-9,size:8,font:fB,color:grey});
+  page.drawText(resLabel,{x:mg+70,y:y-9,size:9,font:fB,color:resColor});
+  page.drawText('Inspector: '+(r.inspector||'-')+'  |  Cert: '+(r.cert_no||'-')+'  |  '+((r.date||'-')),{x:mg+200,y:y-9,size:7,font:fN,color:grey});
+  y-=28;
+
+  // Helper: section header
+  const sec=(title)=>{
+    if(y<60){return;}
+    page.drawRectangle({x:mg,y:y-2,width:W,height:13,color:dark2});
+    page.drawRectangle({x:mg,y:y-2,width:3,height:13,color:orange});
+    page.drawText(title,{x:mg+8,y:y+2,size:7.5,font:fB,color:orange});
+    y-=18;
+  };
+
+  // Helper: field row
+  const fRow=(pairs,colW)=>{
+    if(y<60)return;
+    const cw=colW||(W/pairs.length);
+    pairs.forEach(([lbl,val],i)=>{
+      const x=mg+i*cw;
+      page.drawText((lbl+':').toUpperCase(),{x,y:y+1,size:5.5,font:fB,color:grey});
+      page.drawText(String(val||'-').slice(0,Math.floor(cw/4.5)),{x,y:y-8,size:8,font:fN,color:grey2});
+    });
+    y-=20;
+  };
+
+  // -- SECCION 1: IDENTIFICACION --
+  sec('1. IDENTIFICACION DEL COMPONENTE');
+  fRow([['Componente',r.component],['Categoria','Cat. '+(r.category||'3')],['Fecha',r.date||'-']]);
+  fRow([['Empresa cliente',r.client_company_name],['Equipo / Rig',r.rig],['Pozo',r.well]]);
+  fRow([['Inspector',r.inspector],['Cert. DS-1',r.cert_no],['Empresa Inspectora','GM Robotica']]);
+  fRow([['N Serie',r.serial_no],['N Calor',r.heat_no],['Fabricante',r.manufacturer]]);
+  fRow([['Conexion Superior',r.conn_top],['Conexion Inferior',r.conn_bot],['OD Nominal',(r.nom_od||'-')+(r.nom_od?'"':'')]]);
   y-=4;
 
+  // -- SECCION 2: INSPECCION VISUAL --
   const vis=r.visual_inspection||{};
-  const visFails=Object.entries(vis).filter(([,v])=>v==='F').map(([k])=>VIS_LABELS[k]||k);
-  const visOk=Object.entries(vis).filter(([,v])=>v==='P').length;
-  sec('INSPECCION VISUAL ? DS-1 Vol 3 S3.6 y Addendum');
-  if(visFails.length===0){p.drawText('TODOS LOS ITEMS VISUALES APROBADOS ('+visOk+' items)',{x:m+4,y,size:8,font:fB,color:rgb(0.13,0.77,0.37)});y-=14;}
-  else{p.drawText('ITEMS RECHAZADOS: '+visFails.join(', '),{x:m+4,y,size:7.5,font:fB,color:rgb(0.94,0.27,0.27)});y-=14;}
-  y-=6;
+  const VL={pinThread:'Roscas Pin',boxThread:'Roscas Caja',pinSeal:'Sello Pin',boxSeal:'Sello Caja',pinNeck:'Cuello Pin',boxExt:'Ext. Caja',bodyExt:'Cuerpo',hb:'Hardbanding',bb:'Boreback',slipG:'Ranura Slip',elevG:'Ranura Elevator',marks:'Marcado',dye:'Liq. Penetrantes',mpi:'MPI'};
+  const viPass=Object.entries(vis).filter(([,v])=>v==='P');
+  const viFail=Object.entries(vis).filter(([,v])=>v==='F');
+  sec('2. INSPECCION VISUAL - DS-1 Vol.3 S3.6 y Addendum');
 
+  if(viFail.length===0&&viPass.length>0){
+    page.drawRectangle({x:mg,y:y-12,width:W,height:16,color:rgb(0.05,0.18,0.09)});
+    page.drawText('TODOS LOS ITEMS VISUALES APROBADOS ('+viPass.length+' items inspeccionados)',{x:mg+8,y:y-5,size:8,font:fB,color:green});
+    y-=20;
+  } else if(viFail.length>0){
+    page.drawRectangle({x:mg,y:y-12,width:W,height:16,color:rgb(0.18,0.05,0.05)});
+    page.drawText('ITEMS RECHAZADOS: '+viFail.map(([k])=>VL[k]||k).join(', '),{x:mg+8,y:y-5,size:7.5,font:fB,color:red});
+    y-=20;
+  }
+
+  // Visual grid - 3 columns
+  const visItems=Object.entries(VL).filter(([k])=>vis[k]&&vis[k]!=='NA');
+  if(visItems.length>0){
+    const colW3=W/3;
+    let col=0;
+    let rowY=y;
+    visItems.forEach(([k,lbl])=>{
+      if(rowY<60)return;
+      const x=mg+col*colW3;
+      const vr=vis[k];
+      const vc=vr==='P'?green:red;
+      const vt=vr==='P'?'[OK]':'[X]';
+      page.drawText(vt,{x,y:rowY,size:7,font:fB,color:vc});
+      page.drawText(lbl,{x:x+22,y:rowY,size:7,font:fN,color:grey2});
+      col++;
+      if(col>=3){col=0;rowY-=11;}
+    });
+    y=rowY-(col>0?11:0);
+    y-=6;
+  }
+
+  // -- SECCION 3: MEDICIONES --
   const meas=r.measurements||{};
-  const measPairs=Object.entries(MEAS_LABELS).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
-  if(measPairs.length){
-    sec('MEDICIONES DIMENSIONALES - Tablas DS-1 Vol 3');
-    const cols=[m,m+88,m+130,m+175,m+225,m+270,m+315,m+362,m+405];
-    p.drawRectangle({x:m,y:y-2,width:W,height:12,color:rgb(0.18,0.18,0.18)});
-    ['Parametro','Un','Min','Max','Med 1','Med 2','Med 3','Prom.','Est.'].forEach((h,i)=>p.drawText(h,{x:cols[i]+2,y:y+1,size:6,font:fB,color:rgb(0.6,0.6,0.6)}));
-    y-=12;
-    measPairs.forEach(([k,label])=>{
+  const ML={bodyOD:'OD Cuerpo',bodyID:'ID Cuerpo',wallThk:'Esp. Pared',totalLen:'Longitud',bow:'Curvatura',pinTong:'Tong Space Pin',pinLen:'Long. Pin',bevel:'Bisel Pin',boxTong:'Tong Space Caja',boxOD:'OD Caja',cbDiam:'Diam. Counterbore',cbDepth:'Prof. Counterbore',sealShldr:'Ancho Sello'};
+  const measPairs=Object.entries(ML).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
+
+  if(measPairs.length>0&&y>80){
+    sec('3. MEDICIONES DIMENSIONALES - Tablas DS-1 Vol.3');
+    // Table header
+    const cols=[mg,mg+85,mg+125,mg+165,mg+210,mg+255,mg+300,mg+348,mg+400];
+    const hdrs=['Parametro','Min','Max','Med.1','Med.2','Med.3','Prom.','Estado'];
+    page.drawRectangle({x:mg,y:y-2,width:W,height:12,color:dark3});
+    hdrs.forEach((h,i)=>page.drawText(h,{x:cols[i]+2,y:y+1,size:5.5,font:fB,color:grey}));
+    y-=13;
+
+    measPairs.forEach(([k,lbl])=>{
       if(y<50)return;
-      const mm=meas[k];const a=avg3(mm);const st=evalSt(a||mm.m1,mm.min,mm.max);
-      const rc=st==='f'?rgb(0.94,0.27,0.27):st==='p'?rgb(0.13,0.77,0.37):rgb(0.6,0.6,0.6);
-      p.drawRectangle({x:m,y:y-1,width:W,height:10,color:rgb(0.1,0.1,0.1),opacity:0.5});
-      p.drawText(label.slice(0,20),{x:cols[0]+2,y:y+1,size:6,font:fN,color:rgb(0.85,0.85,0.85)});
-      p.drawText('in',{x:cols[1]+2,y:y+1,size:5.5,font:fN,color:rgb(0.5,0.5,0.5)});
-      p.drawText(mm.min||'',{x:cols[2]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
-      p.drawText(mm.max||'',{x:cols[3]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
-      [mm.m1,mm.m2,mm.m3].forEach((v,i)=>p.drawText(v||'-',{x:cols[4+i]+2,y:y+1,size:6,font:fN,color:rgb(0.85,0.85,0.85)}));
-      if(a)p.drawText(a,{x:cols[7]+2,y:y+1,size:6,font:fB,color:rc});
-      if(st!=='e')p.drawText(st==='p'?'OK':'FALLA',{x:cols[8]+2,y:y+1,size:5.5,font:fB,color:rc});
+      const m=meas[k];
+      const vals=[m.m1,m.m2,m.m3].filter(v=>v!=null&&v!==''&&!isNaN(parseFloat(v))).map(parseFloat);
+      const avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(3):'';
+      const mn=parseFloat(m.min);const mx=parseFloat(m.max);
+      const hm=m.min!==''&&!isNaN(mn);const hM=m.max!==''&&!isNaN(mx);
+      const n=parseFloat(avg);
+      let st='',sc=grey;
+      if(avg&&(hm||hM)){
+        if((hm&&n<mn)||(hM&&n>mx)){st='FALLA';sc=red;}
+        else{st='OK';sc=green;}
+      }
+      const rowBg=(measPairs.indexOf(measPairs.find(p=>p[0]===k))%2===0)?rgb(0.09,0.09,0.09):dark;
+      page.drawRectangle({x:mg,y:y-1,width:W,height:10,color:rowBg});
+      page.drawText(lbl.slice(0,18),{x:cols[0]+2,y:y+1,size:6,font:fN,color:grey2});
+      page.drawText(m.min||'',{x:cols[1]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
+      page.drawText(m.max||'',{x:cols[2]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
+      [m.m1,m.m2,m.m3].forEach((v,i)=>page.drawText(v||'-',{x:cols[3+i]+2,y:y+1,size:6,font:fN,color:grey2}));
+      if(avg)page.drawText(avg,{x:cols[6]+2,y:y+1,size:6,font:fB,color:sc});
+      if(st)page.drawText(st,{x:cols[7]+2,y:y+1,size:6,font:fB,color:sc});
       y-=10;
     });
     y-=6;
   }
 
+  // -- SECCION 4: IMAGENES --
   const images=r.images||[];
-  if(images.length>0&&y>150){
-    sec('EVIDENCIA FOTOGRAFICA');
-    p.drawText(`${images.length} imagen(es) adjunta(s). Ver version digital del informe.`,{x:m+4,y,size:7.5,font:fN,color:rgb(0.6,0.6,0.6)});
-    y-=14;
+  if(images.length>0&&y>100){
+    sec('4. EVIDENCIA FOTOGRAFICA');
+    page.drawText(images.length+' imagen(es) adjunta(s). Ver version digital del informe para acceso completo.',{x:mg+4,y,size:7,font:fN,color:grey});
+    y-=12;
   }
 
-  if(r.comments&&y>80){sec('OBSERVACIONES');const lines=r.comments.match(/.{1,110}/g)||[r.comments];lines.slice(0,3).forEach(l=>{if(y<50)return;p.drawText(l,{x:m+4,y,size:7.5,font:fN,color:rgb(0.85,0.85,0.85)});y-=11;});y-=4;}
+  // -- SECCION 5: OBSERVACIONES --
+  if(r.comments&&y>70){
+    sec('5. OBSERVACIONES Y CONCLUSION');
+    const maxChars=110;
+    const lines=[];
+    let txt=r.comments;
+    while(txt.length>0){
+      // Only ASCII safe
+      const chunk=txt.slice(0,maxChars).replace(/[^\x00-\x7F]/g,'');
+      lines.push(chunk);
+      txt=txt.slice(maxChars);
+    }
+    lines.slice(0,4).forEach(l=>{
+      if(y<60)return;
+      page.drawText(l,{x:mg+4,y,size:7,font:fN,color:grey2});
+      y-=10;
+    });
+    y-=4;
+  }
 
-  const rc=r.result==='APROBADO'?rgb(0.08,0.62,0.24):r.result==='RECHAZADO'?rgb(0.86,0.15,0.15):rgb(0.6,0.27,0.04);
-  y=Math.min(y,120);
-  p.drawRectangle({x:m,y:y-20,width:W,height:28,color:rgb(0.07,0.07,0.07)});
-  p.drawRectangle({x:m,y:y+6,width:4,height:22,color:rc});
-  p.drawText(`RESULTADO: ${r.result||'-'}`,{x:m+12,y:y-8,size:13,font:fB,color:rc});
-  p.drawText(`Inspector: ${r.inspector||'-'} | Cert: ${r.cert_no||'-'} | ${fmtDate(r.date)}`,{x:m+12,y:y-22,size:7,font:fN,color:rgb(0.5,0.5,0.5)});
-  y-=40;
+  // -- FIRMAS --
+  if(y>70){
+    y=Math.min(y,90);
+    page.drawRectangle({x:mg,y:32,width:W,height:1,color:dark2});
+    const sigCols=[mg,mg+W/3,mg+2*W/3];
+    const sigLabels=['Inspector DS-1','Supervisor','Cliente / Recepcion'];
+    sigLabels.forEach((l,i)=>{
+      const x=sigCols[i];
+      page.drawLine({start:{x:x+5,y:60},end:{x:x+W/3-10,y:60},thickness:0.5,color:dark3});
+      page.drawText(l,{x:x+5,y:50,size:5.5,font:fN,color:grey});
+      page.drawText('Firma y sello',{x:x+5,y:42,size:5.5,font:fN,color:dark3});
+      page.drawText('Fecha: ___/___/______',{x:x+5,y:34,size:5.5,font:fN,color:dark3});
+    });
+  }
 
-  [['Inspector / Firma',''],['Supervisor / Conformidad',''],['Cliente / Recepcion','']].forEach(([l],i)=>{
-    const x=m+i*(W/3+2);
-    p.drawLine({start:{x,y:30},end:{x:x+W/3-8,y:30},thickness:.5,color:rgb(0.3,0.3,0.3)});
-    p.drawText(l,{x,y:20,size:6,font:fN,color:rgb(0.5,0.5,0.5)});
-    p.drawText('Fecha: ____________',{x,y:11,size:6,font:fN,color:rgb(0.4,0.4,0.4)});
-  });
+  // -- FOOTER --
+  page.drawRectangle({x:0,y:0,width,height:28,color:dark});
+  page.drawRectangle({x:0,y:28,width,height:1,color:rgb(0.2,0.2,0.2)});
+  page.drawText('GM ROBOTICA | Portal DS-1 | Documento Confidencial | Conforme DS-1(R) Vol.3 + Addendum | ISO 9001:2015',{x:mg,y:16,size:5.5,font:fN,color:grey});
+  page.drawText('Pag. 1 / 1',{x:width-mg-30,y:16,size:5.5,font:fN,color:grey});
 
   return doc;
 }
@@ -1209,98 +1324,4 @@ window.sendInvitation=async function(){
       <div><strong>Invitación creada para ${name}.</strong>
       <div style="margin-top:6px;font-size:11px">
         ${authErr?'El email mágico no se pudo enviar. Enviá este link manualmente:':' Se envió un email de acceso a '+email+'. También podés compartir este link:'}
-        <br><code style="background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:10px;word-break:break-all">${link}</code>
-        <button onclick="navigator.clipboard.writeText('${link}').then(()=>showToast('Link copiado','ok'))" class="btn btn-xs" style="margin-left:6px"><i class="ti ti-copy"></i></button>
-      </div></div>
-    </div>`;
-
-  await logEvent('invitacion_enviada',null,null,{email,role,company:coId});
-};
-
-/* ── Audit Log ── */
-async function renderAuditLog(){
-  const mc=$('mc');
-  let q=sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
-  if(!isSuper())q=q.eq('company_id',S.profile.company_id);
-  const{data:logs}=await q;
-
-  mc.innerHTML=`
-  <div class="tbl-wrap">
-    <div class="tbl-toolbar">
-      <i class="ti ti-shield-check" style="font-size:16px;color:var(--orange-text)"></i>
-      <span style="font-size:12px;font-weight:600">Audit Log — últimas 200 acciones</span>
-      <div style="margin-left:auto">
-        <button class="btn btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button>
-      </div>
-    </div>
-    <table class="tbl">
-      <thead><tr><th>Fecha / Hora</th><th>Evento</th><th>Usuario</th><th>Rol</th><th>Empresa</th><th>Informe</th></tr></thead>
-      <tbody>
-      ${(logs||[]).length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px">Sin registros.</td></tr>`:
-      (logs||[]).map(l=>{
-        const ec=l.event==='descarga_pdf'?'var(--green-text)':l.event.includes('login')?'var(--orange-text)':l.event.includes('error')?'var(--red-text)':'var(--text2)';
-        return`<tr>
-          <td style="font-size:11px;white-space:nowrap;font-family:monospace">${fmtDT(l.created_at)}</td>
-          <td><span style="color:${ec};font-size:11px;font-weight:700">${l.event}</span></td>
-          <td style="font-size:11px">${l.user_name||'—'}</td>
-          <td>${l.user_role?roleBadge(l.user_role):''}</td>
-          <td style="font-size:11px">${l.user_company||'—'}</td>
-          <td style="font-family:monospace;font-size:11px;color:var(--orange-text)">${l.report_no||'—'}</td>
-        </tr>`;}).join('')}
-      </tbody>
-    </table>
-  </div>`;
-}
-
-window.exportCSV=function(){
-  const rows=document.querySelectorAll('#mc .tbl tbody tr');
-  let csv='Fecha,Evento,Usuario,Rol,Empresa,Informe\n';
-  rows.forEach(tr=>{
-    const cols=[...tr.querySelectorAll('td')].map(td=>'"'+td.textContent.trim().replace(/"/g,'""')+'"');
-    csv+=cols.join(',')+'\n';
-  });
-  const b=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const u=URL.createObjectURL(b);
-  const a=document.createElement('a');a.href=u;a.download=`audit_log_${new Date().toISOString().slice(0,10)}.csv`;a.click();
-};
-
-/* ============================================================
-   AUTH STATE
-   ============================================================ */
-async function init(){
-  if(!IS_OK){render();return;}
-
-  sb.auth.onAuthStateChange(async(event,session)=>{
-    if(session?.user){
-      S.user=session.user;
-      const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
-      S.profile=profile;
-      if(profile?.company_id){
-        const{data:co}=await sb.from('companies').select('*').eq('id',profile.company_id).single();
-        S.company=co;
-      }
-      if(event==='SIGNED_IN'){
-        await sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',session.user.id);
-        await logEvent('login');
-      }
-      render();
-    }else{
-      S={user:null,profile:null,company:null,tab:'dashboard',sub:'',selected:null};
-      render();
-    }
-  });
-
-  try{
-    const{data:{session},error}=await sb.auth.getSession();
-    if(error)throw error;
-    if(!session)render();
-  }catch(e){
-    console.error('Supabase error:',e);
-    render();
-  }
-}
-
-init();
-</script>
-</body>
-</html>
+        <br><code style="background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:10
