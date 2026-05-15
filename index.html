@@ -348,7 +348,7 @@ async function generateReportPDF(r){
   const visOk=Object.entries(vis).filter(([,v])=>v==='P').length;
   sec('INSPECCIÓN VISUAL — DS-1 Vol 3 §3.6 y Addendum');
   if(visFails.length===0){p.drawText('TODOS LOS ITEMS VISUALES APROBADOS ('+visOk+' items)',{x:m+4,y,size:8,font:fB,color:rgb(0.13,0.77,0.37)});y-=14;}
-  else{p.drawText('✗ ÍTEMS RECHAZADOS: '+visFails.join(', '),{x:m+4,y,size:7.5,font:fB,color:rgb(0.94,0.27,0.27)});y-=14;}
+  else{p.drawText('ITEMS RECHAZADOS: '+visFails.join(', '),{x:m+4,y,size:7.5,font:fB,color:rgb(0.94,0.27,0.27)});y-=14;}
   y-=6;
 
   const meas=r.measurements||{};
@@ -370,7 +370,7 @@ async function generateReportPDF(r){
       p.drawText(mm.max||'',{x:cols[3]+2,y:y+1,size:6,font:fN,color:rgb(0.5,0.7,1)});
       [mm.m1,mm.m2,mm.m3].forEach((v,i)=>p.drawText(v||'—',{x:cols[4+i]+2,y:y+1,size:6,font:fN,color:rgb(0.85,0.85,0.85)}));
       if(a)p.drawText(a,{x:cols[7]+2,y:y+1,size:6,font:fB,color:rc});
-      if(st!=='e')p.drawText(st==='p'?'✓ OK':'✗ Falla',{x:cols[8]+2,y:y+1,size:5.5,font:fB,color:rc});
+      if(st!=='e')p.drawText(st==='p'?'OK':'FALLA',{x:cols[8]+2,y:y+1,size:5.5,font:fB,color:rc});
       y-=10;
     });
     y-=6;
@@ -389,7 +389,7 @@ async function generateReportPDF(r){
   y=Math.min(y,120);
   p.drawRectangle({x:m,y:y-20,width:W,height:28,color:rgb(0.07,0.07,0.07)});
   p.drawRectangle({x:m,y:y+6,width:4,height:22,color:rc});
-  p.drawText(`RESULTADO: ${r.result||'—'}`,{x:m+12,y:y-8,size:13,font:fB,color:rc});
+  p.drawText(`RESULTADO: ${r.result||'-'}`,{x:m+12,y:y-8,size:13,font:fB,color:rc});
   p.drawText(`Inspector: ${r.inspector||'—'} | Cert: ${r.cert_no||'—'} | ${fmtDate(r.date)}`,{x:m+12,y:y-22,size:7,font:fN,color:rgb(0.5,0.5,0.5)});
   y-=40;
 
@@ -819,7 +819,7 @@ async function renderReportDetail(){
     <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
         <div style="font-size:22px;font-weight:800;color:${r.result==='APROBADO'?'var(--green-text)':r.result==='RECHAZADO'?'var(--red-text)':'var(--amber-text)'}">
-          ${r.result==='APROBADO'?'✓':'✗'} ${r.result||'—'}
+          ${r.result==='APROBADO'?'OK':'NO'} ${r.result||'—'}
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:3px">
           ${r.result==='APROBADO'?'Componente apto para servicio según DS-1 Vol 3':'Componente NO apto — ver observaciones'}
