@@ -1458,8 +1458,68 @@ window.exportCSV=function(){
 /* ============================================================
    AUTH STATE
    ============================================================ */
+function renderPasswordRecovery(app, accessToken){
+  app.innerHTML=`
+  <div class="login-page">
+    <div class="login-card">
+      <div style="text-align:center;margin-bottom:22px">
+        <img src="${LOGO_URL}" style="max-height:56px;margin-bottom:12px" alt="GM Robotica">
+        <h2 style="color:var(--orange);font-size:20px;font-weight:800">Nueva contrasena</h2>
+        <p style="color:var(--text2);font-size:12px;margin-top:3px">Ingresa tu nueva contrasena para acceder al portal.</p>
+      </div>
+      <div id="rec-err"></div>
+      <div class="form-group">
+        <label class="lbl">Nueva contrasena</label>
+        <input class="inp" type="password" id="rec-pass1" placeholder="Minimo 8 caracteres" oninput="checkPwStrength(this.value)">
+        <div class="pw-strength" id="pw-bar" style="background:var(--border2)"></div>
+        <div class="pw-hint" id="pw-hint">Ingresa tu nueva contrasena</div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Confirmar contrasena</label>
+        <input class="inp" type="password" id="rec-pass2" placeholder="Repeti la contrasena" onkeydown="if(event.key==='Enter')doRecovery('${accessToken}')">
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center;font-size:14px" onclick="doRecovery('${accessToken}')">
+        <i class="ti ti-lock-check"></i> Guardar contrasena
+      </button>
+    </div>
+  </div>`;
+}
+
+async function doRecovery(token){
+  const p1=document.getElementById('rec-pass1').value;
+  const p2=document.getElementById('rec-pass2').value;
+  const err=document.getElementById('rec-err');
+  if(p1.length<8){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Minimo 8 caracteres.</div>';return;}
+  if(p1!==p2){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contrasenas no coinciden.</div>';return;}
+  // Set session with the recovery token
+  const{data,error}=await sb.auth.setSession({access_token:token,refresh_token:token});
+  if(error){
+    // Try direct password update
+    const{error:e2}=await sb.auth.updateUser({password:p1});
+    if(e2){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${e2.message}</div>`;return;}
+  } else {
+    const{error:e3}=await sb.auth.updateUser({password:p1});
+    if(e3){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${e3.message}</div>`;return;}
+  }
+  // Clear hash and reload
+  window.location.hash='';
+  showToast('Contrasena actualizada. Ingresa con tu nueva contrasena.','ok');
+  setTimeout(()=>window.location.reload(),2000);
+}
+
 async function init(){
   if(!IS_OK){render();return;}
+
+  // Handle password recovery token from URL hash
+  const hash = window.location.hash;
+  if(hash && hash.includes('type=recovery')){
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get('access_token');
+    if(accessToken){
+      renderPasswordRecovery(document.getElementById('app'), accessToken);
+      return;
+    }
+  }
 
   sb.auth.onAuthStateChange(async(event,session)=>{
     if(session?.user){
