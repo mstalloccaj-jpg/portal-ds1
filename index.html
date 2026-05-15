@@ -470,35 +470,43 @@ async function generateReportPDF(r){
   const images=r.images||[];
   if(images.length>0&&y>120){
     sec('4. EVIDENCIA FOTOGRAFICA');
-    // Embed images
     const maxImgs=Math.min(images.length,4);
     const imgW=Math.floor((W-(maxImgs-1)*6)/maxImgs);
     const imgH=Math.min(80,imgW*0.75);
+
+    // Convert image URL to base64 via canvas
+    const toBase64=url=>new Promise(resolve=>{
+      const img=new Image();
+      img.crossOrigin='anonymous';
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+        canvas.getContext('2d').drawImage(img,0,0);
+        resolve(canvas.toDataURL('image/jpeg',0.85));
+      };
+      img.onerror=()=>resolve(null);
+      img.src=url+'?t='+Date.now();
+    });
+
     let imgX=mg;
     for(let i=0;i<maxImgs;i++){
       try{
-        const resp=await fetch(images[i]);
-        const buf=await resp.arrayBuffer();
-        const bytes=new Uint8Array(buf);
-        // Detect format from first bytes
-        let embedded;
-        if(bytes[0]===0xFF&&bytes[1]===0xD8){
-          embedded=await doc.embedJpg(buf);
-        } else if(bytes[0]===0x89&&bytes[1]===0x50){
-          embedded=await doc.embedPng(buf);
-        } else {
-          embedded=await doc.embedJpg(buf);
-        }
+        const b64=await toBase64(images[i]);
+        if(!b64){throw new Error('no data');}
+        const b64data=b64.split(',')[1];
+        const binStr=atob(b64data);
+        const buf=new Uint8Array(binStr.length);
+        for(let j=0;j<binStr.length;j++)buf[j]=binStr.charCodeAt(j);
+        const embedded=await doc.embedJpg(buf.buffer);
         if(y-imgH<40)break;
         page.drawImage(embedded,{x:imgX,y:y-imgH,width:imgW,height:imgH});
         page.drawRectangle({x:imgX,y:y-imgH,width:imgW,height:imgH,borderColor:dark2,borderWidth:0.5});
         page.drawText('Foto '+(i+1),{x:imgX+2,y:y-imgH+3,size:5,font:fN,color:grey});
-        imgX+=imgW+6;
       }catch(e){
         page.drawRectangle({x:imgX,y:y-imgH,width:imgW,height:imgH,color:dark3});
-        page.drawText('Imagen no disponible',{x:imgX+4,y:y-imgH/2,size:6,font:fN,color:grey});
-        imgX+=imgW+6;
+        page.drawText('[Imagen '+(i+1)+']',{x:imgX+4,y:y-imgH/2,size:6,font:fN,color:grey});
       }
+      imgX+=imgW+6;
     }
     y-=imgH+8;
     if(images.length>4){
