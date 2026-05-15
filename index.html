@@ -1432,9 +1432,13 @@ async function renderAuditLog(){
 
 window.deleteReport=async function(id,reportNo){
   if(!confirm('Eliminar reporte '+reportNo+'? Esta accion no se puede deshacer.'))return;
+  // Delete audit logs first to avoid FK constraint
+  await sb.from('audit_logs').delete().eq('report_id',id);
+  // Delete report assignments
+  await sb.from('report_assignments').delete().eq('report_id',id);
+  // Now delete the report
   const{error}=await sb.from('reports').delete().eq('id',id);
   if(error){showToast('Error: '+error.message,'err');return;}
-  await logEvent('reporte_eliminado',id,reportNo);
   showToast('Reporte '+reportNo+' eliminado.','ok');
   renderReports();
 };
