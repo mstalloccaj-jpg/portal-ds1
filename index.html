@@ -347,7 +347,7 @@ async function generateReportPDF(r){
   const visFails=Object.entries(vis).filter(([,v])=>v==='F').map(([k])=>VIS_LABELS[k]||k);
   const visOk=Object.entries(vis).filter(([,v])=>v==='P').length;
   sec('INSPECCIÓN VISUAL — DS-1 Vol 3 §3.6 y Addendum');
-  if(visFails.length===0){p.drawText('✓ TODOS LOS ÍTEMS VISUALES APROBADOS ('+visOk+' ítems)',{x:m+4,y,size:8,font:fB,color:rgb(0.13,0.77,0.37)});y-=14;}
+  if(visFails.length===0){p.drawText('TODOS LOS ITEMS VISUALES APROBADOS ('+visOk+' items)',{x:m+4,y,size:8,font:fB,color:rgb(0.13,0.77,0.37)});y-=14;}
   else{p.drawText('✗ ÍTEMS RECHAZADOS: '+visFails.join(', '),{x:m+4,y,size:7.5,font:fB,color:rgb(0.94,0.27,0.27)});y-=14;}
   y-=6;
 
