@@ -468,10 +468,43 @@ async function generateReportPDF(r){
 
   // -- SECCION 4: IMAGENES --
   const images=r.images||[];
-  if(images.length>0&&y>100){
+  if(images.length>0&&y>120){
     sec('4. EVIDENCIA FOTOGRAFICA');
-    page.drawText(images.length+' imagen(es) adjunta(s). Ver version digital del informe para acceso completo.',{x:mg+4,y,size:7,font:fN,color:grey});
-    y-=12;
+    // Embed images
+    const maxImgs=Math.min(images.length,4);
+    const imgW=Math.floor((W-(maxImgs-1)*6)/maxImgs);
+    const imgH=Math.min(80,imgW*0.75);
+    let imgX=mg;
+    for(let i=0;i<maxImgs;i++){
+      try{
+        const resp=await fetch(images[i]);
+        const buf=await resp.arrayBuffer();
+        const bytes=new Uint8Array(buf);
+        // Detect format from first bytes
+        let embedded;
+        if(bytes[0]===0xFF&&bytes[1]===0xD8){
+          embedded=await doc.embedJpg(buf);
+        } else if(bytes[0]===0x89&&bytes[1]===0x50){
+          embedded=await doc.embedPng(buf);
+        } else {
+          embedded=await doc.embedJpg(buf);
+        }
+        if(y-imgH<40)break;
+        page.drawImage(embedded,{x:imgX,y:y-imgH,width:imgW,height:imgH});
+        page.drawRectangle({x:imgX,y:y-imgH,width:imgW,height:imgH,borderColor:dark2,borderWidth:0.5});
+        page.drawText('Foto '+(i+1),{x:imgX+2,y:y-imgH+3,size:5,font:fN,color:grey});
+        imgX+=imgW+6;
+      }catch(e){
+        page.drawRectangle({x:imgX,y:y-imgH,width:imgW,height:imgH,color:dark3});
+        page.drawText('Imagen no disponible',{x:imgX+4,y:y-imgH/2,size:6,font:fN,color:grey});
+        imgX+=imgW+6;
+      }
+    }
+    y-=imgH+8;
+    if(images.length>4){
+      page.drawText('+ '+(images.length-4)+' imagen(es) adicional(es). Ver portal digital.',{x:mg,y,size:6,font:fN,color:grey});
+      y-=10;
+    }
   }
 
   // -- SECCION 5: OBSERVACIONES --
