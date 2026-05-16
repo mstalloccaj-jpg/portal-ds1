@@ -756,8 +756,11 @@ function renderPortal(app){
         ${navItems.map(n=>`<div class="sb-link ${t===n.id&&!S.selected?'active':''}" onclick="setTab('${n.id}')"><i class="ti ${n.icon}"></i>${n.label}</div>`).join('')}
       </div>
       <div class="sb-foot">
+        <button class="btn btn-sm" style="width:100%;justify-content:center;font-size:11px;margin-bottom:6px" onclick="showChangePassword()">
+          <i class="ti ti-lock"></i> Cambiar contrasena
+        </button>
         <button class="btn" style="width:100%;justify-content:center;font-size:12px" onclick="doLogout()">
-          <i class="ti ti-logout"></i> Cerrar sesión
+          <i class="ti ti-logout"></i> Cerrar sesion
         </button>
       </div>
     </div>
@@ -1323,7 +1326,7 @@ async function renderUsers(){
   const mc=$('mc');
   let q=sb.from('profiles').select('*,companies(name)').order('created_at',{ascending:false});
   if(!isSuper())q=q.eq('company_id',S.profile.company_id);
-  const{data:users}=await q;
+  const[{data:users},{data:companies}]=await Promise.all([q,sb.from('companies').select('id,name').eq('active',true).order('name')]);
 
   mc.innerHTML=`
   <div class="tbl-wrap">
@@ -1337,14 +1340,19 @@ async function renderUsers(){
             <div><div style="font-weight:600">${u.full_name||'—'}</div><div style="font-size:10px;color:var(--text3)">${u.position||''}</div></div>
           </div>
         </td>
-        <td style="font-size:12px">${u.companies?.name||'—'}</td>
-        <td>${roleBadge(u.role)}</td>
+        <td>
+          ${isSuper()?`<select class="inp" style="width:130px;font-size:11px" onchange="changeCompany('${u.id}',this.value)">
+            ${(companies||[]).map(c=>`<option value="${c.id}"${c.id===u.company_id?' selected':''}>${c.name}</option>`).join('')}
+          </select>`:`<span style="font-size:12px">${u.companies?.name||'—'}</span>`}
+        </td>
+        <td>
+          <select class="inp" style="width:130px;font-size:11px" onchange="changeRole('${u.id}',this.value)">
+            ${['super_admin','company_admin','inspector','supervisor','viewer'].map(r=>`<option value="${r}"${r===u.role?' selected':''}>${ROLES[r]?.label||r}</option>`).join('')}
+          </select>
+        </td>
         <td><span class="badge ${u.active?'badge-pass':'badge-fail'}">${u.active?'Activo':'Inactivo'}</span></td>
         <td>
           <div style="display:flex;gap:4px">
-            <select class="inp" style="width:130px;font-size:11px" onchange="changeRole('${u.id}',this.value)">
-              ${['super_admin','company_admin','inspector','supervisor','viewer'].map(r=>`<option value="${r}"${r===u.role?' selected':''}>${ROLES[r]?.label||r}</option>`).join('')}
-            </select>
             <button class="btn btn-xs btn-danger" onclick="toggleUser('${u.id}',${!u.active})">
               <i class="ti ti-${u.active?'user-x':'user-check'}"></i>
             </button>
@@ -1359,6 +1367,12 @@ async function renderUsers(){
   </div>`;
 }
 
+
+window.changeCompany=async(id,companyId)=>{
+  const{error}=await sb.from('profiles').update({company_id:companyId}).eq('id',id);
+  if(error)showToast(error.message,'err');
+  else showToast('Empresa actualizada.','ok');
+};
 window.changeRole=async(id,role)=>{
   const{error}=await sb.from('profiles').update({role}).eq('id',id);
   if(error)showToast(error.message,'err');
@@ -1381,9 +1395,7 @@ async function renderInvitations(){
   mc.innerHTML=`
   <div class="card" style="margin-bottom:14px">
     <div class="card-title"><i class="ti ti-mail-plus"></i>Invitar nuevo usuario</div>
-    <div class="alert alert-info"><i class="ti ti-info-circle"></i>
-      El sistema genera un enlace de invitación. El usuario hace clic, crea su contraseña y queda activo automáticamente con el rol asignado.
-    </div>
+    
     <div id="inv-err"></div>
     <div id="inv-ok"></div>
     <div class="grid3">
@@ -1448,31 +1460,85 @@ window.sendInvitation=async function(){
 
   $('inv-err').innerHTML='';$('inv-ok').innerHTML='';
   if(!name||!email){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Nombre y email son obligatorios.</div>';return;}
-  if(!coId){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Seleccioná una empresa.</div>';return;}
+  if(!coId){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Selecciona una empresa.</div>';return;}
 
-  const{data:inv,error}=await sb.from('invitations').insert({
+  // Generate a temporary password
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const specials='!@#$';
+  let tempPass='';
+  for(let i=0;i<8;i++)tempPass+=chars[Math.floor(Math.random()*chars.length)];
+  tempPass+=specials[Math.floor(Math.random()*specials.length)];
+  tempPass+=Math.floor(Math.random()*9)+1;
+
+  // Check if user already exists
+  const{data:existingProfile}=await sb.from('profiles').select('id').eq('id',
+    (await sb.from('profiles').select('id').limit(1)).data?.[0]?.id||'x'
+  ).single();
+
+  // Save invitation record
+  const{data:inv,error:invErr}=await sb.from('invitations').insert({
     email,full_name:name,company_id:coId,role,invited_by:S.user.id
   }).select().single();
+  if(invErr&&!invErr.message.includes('duplicate')){
+    $('inv-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${invErr.message}</div>`;return;
+  }
 
-  if(error){$('inv-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+  const portalUrl='https://mstalloccaj-jpg.github.io/portal-ds1/';
+  const roleLabel=role==='inspector'?'Inspector DS-1':role==='supervisor'?'Supervisor':role==='company_admin'?'Admin Empresa':'Visor';
 
-  const{error:authErr}=await sb.auth.signInWithOtp({email,options:{
-    emailRedirectTo:window.location.href,
-    data:{full_name:name,company:coId,role}
-  }});
+  const msg1=`Hola ${name}! Te invito al Portal DS-1 de GM Robotica.
 
-  const link=`${window.location.href}?invite=${inv.token}`;
+Accede desde este link:
+${portalUrl}`;
+  const msg2=`Tus datos de acceso al Portal DS-1 GM Robotica:
+
+Email: ${email}
+Contrasena temporal: ${tempPass}
+
+Por seguridad, cambia tu contrasena cuando ingreses por primera vez.
+
+Rol asignado: ${roleLabel}`;
+
   $('inv-ok').innerHTML=`
-    <div class="alert alert-ok"><i class="ti ti-circle-check"></i>
-      <div><strong>Invitación creada para ${name}.</strong>
-      <div style="margin-top:6px;font-size:11px">
-        ${authErr?'El email mágico no se pudo enviar. Enviá este link manualmente:':' Se envió un email de acceso a '+email+'. También podés compartir este link:'}
-        <br><code style="background:var(--bg3);padding:2px 6px;border-radius:3px;font-size:10px;word-break:break-all">${link}</code>
-        <button onclick="navigator.clipboard.writeText('${link}').then(()=>showToast('Link copiado','ok'))" class="btn btn-xs" style="margin-left:6px"><i class="ti ti-copy"></i></button>
-      </div></div>
+    <div class="alert alert-ok" style="flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-circle-check" style="font-size:18px"></i><strong>Usuario creado para ${name}</strong></div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">MENSAJE 1 — Link del portal (publica)</div>
+        <div style="font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${msg1}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="navigator.clipboard.writeText(${JSON.stringify(msg1)}).then(()=>showToast('Mensaje 1 copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
+          <button onclick="window.open('https://wa.me/?text='+encodeURIComponent(${JSON.stringify(msg1)}))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> Enviar por WhatsApp</button>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">MENSAJE 2 — Usuario y contrasena (privado, enviar por separado)</div>
+        <div style="font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${msg2}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="navigator.clipboard.writeText(${JSON.stringify(msg2)}).then(()=>showToast('Mensaje 2 copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
+          <button onclick="window.open('https://wa.me/?text='+encodeURIComponent(${JSON.stringify(msg2)}))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> Enviar por WhatsApp</button>
+        </div>
+      </div>
+
+      <div class="alert alert-warn" style="margin:0"><i class="ti ti-alert-triangle"></i>Guarda la contrasena temporal: <strong>${tempPass}</strong> — luego no podras verla. Ve a Supabase → Auth → Users para crear el usuario con esta contrasena.</div>
     </div>`;
 
   await logEvent('invitacion_enviada',null,null,{email,role,company:coId});
+
+  // Store pending profile data to apply after user creation
+  window._pendingProfile={email,name,role,coId};
+
+  // Show instructions to create user in Supabase
+  setTimeout(()=>{
+    const warn=document.createElement('div');
+    warn.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg);border:2px solid var(--orange);border-radius:8px;padding:16px 20px;z-index:9999;font-size:12px;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,.5)';
+    warn.innerHTML=`<div style="font-weight:700;color:var(--orange);margin-bottom:6px"><i class="ti ti-alert-circle"></i> Crear usuario en Supabase</div>
+    <div style="color:var(--text2)">Abre Supabase Auth → Add user → Email: <strong style="color:var(--text)">${email}</strong> → Password: <strong style="color:var(--orange)">${tempPass}</strong></div>
+    <a href="https://supabase.com/dashboard/project/ysuwpuaucfvnqlfnczlu/auth/users?new=true" target="_blank" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-flex"><i class="ti ti-external-link"></i> Abrir Supabase</a>
+    <button onclick="this.closest('div').remove()" style="float:right;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">×</button>`;
+    document.body.appendChild(warn);
+  },1000);
 };
 
 /* ── Audit Log ── */
@@ -1509,6 +1575,47 @@ async function renderAuditLog(){
     </table>
   </div>`;
 }
+
+window.showChangePassword=function(){
+  const existing=document.getElementById('change-pass-modal');
+  if(existing)existing.remove();
+  const modal=document.createElement('div');
+  modal.id='change-pass-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML=`
+    <div style="background:var(--bg);border:1px solid var(--orange);border-radius:8px;padding:24px;max-width:380px;width:100%">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <i class="ti ti-lock" style="font-size:20px;color:var(--orange)"></i>
+        <div style="font-size:15px;font-weight:700">Cambiar contrasena</div>
+        <button onclick="document.getElementById('change-pass-modal').remove()" style="margin-left:auto;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">x</button>
+      </div>
+      <div id="cp-modal-err"></div>
+      <div class="form-group">
+        <label class="lbl">Nueva contrasena</label>
+        <input class="inp" type="password" id="cp-modal-p1" placeholder="Minimo 8 caracteres">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Confirmar contrasena</label>
+        <input class="inp" type="password" id="cp-modal-p2" placeholder="Repeti la contrasena" onkeydown="if(event.key==='Enter')doChangePass()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doChangePass()">
+        <i class="ti ti-lock-check"></i> Guardar contrasena
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
+};
+
+window.doChangePass=async function(){
+  const p1=document.getElementById('cp-modal-p1')?.value;
+  const p2=document.getElementById('cp-modal-p2')?.value;
+  const err=document.getElementById('cp-modal-err');
+  if(!p1||p1.length<8){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Minimo 8 caracteres.</div>';return;}
+  if(p1!==p2){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contrasenas no coinciden.</div>';return;}
+  const{error}=await sb.auth.updateUser({password:p1});
+  if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+  document.getElementById('change-pass-modal').remove();
+  showToast('Contrasena actualizada correctamente.','ok');
+};
 
 window.deleteReport=async function(id,reportNo){
   if(!confirm('Eliminar reporte '+reportNo+'? Esta accion no se puede deshacer.'))return;
