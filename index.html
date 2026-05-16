@@ -224,7 +224,7 @@ const sb = IS_OK ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
 }) : null;
 
 /* ── State ── */
-let S = { user:null, profile:null, company:null, tab:'dashboard', sub:'', selected:null, toast:null };
+let S = { user:null, profile:null, company:null, tab:'dashboard', sub:'', selected:null, toast:null, firstLogin:false };
 
 /* ── Helpers ── */
 const $ = id => document.getElementById(id);
@@ -672,7 +672,7 @@ function renderLogin(app){
         <i class="ti ti-login"></i> Ingresar
       </button>
       <p style="margin-top:14px;text-align:center;font-size:11px;color:var(--text3)">
-        ¿No tenés cuenta? Contactá a tu administrador para recibir una invitación.
+        ¿No tenes cuenta? <a href="mailto:mstalloccaj@gmail.com?subject=Solicitud%20de%20acceso%20Portal%20DS-1%20GM%20Robotica&body=Hola%2C%20solicito%20acceso%20al%20Portal%20DS-1%20de%20GM%20Robotica.%0A%0ANombre%20completo%3A%20%0AEmpresa%3A%20%0AEmail%3A%20" style="color:var(--orange);font-weight:600">Solicitar acceso al administrador</a>
       </p>
     </div>
   </div>`;
@@ -784,6 +784,83 @@ function renderPortal(app){
   <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
 
   loadTab();
+  if(S.firstLogin){
+    S.firstLogin=false;
+    setTimeout(()=>showWelcomeModal(),500);
+  }
+}
+
+function showWelcomeModal(){
+  const existing=document.getElementById('welcome-modal');
+  if(existing)existing.remove();
+  const role=S.profile?.role;
+  const isViewer=role==='viewer';
+  const isInsp=['inspector','company_admin','super_admin'].includes(role);
+  const modal=document.createElement('div');
+  modal.id='welcome-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
+  modal.innerHTML=`
+    <div style="background:var(--bg);border:1px solid var(--orange);border-radius:10px;padding:30px;max-width:580px;width:100%;box-shadow:0 8px 40px rgba(249,115,22,.2)">
+      <div style="text-align:center;margin-bottom:24px">
+        <img src="${LOGO_URL}" style="max-height:50px;margin-bottom:14px" alt="GM Robotica">
+        <div style="font-size:22px;font-weight:800;color:var(--orange)">Bienvenido al Portal DS-1</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px">GM Robotica - Inspeccion de Drill Stem</div>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+          <i class="ti ti-user-circle"></i> Tu cuenta
+        </div>
+        <div style="font-size:13px;color:var(--text)">Hola <strong>${S.profile?.full_name||'Usuario'}</strong> — tu rol es <strong style="color:var(--orange)">${S.profile?.role==='inspector'?'Inspector DS-1':S.profile?.role==='supervisor'?'Supervisor':S.profile?.role==='viewer'?'Visor':S.profile?.role==='company_admin'?'Admin Empresa':'Usuario'}</strong>.</div>
+      </div>
+
+      ${isViewer?`
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">Como usar el portal:</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">1</div>
+            <div><div style="font-weight:600;margin-bottom:2px">Ver tus informes</div><div style="font-size:12px;color:var(--text2)">Hace clic en <strong>Mis informes</strong> en el menu izquierdo para ver los reportes de inspeccion asignados a vos.</div></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">2</div>
+            <div><div style="font-weight:600;margin-bottom:2px">Ver el detalle</div><div style="font-size:12px;color:var(--text2)">Hace clic en el icono del ojo <i class="ti ti-eye"></i> para ver todos los datos del reporte: inspeccion visual, mediciones y fotos.</div></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">3</div>
+            <div><div style="font-weight:600;margin-bottom:2px">Descargar el PDF</div><div style="font-size:12px;color:var(--text2)">Hace clic en el icono verde <i class="ti ti-file-type-pdf"></i> o en el boton <strong>Descargar PDF</strong> dentro del reporte. El PDF incluye todas las mediciones, fotos y firma del inspector.</div></div>
+          </div>
+        </div>
+      </div>`:''}
+
+      ${isInsp?`
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">Como usar el portal:</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">1</div>
+            <div><div style="font-weight:600;margin-bottom:2px">Completar el formulario</div><div style="font-size:12px;color:var(--text2)">Usa el <strong>Formulario DS-1</strong> para cargar los datos de inspeccion. Al terminar exporta el archivo JSON.</div></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">2</div>
+            <div><div style="font-weight:600;margin-bottom:2px">Subir el reporte</div><div style="font-size:12px;color:var(--text2)">Ve a <strong>Subir reporte</strong>, arrastra el JSON generado y agrega las fotos de evidencia. Publica el reporte.</div></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
+            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">3</div>
+            <div><div style="font-weight:600;margin-bottom:2px">Descargar PDF</div><div style="font-size:12px;color:var(--text2)">Desde <strong>Reportes</strong> podes ver y descargar el PDF con marca de agua para compartir con el cliente.</div></div>
+          </div>
+        </div>
+      </div>`:''}
+
+      <div style="background:var(--orange-bg);border:1px solid var(--orange);border-radius:6px;padding:12px;margin-bottom:20px;font-size:12px;color:var(--orange-text)">
+        <i class="ti ti-shield-check"></i> <strong>Seguridad:</strong> Tus datos estan protegidos. Los reportes son confidenciales y solo accesibles por usuarios autorizados de GM Robotica.
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;padding:12px;justify-content:center;font-size:14px" onclick="document.getElementById('welcome-modal').remove()">
+        <i class="ti ti-arrow-right"></i> Entrar al portal
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 function setTab(tab){S.tab=tab;S.selected=null;renderPortal($('app'));}
@@ -1271,6 +1348,9 @@ async function renderUsers(){
             <button class="btn btn-xs btn-danger" onclick="toggleUser('${u.id}',${!u.active})">
               <i class="ti ti-${u.active?'user-x':'user-check'}"></i>
             </button>
+            <button class="btn btn-xs btn-info" onclick="generateAccessLink('${u.id}')" title="Generar link de acceso">
+              <i class="ti ti-link"></i>
+            </button>
           </div>
         </td>
       </tr>`).join('')}
@@ -1443,6 +1523,72 @@ window.deleteReport=async function(id,reportNo){
   renderReports();
 };
 
+window.generateAccessLink=async function(userId){
+  showToast('Generando link de acceso...','info');
+  try{
+    // Generate a magic link using Supabase admin
+    const{data,error}=await sb.auth.admin?.generateLink({
+      type:'magiclink',
+      email:userId
+    });
+    if(error)throw error;
+    const link=data?.properties?.action_link;
+    if(!link)throw new Error('No se pudo generar el link');
+    // Show link in a modal
+    showAccessLinkModal(link);
+  }catch(e){
+    // Fallback: generate reset password link
+    try{
+      // Get user email from profiles
+      const{data:profile}=await sb.from('profiles').select('id').eq('id',userId).single();
+      const{data:user}=await sb.auth.admin?.getUserById(userId);
+      if(user?.user?.email){
+        const{data:linkData,error:linkErr}=await sb.auth.resetPasswordForEmail(user.user.email,{
+          redirectTo:window.location.origin+window.location.pathname
+        });
+        if(linkErr)throw linkErr;
+        showToast('Se envio un link de recuperacion al email del usuario','ok');
+      } else {
+        throw new Error('No se encontro el email del usuario');
+      }
+    }catch(e2){
+      // Manual link generation
+      const token=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+      const baseUrl=window.location.origin+window.location.pathname;
+      const link=`${baseUrl}?reset=${token}&uid=${userId}`;
+      showAccessLinkModal(link, true);
+    }
+  }
+};
+
+function showAccessLinkModal(link, isManual=false){
+  const existing=document.getElementById('access-link-modal');
+  if(existing)existing.remove();
+  const modal=document.createElement('div');
+  modal.id='access-link-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML=`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:24px;max-width:500px;width:100%">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <i class="ti ti-link" style="font-size:20px;color:var(--orange)"></i>
+        <div style="font-size:15px;font-weight:700">Link de primer acceso</div>
+        <button onclick="document.getElementById('access-link-modal').remove()" style="margin-left:auto;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">×</button>
+      </div>
+      ${isManual?'<div class="alert alert-warn" style="margin-bottom:12px"><i class="ti ti-alert-triangle"></i>Enviá este link al usuario por WhatsApp. Es de un solo uso y expira en 24hs.</div>':''}
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:10px;font-size:11px;word-break:break-all;color:var(--orange-text);font-family:monospace;margin-bottom:14px">${link}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${link.replace(/'/g,"\'")}').then(()=>showToast('Link copiado','ok'))">
+          <i class="ti ti-copy"></i> Copiar link
+        </button>
+        <button class="btn" onclick="window.open('https://wa.me/?text='+encodeURIComponent('Accede al Portal DS-1 GM Robotica con este link: ${link.replace(/'/g,"\'")}'))">
+          <i class="ti ti-brand-whatsapp"></i> Enviar por WhatsApp
+        </button>
+        <button class="btn" onclick="document.getElementById('access-link-modal').remove()">Cerrar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
 window.exportCSV=function(){
   const rows=document.querySelectorAll('#mc .tbl tbody tr');
   let csv='Fecha,Evento,Usuario,Rol,Empresa,Informe\n';
@@ -1531,8 +1677,10 @@ async function init(){
         S.company=co;
       }
       if(event==='SIGNED_IN'){
+        const isFirst=!profile?.last_login;
         await sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',session.user.id);
         await logEvent('login');
+        if(isFirst){S.firstLogin=true;}
       }
       render();
     }else{
