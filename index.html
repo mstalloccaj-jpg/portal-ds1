@@ -336,7 +336,6 @@ async function generateReportPDF(r){
   const green=rgb(0.133,0.773,0.369);
   const red=rgb(0.937,0.267,0.267);
 
-  // -- HEADER BLOCK --
   page.drawRectangle({x:0,y:height-52,width,height:52,color:dark});
   page.drawRectangle({x:0,y:height-56,width,height:4,color:orange});
   page.drawText('GM ROBOTICA',{x:mg,y:height-22,size:11,font:fB,color:orange});
@@ -348,7 +347,6 @@ async function generateReportPDF(r){
   page.drawText((r.date||'-')+' | Cat. '+(r.category||'3'),{x:width-mg-90,y:height-35,size:7,font:fN,color:grey});
   y=height-68;
 
-  // -- RESULT BANNER --
   const resColor=r.result==='APROBADO'?green:r.result==='RECHAZADO'?red:rgb(0.96,0.62,0.04);
   const resLabel=r.result==='APROBADO'?'APROBADO':r.result==='RECHAZADO'?'RECHAZADO':'CONDICIONAL';
   page.drawRectangle({x:mg,y:y-20,width:W,height:26,color:dark2,borderColor:resColor,borderWidth:1.5});
@@ -358,7 +356,6 @@ async function generateReportPDF(r){
   page.drawText('Inspector: '+(r.inspector||'-')+'  |  Cert: '+(r.cert_no||'-')+'  |  '+((r.date||'-')),{x:mg+200,y:y-9,size:7,font:fN,color:grey});
   y-=28;
 
-  // Helper: section header
   const sec=(title)=>{
     if(y<60){return;}
     page.drawRectangle({x:mg,y:y-2,width:W,height:13,color:dark2});
@@ -367,7 +364,6 @@ async function generateReportPDF(r){
     y-=18;
   };
 
-  // Helper: field row
   const fRow=(pairs,colW)=>{
     if(y<60)return;
     const cw=colW||(W/pairs.length);
@@ -379,7 +375,6 @@ async function generateReportPDF(r){
     y-=20;
   };
 
-  // -- SECCION 1: IDENTIFICACION --
   sec('1. IDENTIFICACION DEL COMPONENTE');
   fRow([['Componente',r.component],['Categoria','Cat. '+(r.category||'3')],['Fecha',r.date||'-']]);
   fRow([['Empresa cliente',r.client_company_name],['Equipo / Rig',r.rig],['Pozo',r.well]]);
@@ -388,7 +383,6 @@ async function generateReportPDF(r){
   fRow([['Conexion Superior',r.conn_top],['Conexion Inferior',r.conn_bot],['OD Nominal',(r.nom_od||'-')+(r.nom_od?'"':'')]]);
   y-=4;
 
-  // -- SECCION 2: INSPECCION VISUAL --
   const vis=r.visual_inspection||{};
   const VL={pinThread:'Roscas Pin',boxThread:'Roscas Caja',pinSeal:'Sello Pin',boxSeal:'Sello Caja',pinNeck:'Cuello Pin',boxExt:'Ext. Caja',bodyExt:'Cuerpo',hb:'Hardbanding',bb:'Boreback',slipG:'Ranura Slip',elevG:'Ranura Elevator',marks:'Marcado',dye:'Liq. Penetrantes',mpi:'MPI'};
   const viPass=Object.entries(vis).filter(([,v])=>v==='P');
@@ -405,7 +399,6 @@ async function generateReportPDF(r){
     y-=20;
   }
 
-  // Visual grid - 3 columns
   const visItems=Object.entries(VL).filter(([k])=>vis[k]&&vis[k]!=='NA');
   if(visItems.length>0){
     const colW3=W/3;
@@ -426,14 +419,12 @@ async function generateReportPDF(r){
     y-=6;
   }
 
-  // -- SECCION 3: MEDICIONES --
   const meas=r.measurements||{};
   const ML={bodyOD:'OD Cuerpo',bodyID:'ID Cuerpo',wallThk:'Esp. Pared',totalLen:'Longitud',bow:'Curvatura',pinTong:'Tong Space Pin',pinLen:'Long. Pin',bevel:'Bisel Pin',boxTong:'Tong Space Caja',boxOD:'OD Caja',cbDiam:'Diam. Counterbore',cbDepth:'Prof. Counterbore',sealShldr:'Ancho Sello'};
   const measPairs=Object.entries(ML).filter(([k])=>meas[k]&&(meas[k].m1||meas[k].m2||meas[k].m3));
 
   if(measPairs.length>0&&y>80){
     sec('3. MEDICIONES DIMENSIONALES - Tablas DS-1 Vol.3');
-    // Table header
     const cols=[mg,mg+85,mg+125,mg+165,mg+210,mg+255,mg+300,mg+348,mg+400];
     const hdrs=['Parametro','Min','Max','Med.1','Med.2','Med.3','Prom.','Estado'];
     page.drawRectangle({x:mg,y:y-2,width:W,height:12,color:dark3});
@@ -466,7 +457,6 @@ async function generateReportPDF(r){
     y-=6;
   }
 
-  // -- SECCION 4: IMAGENES --
   const images=r.images||[];
   if(images.length>0&&y>120){
     sec('4. EVIDENCIA FOTOGRAFICA');
@@ -474,7 +464,6 @@ async function generateReportPDF(r){
     const imgW=Math.floor((W-(maxImgs-1)*6)/maxImgs);
     const imgH=Math.min(80,imgW*0.75);
 
-    // Convert image URL to base64 via canvas
     const toBase64=url=>new Promise(resolve=>{
       const img=new Image();
       img.crossOrigin='anonymous';
@@ -500,21 +489,15 @@ async function generateReportPDF(r){
         for(let j=0;j<binStr.length;j++)buf[j]=binStr.charCodeAt(j);
         const embedded=await doc.embedJpg(buf.buffer);
         const dims=embedded.scale(1);
-        // Fit image within fixed box keeping aspect ratio
         const maxW=imgW;
         const maxH=70;
         const ratio=dims.height/dims.width;
         let drawW,drawH;
-        if(ratio>maxH/maxW){
-          drawH=maxH;drawW=maxH/ratio;
-        } else {
-          drawW=maxW;drawH=maxW*ratio;
-        }
-        drawW=Math.min(drawW,maxW);
-        drawH=Math.min(drawH,maxH);
+        if(ratio>maxH/maxW){drawH=maxH;drawW=maxH/ratio;}
+        else{drawW=maxW;drawH=maxW*ratio;}
+        drawW=Math.min(drawW,maxW);drawH=Math.min(drawH,maxH);
         maxRowH=Math.max(maxRowH,drawH);
         if(y-drawH<40)break;
-        // Center image in box
         const offX=(maxW-drawW)/2;
         page.drawRectangle({x:imgX,y:y-maxH,width:maxW,height:maxH,color:dark3});
         page.drawImage(embedded,{x:imgX+offX,y:y-maxH+(maxH-drawH)/2,width:drawW,height:drawH});
@@ -534,14 +517,12 @@ async function generateReportPDF(r){
     }
   }
 
-  // -- SECCION 5: OBSERVACIONES --
   if(r.comments&&y>70){
     sec('5. OBSERVACIONES Y CONCLUSION');
     const maxChars=110;
     const lines=[];
     let txt=r.comments;
     while(txt.length>0){
-      // Only ASCII safe
       const chunk=txt.slice(0,maxChars).replace(/[^\x00-\x7F]/g,'');
       lines.push(chunk);
       txt=txt.slice(maxChars);
@@ -554,7 +535,6 @@ async function generateReportPDF(r){
     y-=4;
   }
 
-  // -- FIRMAS --
   if(y>70){
     y=Math.min(y,90);
     page.drawRectangle({x:mg,y:32,width:W,height:1,color:dark2});
@@ -569,7 +549,6 @@ async function generateReportPDF(r){
     });
   }
 
-  // -- FOOTER --
   page.drawRectangle({x:0,y:0,width,height:28,color:dark});
   page.drawRectangle({x:0,y:28,width,height:1,color:rgb(0.2,0.2,0.2)});
   page.drawText('GM ROBOTICA | Portal DS-1 | Documento Confidencial | Conforme DS-1(R) Vol.3 + Addendum | ISO 9001:2015',{x:mg,y:16,size:5.5,font:fN,color:grey});
@@ -699,6 +678,46 @@ async function doLogin(){
   await logEvent('login');
 }
 
+/* ── Password Recovery ── */
+function renderPasswordRecovery(app){
+  app.innerHTML=`
+  <div class="login-page">
+    <div class="login-card">
+      <div style="text-align:center;margin-bottom:22px">
+        <img src="${LOGO_URL}" style="max-height:56px;margin-bottom:12px" alt="GM Robotica">
+        <h2 style="color:var(--orange);font-size:20px;font-weight:800">Nueva contrasena</h2>
+        <p style="color:var(--text2);font-size:12px;margin-top:3px">Ingresa tu nueva contrasena para acceder al portal.</p>
+      </div>
+      <div id="rec-err"></div>
+      <div class="form-group">
+        <label class="lbl">Nueva contrasena</label>
+        <input class="inp" type="password" id="rec-pass1" placeholder="Minimo 8 caracteres" oninput="checkPwStrength(this.value)">
+        <div class="pw-strength" id="pw-bar" style="background:var(--border2)"></div>
+        <div class="pw-hint" id="pw-hint">Ingresa tu nueva contrasena</div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Confirmar contrasena</label>
+        <input class="inp" type="password" id="rec-pass2" placeholder="Repeti la contrasena" onkeydown="if(event.key==='Enter')doRecovery()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center;font-size:14px" onclick="doRecovery()">
+        <i class="ti ti-lock-check"></i> Guardar contrasena
+      </button>
+    </div>
+  </div>`;
+}
+
+async function doRecovery(){
+  const p1=document.getElementById('rec-pass1').value;
+  const p2=document.getElementById('rec-pass2').value;
+  const err=document.getElementById('rec-err');
+  if(p1.length<8){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Minimo 8 caracteres.</div>';return;}
+  if(p1!==p2){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contrasenas no coinciden.</div>';return;}
+  const{error}=await sb.auth.updateUser({password:p1});
+  if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+  showToast('Contrasena actualizada. Ingresa con tu nueva contrasena.','ok');
+  setTimeout(()=>{window.location.hash='';window.location.reload();},2000);
+}
+
 /* ── Portal ── */
 function renderPortal(app){
   const p=S.profile;const t=S.tab;
@@ -809,56 +828,15 @@ function showWelcomeModal(){
         <div style="font-size:22px;font-weight:800;color:var(--orange)">Bienvenido al Portal DS-1</div>
         <div style="font-size:13px;color:var(--text2);margin-top:4px">GM Robotica - Inspeccion de Drill Stem</div>
       </div>
-
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:14px">
         <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:6px">
           <i class="ti ti-user-circle"></i> Tu cuenta
         </div>
         <div style="font-size:13px;color:var(--text)">Hola <strong>${S.profile?.full_name||'Usuario'}</strong> — tu rol es <strong style="color:var(--orange)">${S.profile?.role==='inspector'?'Inspector DS-1':S.profile?.role==='supervisor'?'Supervisor':S.profile?.role==='viewer'?'Visor':S.profile?.role==='company_admin'?'Admin Empresa':'Usuario'}</strong>.</div>
       </div>
-
-      ${isViewer?`
-      <div style="margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">Como usar el portal:</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
-            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">1</div>
-            <div><div style="font-weight:600;margin-bottom:2px">Ver tus informes</div><div style="font-size:12px;color:var(--text2)">Hace clic en <strong>Mis informes</strong> en el menu izquierdo para ver los reportes de inspeccion asignados a vos.</div></div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
-            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">2</div>
-            <div><div style="font-weight:600;margin-bottom:2px">Ver el detalle</div><div style="font-size:12px;color:var(--text2)">Hace clic en el icono del ojo <i class="ti ti-eye"></i> para ver todos los datos del reporte: inspeccion visual, mediciones y fotos.</div></div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
-            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">3</div>
-            <div><div style="font-weight:600;margin-bottom:2px">Descargar el PDF</div><div style="font-size:12px;color:var(--text2)">Hace clic en el icono verde <i class="ti ti-file-type-pdf"></i> o en el boton <strong>Descargar PDF</strong> dentro del reporte. El PDF incluye todas las mediciones, fotos y firma del inspector.</div></div>
-          </div>
-        </div>
-      </div>`:''}
-
-      ${isInsp?`
-      <div style="margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px">Como usar el portal:</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
-            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">1</div>
-            <div><div style="font-weight:600;margin-bottom:2px">Completar el formulario</div><div style="font-size:12px;color:var(--text2)">Usa el <strong>Formulario DS-1</strong> para cargar los datos de inspeccion. Al terminar exporta el archivo JSON.</div></div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
-            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">2</div>
-            <div><div style="font-weight:600;margin-bottom:2px">Subir el reporte</div><div style="font-size:12px;color:var(--text2)">Ve a <strong>Subir reporte</strong>, arrastra el JSON generado y agrega las fotos de evidencia. Publica el reporte.</div></div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px">
-            <div style="width:28px;height:28px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0">3</div>
-            <div><div style="font-weight:600;margin-bottom:2px">Descargar PDF</div><div style="font-size:12px;color:var(--text2)">Desde <strong>Reportes</strong> podes ver y descargar el PDF con marca de agua para compartir con el cliente.</div></div>
-          </div>
-        </div>
-      </div>`:''}
-
       <div style="background:var(--orange-bg);border:1px solid var(--orange);border-radius:6px;padding:12px;margin-bottom:20px;font-size:12px;color:var(--orange-text)">
         <i class="ti ti-shield-check"></i> <strong>Seguridad:</strong> Tus datos estan protegidos. Los reportes son confidenciales y solo accesibles por usuarios autorizados de GM Robotica.
       </div>
-
       <button class="btn btn-primary" style="width:100%;padding:12px;justify-content:center;font-size:14px" onclick="document.getElementById('welcome-modal').remove()">
         <i class="ti ti-arrow-right"></i> Entrar al portal
       </button>
@@ -907,7 +885,6 @@ async function renderDashboard(){
     <div class="stat"><i class="ti ti-circle-x stat-icon" style="color:var(--red-text)"></i><div class="stat-num" style="color:var(--red-text)">${rpts.filter(r=>r.result==='RECHAZADO').length}</div><div class="stat-lbl">Rechazados</div></div>
     <div class="stat"><i class="ti ti-users stat-icon" style="color:var(--blue-text)"></i><div class="stat-num">${usrs.length}</div><div class="stat-lbl">Usuarios activos</div></div>
   </div>
-
   <div class="card" style="margin-bottom:14px">
     <div class="card-title"><i class="ti ti-clock"></i>Últimos 5 reportes</div>
     ${rpts.slice(0,5).length===0?'<div class="empty" style="padding:20px"><i class="ti ti-inbox"></i><p>Sin reportes aún.</p></div>':
@@ -916,7 +893,6 @@ async function renderDashboard(){
       <tbody>${rpts.slice(-5).reverse().map(r=>`<tr><td style="font-family:monospace;font-weight:700">${r.report_no||'—'}</td><td>${fmtDate(r.created_at)}</td><td>${resultBadge(r.result)}</td></tr>`).join('')}</tbody>
     </table>`}
   </div>
-
   <div class="alert alert-info" style="margin-bottom:0"><i class="ti ti-info-circle"></i>
     Portal DS-1 · ${COMPANY_NAME} · Conforme DS-1® Vol 3 y Addendum · ISO 9001:2015
   </div>`;
@@ -1021,7 +997,6 @@ async function renderReportDetail(){
       </div>
     </div>
   </div>
-
   <div class="rpt-section">
     <div class="rpt-hdr"><i class="ti ti-tool"></i>Identificación del Componente</div>
     <div class="rpt-body">
@@ -1033,7 +1008,6 @@ async function renderReportDetail(){
       </div>
     </div>
   </div>
-
   ${visPairs.length?`<div class="rpt-section">
     <div class="rpt-hdr"><i class="ti ti-eye"></i>Inspección Visual</div>
     <div class="rpt-body" style="padding:0">
@@ -1043,7 +1017,6 @@ async function renderReportDetail(){
       </table>
     </div>
   </div>`:''}
-
   ${measPairs.length?`<div class="rpt-section">
     <div class="rpt-hdr"><i class="ti ti-ruler-measure"></i>Mediciones Dimensionales</div>
     <div class="rpt-body" style="padding:0;overflow-x:auto">
@@ -1060,19 +1033,16 @@ async function renderReportDetail(){
       </table>
     </div>
   </div>`:''}
-
   ${images.length?`<div class="rpt-section">
     <div class="rpt-hdr"><i class="ti ti-photo"></i>Evidencia fotográfica (${images.length})</div>
     <div class="rpt-body">
       <div class="img-grid">${images.map(url=>`<div class="img-thumb"><img src="${url}" loading="lazy" onclick="window.open('${url}')"></div>`).join('')}</div>
     </div>
   </div>`:''}
-
   ${r.comments?`<div class="rpt-section">
     <div class="rpt-hdr"><i class="ti ti-notes"></i>Observaciones</div>
     <div class="rpt-body"><p style="font-size:13px;line-height:1.7">${r.comments}</p></div>
   </div>`:''}
-
   <div class="rpt-section" style="border:2px solid ${r.result==='APROBADO'?'var(--green)':r.result==='RECHAZADO'?'var(--red)':'var(--amber)'}">
     <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <div>
@@ -1112,7 +1082,6 @@ async function renderUpload(){
   <div class="card">
     <input type="file" id="json-file" accept=".json" style="display:none" onchange="loadJsonFile(this.files[0])">
     <input type="file" id="img-file" accept="image/jpeg,image/png,image/webp,image/heic" multiple style="display:none" onchange="addImages(this.files)">
-
     <div class="dropzone" id="dz" onclick="$('json-file').click()"
       ondragover="event.preventDefault();this.classList.add('drag')"
       ondragleave="this.classList.remove('drag')"
@@ -1122,11 +1091,9 @@ async function renderUpload(){
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px">o hacé clic para buscar el archivo</div>
       <button class="btn btn-primary" style="pointer-events:none"><i class="ti ti-upload"></i> Seleccionar .json</button>
     </div>
-
     <div id="parse-msg"></div>
     <div id="upload-form" style="display:none">
       <div class="alert alert-ok" style="margin-bottom:14px"><i class="ti ti-circle-check"></i><strong>JSON cargado.</strong> Verificá los datos y subí las imágenes si corresponde.</div>
-
       <div class="grid4">
         <div class="form-group"><label class="lbl">N° Reporte *</label><input class="inp" id="u-rno" placeholder="RP-2026-001"></div>
         <div class="form-group"><label class="lbl">Fecha</label><input class="inp" type="date" id="u-date"></div>
@@ -1139,11 +1106,8 @@ async function renderUpload(){
             <option value="CONDICIONAL">~ CONDICIONAL</option>
           </select></div>
       </div>
-
       <div class="form-group"><label class="lbl">Componente / Descripción</label><input class="inp" id="u-comp" placeholder="X-Over NC46 Pin × NC50 Caja, 6-1/2&quot; OD"></div>
-
       ${companiesHtml}
-
       <div class="grid3">
         <div class="form-group"><label class="lbl">Empresa cliente (nombre)</label><input class="inp" id="u-cname"></div>
         <div class="form-group"><label class="lbl">Equipo / Rig</label><input class="inp" id="u-rig"></div>
@@ -1154,9 +1118,7 @@ async function renderUpload(){
         <div class="form-group"><label class="lbl">N° Cert. DS-1</label><input class="inp" id="u-cert"></div>
         <div class="form-group"><label class="lbl">N° Serie</label><input class="inp" id="u-sn"></div>
       </div>
-
       <div class="form-group"><label class="lbl">Observaciones</label><textarea class="inp" id="u-obs"></textarea></div>
-
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
         <div style="font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px">
           <i class="ti ti-camera"></i> Imágenes de evidencia (opcional)
@@ -1165,14 +1127,12 @@ async function renderUpload(){
         <div id="img-preview" class="img-grid"></div>
         <div style="font-size:10px;color:var(--text3);margin-top:4px">JPG, PNG, WEBP — máx. 10 MB por imagen.</div>
       </div>
-
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:12px">
         <div id="upload-err"></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-primary" style="padding:9px 22px;font-size:13px" onclick="submitReport()">
             <i class="ti ti-upload"></i> Publicar reporte
           </button>
-          <div style="font-size:11px;color:var(--text3)">El reporte quedará disponible para los usuarios con acceso.</div>
         </div>
       </div>
     </div>
@@ -1259,7 +1219,7 @@ window.submitReport=async function(){
   if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
 
   await logEvent('reporte_publicado',rpt.id,rpt.report_no,{images:imgUrls.length});
-  showToast(`Reporte ${rpt.report_no} publicado.${imgUrls.length?' '+imgUrls.length+' imagen(es) adjunta(s).':''}`,'ok');
+  showToast(`Reporte ${rpt.report_no} publicado.`,'ok');
   setTab('reports');
 };
 
@@ -1267,7 +1227,6 @@ window.submitReport=async function(){
 async function renderCompanies(){
   const mc=$('mc');
   const{data:cos}=await sb.from('companies').select('*').order('name');
-
   mc.innerHTML=`
   <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
     <button class="btn btn-primary" onclick="showAddCompany()"><i class="ti ti-plus"></i> Nueva empresa</button>
@@ -1281,11 +1240,9 @@ async function renderCompanies(){
         <td>${c.city||'—'}</td>
         <td style="font-size:11px">${c.email||'—'}</td>
         <td><span class="badge ${c.active?'badge-pass':'badge-fail'}">${c.active?'Activa':'Inactiva'}</span></td>
-        <td>
-          <button class="btn btn-xs btn-danger" onclick="toggleCompany('${c.id}',${!c.active})">
-            <i class="ti ti-${c.active?'pause':'play'}"></i>${c.active?'Desactivar':'Activar'}
-          </button>
-        </td>
+        <td><button class="btn btn-xs btn-danger" onclick="toggleCompany('${c.id}',${!c.active})">
+          <i class="ti ti-${c.active?'pause':'play'}"></i>${c.active?'Desactivar':'Activar'}
+        </button></td>
       </tr>`).join('')}
       </tbody>
     </table>
@@ -1327,7 +1284,6 @@ async function renderUsers(){
   let q=sb.from('profiles').select('*,companies(name)').order('created_at',{ascending:false});
   if(!isSuper())q=q.eq('company_id',S.profile.company_id);
   const[{data:users},{data:companies}]=await Promise.all([q,sb.from('companies').select('id,name').eq('active',true).order('name')]);
-
   mc.innerHTML=`
   <div class="tbl-wrap">
     <table class="tbl">
@@ -1340,43 +1296,31 @@ async function renderUsers(){
             <div><div style="font-weight:600">${u.full_name||'—'}</div><div style="font-size:10px;color:var(--text3)">${u.position||''}</div></div>
           </div>
         </td>
-        <td>
-          ${isSuper()?`<select class="inp" style="width:130px;font-size:11px" onchange="changeCompany('${u.id}',this.value)">
-            ${(companies||[]).map(c=>`<option value="${c.id}"${c.id===u.company_id?' selected':''}>${c.name}</option>`).join('')}
-          </select>`:`<span style="font-size:12px">${u.companies?.name||'—'}</span>`}
-        </td>
-        <td>
-          <select class="inp" style="width:130px;font-size:11px" onchange="changeRole('${u.id}',this.value)">
-            ${['super_admin','company_admin','inspector','supervisor','viewer'].map(r=>`<option value="${r}"${r===u.role?' selected':''}>${ROLES[r]?.label||r}</option>`).join('')}
-          </select>
-        </td>
+        <td>${isSuper()?`<select class="inp" style="width:130px;font-size:11px" onchange="changeCompany('${u.id}',this.value)">
+          ${(companies||[]).map(c=>`<option value="${c.id}"${c.id===u.company_id?' selected':''}>${c.name}</option>`).join('')}
+        </select>`:`<span style="font-size:12px">${u.companies?.name||'—'}</span>`}</td>
+        <td><select class="inp" style="width:130px;font-size:11px" onchange="changeRole('${u.id}',this.value)">
+          ${['super_admin','company_admin','inspector','supervisor','viewer'].map(r=>`<option value="${r}"${r===u.role?' selected':''}>${ROLES[r]?.label||r}</option>`).join('')}
+        </select></td>
         <td><span class="badge ${u.active?'badge-pass':'badge-fail'}">${u.active?'Activo':'Inactivo'}</span></td>
-        <td>
-          <div style="display:flex;gap:4px">
-            <button class="btn btn-xs btn-danger" onclick="toggleUser('${u.id}',${!u.active})">
-              <i class="ti ti-${u.active?'user-x':'user-check'}"></i>
-            </button>
-            <button class="btn btn-xs btn-info" onclick="generateAccessLink('${u.id}')" title="Generar link de acceso">
-              <i class="ti ti-link"></i>
-            </button>
-          </div>
-        </td>
+        <td><div style="display:flex;gap:4px">
+          <button class="btn btn-xs btn-danger" onclick="toggleUser('${u.id}',${!u.active})">
+            <i class="ti ti-${u.active?'user-x':'user-check'}"></i>
+          </button>
+        </div></td>
       </tr>`).join('')}
       </tbody>
     </table>
   </div>`;
 }
 
-
 window.changeCompany=async(id,companyId)=>{
   const{error}=await sb.from('profiles').update({company_id:companyId}).eq('id',id);
-  if(error)showToast(error.message,'err');
-  else showToast('Empresa actualizada.','ok');
+  if(error)showToast(error.message,'err');else showToast('Empresa actualizada.','ok');
 };
 window.changeRole=async(id,role)=>{
   const{error}=await sb.from('profiles').update({role}).eq('id',id);
-  if(error)showToast(error.message,'err');
-  else showToast('Rol actualizado.','ok');
+  if(error)showToast(error.message,'err');else showToast('Rol actualizado.','ok');
 };
 window.toggleUser=async(id,active)=>{
   await sb.from('profiles').update({active}).eq('id',id);
@@ -1389,13 +1333,10 @@ async function renderInvitations(){
   const mc=$('mc');
   let cosData=[];
   if(isSuper()){const{data}=await sb.from('companies').select('id,name').eq('active',true).neq('id','00000000-0000-0000-0000-000000000001');cosData=data||[];}
-
   const{data:invites}=await sb.from('invitations').select('*,companies(name)').order('created_at',{ascending:false}).limit(50);
-
   mc.innerHTML=`
   <div class="card" style="margin-bottom:14px">
     <div class="card-title"><i class="ti ti-mail-plus"></i>Invitar nuevo usuario</div>
-    
     <div id="inv-err"></div>
     <div id="inv-ok"></div>
     <div class="grid3">
@@ -1411,10 +1352,8 @@ async function renderInvitations(){
         <div class="role-card ${r==='viewer'?'selected':''}" onclick="selectRole('${r}',this)">
           <div style="display:flex;align-items:center;gap:8px">
             <div class="role-check"><i class="ti ti-check" style="font-size:10px"></i></div>
-            <div>
-              <div style="font-weight:700;font-size:12px">${roleBadge(r)}</div>
-              <div style="font-size:11px;color:var(--text2);margin-top:3px">${ROLES[r]?.desc}</div>
-            </div>
+            <div><div style="font-weight:700;font-size:12px">${roleBadge(r)}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">${ROLES[r]?.desc}</div></div>
           </div>
         </div>`).join('')}
       </div>
@@ -1424,7 +1363,6 @@ async function renderInvitations(){
       <i class="ti ti-send"></i> Enviar invitación
     </button>
   </div>
-
   <div class="card-title" style="margin-bottom:8px"><i class="ti ti-history"></i>Invitaciones enviadas</div>
   <div class="tbl-wrap">
     <table class="tbl">
@@ -1457,12 +1395,10 @@ window.sendInvitation=async function(){
   const email=$('inv-email')?.value?.trim();
   const role=$('inv-role')?.value||'viewer';
   const coId=$('inv-co')?.value||S.profile.company_id;
-
   $('inv-err').innerHTML='';$('inv-ok').innerHTML='';
   if(!name||!email){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Nombre y email son obligatorios.</div>';return;}
   if(!coId){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Selecciona una empresa.</div>';return;}
 
-  // Generate a temporary password
   const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
   const specials='!@#$';
   let tempPass='';
@@ -1470,12 +1406,6 @@ window.sendInvitation=async function(){
   tempPass+=specials[Math.floor(Math.random()*specials.length)];
   tempPass+=Math.floor(Math.random()*9)+1;
 
-  // Check if user already exists
-  const{data:existingProfile}=await sb.from('profiles').select('id').eq('id',
-    (await sb.from('profiles').select('id').limit(1)).data?.[0]?.id||'x'
-  ).single();
-
-  // Save invitation record
   const{data:inv,error:invErr}=await sb.from('invitations').insert({
     email,full_name:name,company_id:coId,role,invited_by:S.user.id
   }).select().single();
@@ -1485,62 +1415,30 @@ window.sendInvitation=async function(){
 
   const portalUrl='https://mstalloccaj-jpg.github.io/portal-ds1/';
   const roleLabel=role==='inspector'?'Inspector DS-1':role==='supervisor'?'Supervisor':role==='company_admin'?'Admin Empresa':'Visor';
-
-  const msg1=`Hola ${name}! Te invito al Portal DS-1 de GM Robotica.
-
-Accede desde este link:
-${portalUrl}`;
-  const msg2=`Tus datos de acceso al Portal DS-1 GM Robotica:
-
-Email: ${email}
-Contrasena temporal: ${tempPass}
-
-Por seguridad, cambia tu contrasena cuando ingreses por primera vez.
-
-Rol asignado: ${roleLabel}`;
+  const msg1=`Hola ${name}! Te invito al Portal DS-1 de GM Robotica.\n\nAccede desde este link:\n${portalUrl}`;
+  const msg2=`Tus datos de acceso al Portal DS-1 GM Robotica:\n\nEmail: ${email}\nContrasena temporal: ${tempPass}\n\nPor seguridad, cambia tu contrasena cuando ingreses por primera vez.\n\nRol asignado: ${roleLabel}`;
 
   $('inv-ok').innerHTML=`
     <div class="alert alert-ok" style="flex-direction:column;gap:12px">
-      <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-circle-check" style="font-size:18px"></i><strong>Usuario creado para ${name}</strong></div>
-
+      <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-circle-check" style="font-size:18px"></i><strong>Usuario preparado: ${name}</strong></div>
       <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:12px">
-        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">MENSAJE 1 — Link del portal (publica)</div>
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">MENSAJE 1 — Link del portal</div>
         <div style="font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${msg1}</div>
-        <div style="display:flex;gap:6px">
-          <button onclick="navigator.clipboard.writeText(window._invMsg1).then(()=>showToast('Mensaje 1 copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
-          <button onclick="window.open('https://wa.me/?text='+encodeURIComponent(window._invMsg1))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> Enviar por WhatsApp</button>
-        </div>
+        <button onclick="navigator.clipboard.writeText(window._invMsg1).then(()=>showToast('Copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
+        <button onclick="window.open('https://wa.me/?text='+encodeURIComponent(window._invMsg1))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> WhatsApp</button>
       </div>
-
       <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:12px">
-        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">MENSAJE 2 — Usuario y contrasena (privado, enviar por separado)</div>
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">MENSAJE 2 — Credenciales (enviar por separado)</div>
         <div style="font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${msg2}</div>
-        <div style="display:flex;gap:6px">
-          <button onclick="navigator.clipboard.writeText(window._invMsg2).then(()=>showToast('Mensaje 2 copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
-          <button onclick="window.open('https://wa.me/?text='+encodeURIComponent(window._invMsg2))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> Enviar por WhatsApp</button>
-        </div>
+        <button onclick="navigator.clipboard.writeText(window._invMsg2).then(()=>showToast('Copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
+        <button onclick="window.open('https://wa.me/?text='+encodeURIComponent(window._invMsg2))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> WhatsApp</button>
       </div>
-
-      <div class="alert alert-warn" style="margin:0"><i class="ti ti-alert-triangle"></i>Guarda la contrasena temporal: <strong>${tempPass}</strong> — luego no podras verla. Ve a Supabase → Auth → Users para crear el usuario con esta contrasena.</div>
+      <div class="alert alert-warn" style="margin:0"><i class="ti ti-alert-triangle"></i>Contraseña temporal: <strong>${tempPass}</strong> — Creá el usuario en Supabase Auth con este email y contraseña.</div>
     </div>`;
 
-  await logEvent('invitacion_enviada',null,null,{email,role,company:coId});
-
-  // Store pending profile data to apply after user creation
-  window._pendingProfile={email,name,role,coId};
   window._invMsg1=msg1;
   window._invMsg2=msg2;
-
-  // Show instructions to create user in Supabase
-  setTimeout(()=>{
-    const warn=document.createElement('div');
-    warn.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg);border:2px solid var(--orange);border-radius:8px;padding:16px 20px;z-index:9999;font-size:12px;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,.5)';
-    warn.innerHTML=`<div style="font-weight:700;color:var(--orange);margin-bottom:6px"><i class="ti ti-alert-circle"></i> Crear usuario en Supabase</div>
-    <div style="color:var(--text2)">Abre Supabase Auth → Add user → Email: <strong style="color:var(--text)">${email}</strong> → Password: <strong style="color:var(--orange)">${tempPass}</strong></div>
-    <a href="https://supabase.com/dashboard/project/ysuwpuaucfvnqlfnczlu/auth/users?new=true" target="_blank" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-flex"><i class="ti ti-external-link"></i> Abrir Supabase</a>
-    <button onclick="this.closest('div').remove()" style="float:right;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">×</button>`;
-    document.body.appendChild(warn);
-  },1000);
+  await logEvent('invitacion_enviada',null,null,{email,role,company:coId});
 };
 
 /* ── Audit Log ── */
@@ -1549,15 +1447,12 @@ async function renderAuditLog(){
   let q=sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
   if(!isSuper())q=q.eq('company_id',S.profile.company_id);
   const{data:logs}=await q;
-
   mc.innerHTML=`
   <div class="tbl-wrap">
     <div class="tbl-toolbar">
       <i class="ti ti-shield-check" style="font-size:16px;color:var(--orange-text)"></i>
       <span style="font-size:12px;font-weight:600">Audit Log — últimas 200 acciones</span>
-      <div style="margin-left:auto">
-        <button class="btn btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button>
-      </div>
+      <div style="margin-left:auto"><button class="btn btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button></div>
     </div>
     <table class="tbl">
       <thead><tr><th>Fecha / Hora</th><th>Evento</th><th>Usuario</th><th>Rol</th><th>Empresa</th><th>Informe</th></tr></thead>
@@ -1589,17 +1484,11 @@ window.showChangePassword=function(){
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <i class="ti ti-lock" style="font-size:20px;color:var(--orange)"></i>
         <div style="font-size:15px;font-weight:700">Cambiar contrasena</div>
-        <button onclick="document.getElementById('change-pass-modal').remove()" style="margin-left:auto;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">x</button>
+        <button onclick="document.getElementById('change-pass-modal').remove()" style="margin-left:auto;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">×</button>
       </div>
       <div id="cp-modal-err"></div>
-      <div class="form-group">
-        <label class="lbl">Nueva contrasena</label>
-        <input class="inp" type="password" id="cp-modal-p1" placeholder="Minimo 8 caracteres">
-      </div>
-      <div class="form-group">
-        <label class="lbl">Confirmar contrasena</label>
-        <input class="inp" type="password" id="cp-modal-p2" placeholder="Repeti la contrasena" onkeydown="if(event.key==='Enter')doChangePass()">
-      </div>
+      <div class="form-group"><label class="lbl">Nueva contrasena</label><input class="inp" type="password" id="cp-modal-p1" placeholder="Minimo 8 caracteres"></div>
+      <div class="form-group"><label class="lbl">Confirmar contrasena</label><input class="inp" type="password" id="cp-modal-p2" placeholder="Repeti la contrasena" onkeydown="if(event.key==='Enter')doChangePass()"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doChangePass()">
         <i class="ti ti-lock-check"></i> Guardar contrasena
       </button>
@@ -1621,82 +1510,13 @@ window.doChangePass=async function(){
 
 window.deleteReport=async function(id,reportNo){
   if(!confirm('Eliminar reporte '+reportNo+'? Esta accion no se puede deshacer.'))return;
-  // Delete audit logs first to avoid FK constraint
   await sb.from('audit_logs').delete().eq('report_id',id);
-  // Delete report assignments
   await sb.from('report_assignments').delete().eq('report_id',id);
-  // Now delete the report
   const{error}=await sb.from('reports').delete().eq('id',id);
   if(error){showToast('Error: '+error.message,'err');return;}
   showToast('Reporte '+reportNo+' eliminado.','ok');
   renderReports();
 };
-
-window.generateAccessLink=async function(userId){
-  showToast('Generando link de acceso...','info');
-  try{
-    // Generate a magic link using Supabase admin
-    const{data,error}=await sb.auth.admin?.generateLink({
-      type:'magiclink',
-      email:userId
-    });
-    if(error)throw error;
-    const link=data?.properties?.action_link;
-    if(!link)throw new Error('No se pudo generar el link');
-    // Show link in a modal
-    showAccessLinkModal(link);
-  }catch(e){
-    // Fallback: generate reset password link
-    try{
-      // Get user email from profiles
-      const{data:profile}=await sb.from('profiles').select('id').eq('id',userId).single();
-      const{data:user}=await sb.auth.admin?.getUserById(userId);
-      if(user?.user?.email){
-        const{data:linkData,error:linkErr}=await sb.auth.resetPasswordForEmail(user.user.email,{
-          redirectTo:window.location.origin+window.location.pathname
-        });
-        if(linkErr)throw linkErr;
-        showToast('Se envio un link de recuperacion al email del usuario','ok');
-      } else {
-        throw new Error('No se encontro el email del usuario');
-      }
-    }catch(e2){
-      // Manual link generation
-      const token=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-      const baseUrl=window.location.origin+window.location.pathname;
-      const link=`${baseUrl}?reset=${token}&uid=${userId}`;
-      showAccessLinkModal(link, true);
-    }
-  }
-};
-
-function showAccessLinkModal(link, isManual=false){
-  const existing=document.getElementById('access-link-modal');
-  if(existing)existing.remove();
-  const modal=document.createElement('div');
-  modal.id='access-link-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML=`
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:24px;max-width:500px;width:100%">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <i class="ti ti-link" style="font-size:20px;color:var(--orange)"></i>
-        <div style="font-size:15px;font-weight:700">Link de primer acceso</div>
-        <button onclick="document.getElementById('access-link-modal').remove()" style="margin-left:auto;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">×</button>
-      </div>
-      ${isManual?'<div class="alert alert-warn" style="margin-bottom:12px"><i class="ti ti-alert-triangle"></i>Enviá este link al usuario por WhatsApp. Es de un solo uso y expira en 24hs.</div>':''}
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:10px;font-size:11px;word-break:break-all;color:var(--orange-text);font-family:monospace;margin-bottom:14px">${link}</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${link.replace(/'/g,"\'")}').then(()=>showToast('Link copiado','ok'))">
-          <i class="ti ti-copy"></i> Copiar link
-        </button>
-        <button class="btn" onclick="window.open('https://wa.me/?text='+encodeURIComponent('Accede al Portal DS-1 GM Robotica con este link: ${link.replace(/'/g,"\'")}'))">
-          <i class="ti ti-brand-whatsapp"></i> Enviar por WhatsApp
-        </button>
-        <button class="btn" onclick="document.getElementById('access-link-modal').remove()">Cerrar</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-}
 
 window.exportCSV=function(){
   const rows=document.querySelectorAll('#mc .tbl tbody tr');
@@ -1711,72 +1531,16 @@ window.exportCSV=function(){
 };
 
 /* ============================================================
-   AUTH STATE
+   AUTH STATE — con soporte PASSWORD_RECOVERY
    ============================================================ */
-function renderPasswordRecovery(app, accessToken){
-  app.innerHTML=`
-  <div class="login-page">
-    <div class="login-card">
-      <div style="text-align:center;margin-bottom:22px">
-        <img src="${LOGO_URL}" style="max-height:56px;margin-bottom:12px" alt="GM Robotica">
-        <h2 style="color:var(--orange);font-size:20px;font-weight:800">Nueva contrasena</h2>
-        <p style="color:var(--text2);font-size:12px;margin-top:3px">Ingresa tu nueva contrasena para acceder al portal.</p>
-      </div>
-      <div id="rec-err"></div>
-      <div class="form-group">
-        <label class="lbl">Nueva contrasena</label>
-        <input class="inp" type="password" id="rec-pass1" placeholder="Minimo 8 caracteres" oninput="checkPwStrength(this.value)">
-        <div class="pw-strength" id="pw-bar" style="background:var(--border2)"></div>
-        <div class="pw-hint" id="pw-hint">Ingresa tu nueva contrasena</div>
-      </div>
-      <div class="form-group">
-        <label class="lbl">Confirmar contrasena</label>
-        <input class="inp" type="password" id="rec-pass2" placeholder="Repeti la contrasena" onkeydown="if(event.key==='Enter')doRecovery('${accessToken}')">
-      </div>
-      <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center;font-size:14px" onclick="doRecovery('${accessToken}')">
-        <i class="ti ti-lock-check"></i> Guardar contrasena
-      </button>
-    </div>
-  </div>`;
-}
-
-async function doRecovery(token){
-  const p1=document.getElementById('rec-pass1').value;
-  const p2=document.getElementById('rec-pass2').value;
-  const err=document.getElementById('rec-err');
-  if(p1.length<8){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Minimo 8 caracteres.</div>';return;}
-  if(p1!==p2){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contrasenas no coinciden.</div>';return;}
-  // Set session with the recovery token
-  const{data,error}=await sb.auth.setSession({access_token:token,refresh_token:token});
-  if(error){
-    // Try direct password update
-    const{error:e2}=await sb.auth.updateUser({password:p1});
-    if(e2){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${e2.message}</div>`;return;}
-  } else {
-    const{error:e3}=await sb.auth.updateUser({password:p1});
-    if(e3){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${e3.message}</div>`;return;}
-  }
-  // Clear hash and reload
-  window.location.hash='';
-  showToast('Contrasena actualizada. Ingresa con tu nueva contrasena.','ok');
-  setTimeout(()=>window.location.reload(),2000);
-}
-
 async function init(){
   if(!IS_OK){render();return;}
 
-  // Handle password recovery token from URL hash
-  const hash = window.location.hash;
-  if(hash && hash.includes('type=recovery')){
-    const params = new URLSearchParams(hash.substring(1));
-    const accessToken = params.get('access_token');
-    if(accessToken){
-      renderPasswordRecovery(document.getElementById('app'), accessToken);
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='PASSWORD_RECOVERY'){
+      renderPasswordRecovery(document.getElementById('app'));
       return;
     }
-  }
-
-  sb.auth.onAuthStateChange(async(event,session)=>{
     if(session?.user){
       S.user=session.user;
       const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
