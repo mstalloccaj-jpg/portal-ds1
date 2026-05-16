@@ -712,10 +712,23 @@ async function doRecovery(){
   const err=document.getElementById('rec-err');
   if(p1.length<8){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Minimo 8 caracteres.</div>';return;}
   if(p1!==p2){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contrasenas no coinciden.</div>';return;}
-  const{error}=await sb.auth.updateUser({password:p1});
-  if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
-  showToast('Contrasena actualizada. Ingresa con tu nueva contrasena.','ok');
-  setTimeout(()=>{window.location.hash='';window.location.reload();},2000);
+  err.innerHTML='<div class="alert alert-info"><i class="ti ti-loader-2"></i>Guardando...</div>';
+  try{
+    const hash=window.location.hash.substring(1);
+    const params=new URLSearchParams(hash);
+    const accessToken=params.get('access_token');
+    const refreshToken=params.get('refresh_token');
+    if(accessToken&&refreshToken){
+      await sb.auth.setSession({access_token:accessToken,refresh_token:refreshToken});
+    }
+    const{error}=await sb.auth.updateUser({password:p1});
+    if(error){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+error.message+'</div>';return;}
+    err.innerHTML='<div class="alert alert-ok"><i class="ti ti-circle-check"></i>Contrasena actualizada correctamente.</div>';
+    showToast('Contrasena actualizada. Ingresa con tu nueva contrasena.','ok');
+    setTimeout(()=>{window.location.href=window.location.origin+window.location.pathname;},2000);
+  }catch(e){
+    err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+e.message+'</div>';
+  }
 }
 
 /* ── Portal ── */
