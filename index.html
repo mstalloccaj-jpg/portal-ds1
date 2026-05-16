@@ -597,6 +597,14 @@ function renderChangePassword(app){
   </div>`;
 }
 
+function togglePw(id,btn){
+  const inp=document.getElementById(id);
+  if(!inp)return;
+  const show=inp.type==='password';
+  inp.type=show?'text':'password';
+  btn.querySelector('i').className=show?'ti ti-eye-off':'ti ti-eye';
+}
+
 function checkPwStrength(pw){
   const bar=$('pw-bar');const hint=$('pw-hint');if(!bar)return;
   let score=0;
@@ -642,7 +650,10 @@ function renderLogin(app){
       </div>
       <div class="form-group">
         <label class="lbl">Contraseña</label>
-        <input class="inp" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <div style="position:relative">
+          <input class="inp" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:36px">
+          <button type="button" onclick="togglePw('l-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;padding:0;font-size:16px"><i class="ti ti-eye"></i></button>
+        </div>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
         <button onclick="showForgot()" style="background:none;border:none;color:var(--orange);font-size:11px;cursor:pointer;font-family:inherit">¿Olvidaste tu contraseña?</button>
@@ -691,13 +702,19 @@ function renderPasswordRecovery(app){
       <div id="rec-err"></div>
       <div class="form-group">
         <label class="lbl">Nueva contrasena</label>
-        <input class="inp" type="password" id="rec-pass1" placeholder="Minimo 8 caracteres" oninput="checkPwStrength(this.value)">
+        <div style="position:relative">
+          <input class="inp" type="password" id="rec-pass1" placeholder="Minimo 8 caracteres" oninput="checkPwStrength(this.value)" style="padding-right:36px">
+          <button type="button" onclick="togglePw('rec-pass1',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;padding:0;font-size:16px"><i class="ti ti-eye"></i></button>
+        </div>
         <div class="pw-strength" id="pw-bar" style="background:var(--border2)"></div>
         <div class="pw-hint" id="pw-hint">Ingresa tu nueva contrasena</div>
       </div>
       <div class="form-group">
         <label class="lbl">Confirmar contrasena</label>
-        <input class="inp" type="password" id="rec-pass2" placeholder="Repeti la contrasena" onkeydown="if(event.key==='Enter')doRecovery()">
+        <div style="position:relative">
+          <input class="inp" type="password" id="rec-pass2" placeholder="Repeti la contrasena" onkeydown="if(event.key==='Enter')doRecovery()" style="padding-right:36px">
+          <button type="button" onclick="togglePw('rec-pass2',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;padding:0;font-size:16px"><i class="ti ti-eye"></i></button>
+        </div>
       </div>
       <button class="btn btn-primary" style="width:100%;padding:10px;justify-content:center;font-size:14px" onclick="doRecovery()">
         <i class="ti ti-lock-check"></i> Guardar contrasena
