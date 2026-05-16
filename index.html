@@ -671,7 +671,8 @@ function renderLogin(app){
 async function showForgot(){
   const email=prompt('Ingresá tu email para recuperar la contraseña:');
   if(!email)return;
-  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
+  const redirectTo=window.location.origin+window.location.pathname;
+  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
   if(error)showToast(error.message,'err');
   else showToast('Se envió un email para restablecer tu contraseña.','ok');
 }
@@ -731,16 +732,32 @@ async function doRecovery(){
   if(p1!==p2){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contrasenas no coinciden.</div>';return;}
   err.innerHTML='<div class="alert alert-info"><i class="ti ti-loader-2"></i>Guardando...</div>';
   try{
+    // Obtener tokens del hash de la URL
     const hash=window.location.hash.substring(1);
     const params=new URLSearchParams(hash);
     const accessToken=params.get('access_token');
     const refreshToken=params.get('refresh_token');
-    if(accessToken&&refreshToken){
-      await sb.auth.setSession({access_token:accessToken,refresh_token:refreshToken});
+    if(!accessToken){
+      err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Token no encontrado. Solicitá un nuevo link de recuperacion.</div>';
+      return;
     }
-    const{error}=await sb.auth.updateUser({password:p1});
-    if(error){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+error.message+'</div>';return;}
-    err.innerHTML='<div class="alert alert-ok"><i class="ti ti-circle-check"></i>Contrasena actualizada correctamente.</div>';
+    // Usar fetch directo a la API — mas confiable que el SDK en GitHub Pages
+    const res=await fetch('https://ysuwpuaucfvnqlfnczlu.supabase.co/auth/v1/user',{
+      method:'PUT',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+accessToken,
+        'apikey':'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-'
+      },
+      body:JSON.stringify({password:p1})
+    });
+    const data=await res.json();
+    if(!res.ok||data.error){
+      const msg=data.error_description||data.message||data.error||'Error desconocido';
+      err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+msg+'</div>';
+      return;
+    }
+    err.innerHTML='<div class="alert alert-ok"><i class="ti ti-circle-check"></i>Contrasena actualizada correctamente. Redirigiendo...</div>';
     showToast('Contrasena actualizada. Ingresa con tu nueva contrasena.','ok');
     setTimeout(()=>{window.location.href=window.location.origin+window.location.pathname;},2000);
   }catch(e){
