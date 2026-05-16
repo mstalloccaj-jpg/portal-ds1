@@ -681,13 +681,50 @@ async function doLogin(){
   const email=$('l-email')?.value?.trim();
   const pass=$('l-pass')?.value;
   if(!email||!pass)return;
-  $('login-err').innerHTML='';
-  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){
-    $('login-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message==='Invalid login credentials'?'Email o contraseña incorrectos.':error.message}</div>`;
-    return;
+  $('login-err').innerHTML='<div class="alert alert-info"><i class="ti ti-loader-2"></i>Verificando...</div>';
+  try{
+    const res=await fetch('https://ysuwpuaucfvnqlfnczlu.supabase.co/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-'
+      },
+      body:JSON.stringify({email,password:pass})
+    });
+    const data=await res.json();
+    if(!res.ok||data.error){
+      const msg=data.error_description||data.message||data.error||'Error desconocido';
+      $('login-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+(msg==='Invalid login credentials'?'Email o contraseña incorrectos.':msg)+'</div>';
+      return;
+    }
+    // Cargar perfil y entrar al portal directamente
+    S.user=data.user;
+    const profRes=await fetch('https://ysuwpuaucfvnqlfnczlu.supabase.co/rest/v1/profiles?id=eq.'+data.user.id+'&select=*',{
+      headers:{
+        'apikey':'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-',
+        'Authorization':'Bearer '+data.access_token
+      }
+    });
+    const profiles=await profRes.json();
+    S.profile=profiles[0]||null;
+    if(S.profile?.company_id){
+      const coRes=await fetch('https://ysuwpuaucfvnqlfnczlu.supabase.co/rest/v1/companies?id=eq.'+S.profile.company_id+'&select=*',{
+        headers:{
+          'apikey':'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-',
+          'Authorization':'Bearer '+data.access_token
+        }
+      });
+      const cos=await coRes.json();
+      S.company=cos[0]||null;
+    }
+    // Guardar token para queries posteriores
+    window._authToken=data.access_token;
+    // Reiniciar cliente con el token
+    sb.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token}).catch(()=>{});
+    render();
+  }catch(e){
+    $('login-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+e.message+'</div>';
   }
-  await logEvent('login');
 }
 
 /* ── Password Recovery ── */
