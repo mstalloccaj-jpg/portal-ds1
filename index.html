@@ -1568,44 +1568,73 @@ window.sendInvitation=async function(){
   if(!name||!email){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Nombre y email son obligatorios.</div>';return;}
   if(!coId){$('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Selecciona una empresa.</div>';return;}
 
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  const specials='!@#$';
-  let tempPass='';
-  for(let i=0;i<8;i++)tempPass+=chars[Math.floor(Math.random()*chars.length)];
-  tempPass+=specials[Math.floor(Math.random()*specials.length)];
-  tempPass+=Math.floor(Math.random()*9)+1;
+  $('inv-ok').innerHTML='<div class="alert alert-info"><i class="ti ti-loader-2"></i>Enviando invitación...</div>';
 
-  const{data:inv,error:invErr}=await sfetch('invitations',{insert:{email,full_name:name,company_id:coId,role,invited_by:S.user.id},single:true});
-  if(invErr&&!invErr.message.includes('duplicate')){
-    $('inv-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${invErr.message}</div>`;return;
+  try{
+    // 1. Invitar usuario via Supabase Auth (envía email automáticamente)
+    const redirectTo='https://mstalloccaj-jpg.github.io/portal-ds1/';
+    const invRes=await fetch(SUPABASE_URL+'/auth/v1/invite',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_ANON,
+        'Authorization':'Bearer '+window._authToken
+      },
+      body:JSON.stringify({email,data:{full_name:name,role,company_id:coId},redirect_to:redirectTo})
+    });
+    const invData=await invRes.json();
+
+    if(!invRes.ok&&!invData.id){
+      // Si ya existe el usuario, igual guardamos la invitación
+      if(!invData.msg?.includes('already')){
+        $('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+(invData.msg||invData.error_description||'Error al enviar invitación')+'</div>';
+        $('inv-ok').innerHTML='';
+        return;
+      }
+    }
+
+    // 2. Guardar en tabla invitations
+    await sfetch('invitations',{insert:{email,full_name:name,company_id:coId,role,invited_by:S.user.id}});
+
+    // 3. Si el usuario ya fue creado, actualizar su perfil
+    if(invData.id){
+      await sfetch('profiles',{
+        update:{full_name:name,role,company_id:coId},
+        filters:[['id','eq',invData.id]]
+      });
+    }
+
+    const roleLabel=role==='inspector'?'Inspector DS-1':role==='supervisor'?'Supervisor':role==='company_admin'?'Admin Empresa':'Visor';
+    const portalUrl='https://mstalloccaj-jpg.github.io/portal-ds1/';
+    const msg=`Hola ${name}! Te invito al Portal DS-1 de GM Robotica.
+
+Recibirás un email con el link de acceso. Si no llega, revisá la carpeta de spam.
+
+Portal: ${portalUrl}
+Rol asignado: ${roleLabel}`;
+
+    $('inv-ok').innerHTML=`
+      <div class="alert alert-ok" style="flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-circle-check" style="font-size:18px"></i><strong>Invitación enviada a ${name}</strong></div>
+        <div style="font-size:12px;color:var(--text2)">Se envió un email a <strong>${email}</strong> con el link para crear su contraseña. El link vence en 24 horas.</div>
+        <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">Mensaje para WhatsApp</div>
+          <div style="font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${msg}</div>
+          <button onclick="navigator.clipboard.writeText('${msg.replace(/'/g,"\'")}').then(()=>showToast('Copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
+          <button onclick="window.open('https://wa.me/?text='+encodeURIComponent('${msg.replace(/'/g,"\'")}'))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> WhatsApp</button>
+        </div>
+      </div>`;
+
+    await logEvent('invitacion_enviada',null,null,{email,role,company:coId});
+
+    // Limpiar formulario
+    $('inv-name').value='';$('inv-email').value='';
+    if($('inv-co'))$('inv-co').value='';
+
+  }catch(e){
+    $('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+e.message+'</div>';
+    $('inv-ok').innerHTML='';
   }
-
-  const portalUrl='https://mstalloccaj-jpg.github.io/portal-ds1/';
-  const roleLabel=role==='inspector'?'Inspector DS-1':role==='supervisor'?'Supervisor':role==='company_admin'?'Admin Empresa':'Visor';
-  const msg1=`Hola ${name}! Te invito al Portal DS-1 de GM Robotica.\n\nAccede desde este link:\n${portalUrl}`;
-  const msg2=`Tus datos de acceso al Portal DS-1 GM Robotica:\n\nEmail: ${email}\nContrasena temporal: ${tempPass}\n\nPor seguridad, cambia tu contrasena cuando ingreses por primera vez.\n\nRol asignado: ${roleLabel}`;
-
-  $('inv-ok').innerHTML=`
-    <div class="alert alert-ok" style="flex-direction:column;gap:12px">
-      <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-circle-check" style="font-size:18px"></i><strong>Usuario preparado: ${name}</strong></div>
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:12px">
-        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">MENSAJE 1 — Link del portal</div>
-        <div style="font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${msg1}</div>
-        <button onclick="navigator.clipboard.writeText(window._invMsg1).then(()=>showToast('Copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
-        <button onclick="window.open('https://wa.me/?text='+encodeURIComponent(window._invMsg1))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> WhatsApp</button>
-      </div>
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:12px">
-        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">MENSAJE 2 — Credenciales (enviar por separado)</div>
-        <div style="font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${msg2}</div>
-        <button onclick="navigator.clipboard.writeText(window._invMsg2).then(()=>showToast('Copiado','ok'))" class="btn btn-xs"><i class="ti ti-copy"></i> Copiar</button>
-        <button onclick="window.open('https://wa.me/?text='+encodeURIComponent(window._invMsg2))" class="btn btn-xs" style="background:var(--green-bg);border-color:var(--green);color:var(--green-text)"><i class="ti ti-brand-whatsapp"></i> WhatsApp</button>
-      </div>
-      <div class="alert alert-warn" style="margin:0"><i class="ti ti-alert-triangle"></i>Contraseña temporal: <strong>${tempPass}</strong> — Creá el usuario en Supabase Auth con este email y contraseña.</div>
-    </div>`;
-
-  window._invMsg1=msg1;
-  window._invMsg2=msg2;
-  await logEvent('invitacion_enviada',null,null,{email,role,company:coId});
 };
 
 /* ── Audit Log ── */
