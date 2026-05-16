@@ -1025,15 +1025,27 @@ async function renderDashboard(){
 async function renderReports(){
   const mc=$('mc');
   let reports=[];
-  if(!isInspector()){
-    const{data:assigned}=await sfetch('report_assignments',{select:'report_id',filters:[['profile_id','eq',S.user.id]]});
-    const ids=(assigned||[]).map(a=>a.report_id);
-    if(!ids.length){mc.innerHTML=`<div class="empty"><i class="ti ti-file-off"></i><p>No tenés informes asignados aún.</p><p style="font-size:11px;margin-top:6px">Tus informes aparecerán aquí cuando sean publicados.</p></div>`;return;}
-    const{data:rpts}=await sfetch('reports',{select:'*',filters:[['id','in',ids]],order:'created_at.desc'});
-    reports=rpts||[];
-  } else {
+  if(isSuper()){
+    // Super admin ve todos los reportes
     const{data:rpts}=await sfetch('reports',{select:'*',order:'created_at.desc'});
     reports=rpts||[];
+  } else if(isCAdmin()||S.profile?.role==='inspector'||S.profile?.role==='supervisor'){
+    // Inspector, admin y supervisor ven reportes de su empresa
+    const filters=S.profile?.company_id?[['company_id','eq',S.profile.company_id]]:[];
+    const{data:rpts}=await sfetch('reports',{select:'*',filters,order:'created_at.desc'});
+    reports=rpts||[];
+  } else {
+    // Viewer ve reportes de su empresa automaticamente
+    if(!S.profile?.company_id){
+      mc.innerHTML=`<div class="empty"><i class="ti ti-building-off"></i><p>Tu usuario no tiene empresa asignada.</p><p style="font-size:11px;margin-top:6px">Contactá al administrador para que te asigne una empresa.</p></div>`;
+      return;
+    }
+    const{data:rpts}=await sfetch('reports',{select:'*',filters:[['company_id','eq',S.profile.company_id]],order:'created_at.desc'});
+    reports=rpts||[];
+    if(!reports.length){
+      mc.innerHTML=`<div class="empty"><i class="ti ti-file-off"></i><p>No hay informes disponibles para tu empresa aún.</p></div>`;
+      return;
+    }
   }
 
   mc.innerHTML=`
