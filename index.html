@@ -1035,12 +1035,12 @@ async function renderReports(){
     const{data:rpts}=await sfetch('reports',{select:'*',filters,order:'created_at.desc'});
     reports=rpts||[];
   } else {
-    // Viewer ve reportes de su empresa automaticamente
+    // Viewer ve reportes de su empresa cliente automaticamente
     if(!S.profile?.company_id){
       mc.innerHTML=`<div class="empty"><i class="ti ti-building-off"></i><p>Tu usuario no tiene empresa asignada.</p><p style="font-size:11px;margin-top:6px">Contactá al administrador para que te asigne una empresa.</p></div>`;
       return;
     }
-    const{data:rpts}=await sfetch('reports',{select:'*',filters:[['company_id','eq',S.profile.company_id]],order:'created_at.desc'});
+    const{data:rpts}=await sfetch('reports',{select:'*',filters:[['client_company_id','eq',S.profile.company_id]],order:'created_at.desc'});
     reports=rpts||[];
     if(!reports.length){
       mc.innerHTML=`<div class="empty"><i class="ti ti-file-off"></i><p>No hay informes disponibles para tu empresa aún.</p></div>`;
@@ -1247,7 +1247,11 @@ async function renderUpload(){
       <div class="form-group"><label class="lbl">Componente / Descripción</label><input class="inp" id="u-comp" placeholder="X-Over NC46 Pin × NC50 Caja, 6-1/2&quot; OD"></div>
       ${companiesHtml}
       <div class="grid3">
-        <div class="form-group"><label class="lbl">Empresa cliente (nombre)</label><input class="inp" id="u-cname"></div>
+        <div class="form-group"><label class="lbl">Empresa cliente</label>
+        <select class="inp" id="u-cname" onchange="setClientCompany(this)">
+          <option value="">— Seleccionar empresa cliente —</option>
+        </select>
+      </div>
         <div class="form-group"><label class="lbl">Equipo / Rig</label><input class="inp" id="u-rig"></div>
         <div class="form-group"><label class="lbl">Pozo</label><input class="inp" id="u-well"></div>
       </div>
@@ -1290,6 +1294,22 @@ window.addImages=function(files){
 };
 window.removeImg=function(i,el){window._imgs[i]=null;el.remove();};
 
+window.setClientCompany=function(sel){
+  const opt=sel.options[sel.selectedIndex];
+  window._clientCompanyId=opt.dataset.id||null;
+};
+
+async function loadClientCompanies(){
+  const sel=$('u-cname');
+  if(!sel)return;
+  const{data:cos}=await sfetch('companies',{select:'id,name',filters:[['active','eq','true'],['id','neq','00000000-0000-0000-0000-000000000001']],order:'name'});
+  (cos||[]).forEach(c=>{
+    const opt=document.createElement('option');
+    opt.value=c.name;opt.dataset.id=c.id;opt.textContent=c.name;
+    sel.appendChild(opt);
+  });
+}
+
 window.loadJsonFile=function(file){
   if(!file)return;
   const r=new FileReader();
@@ -1307,6 +1327,14 @@ window.loadJsonFile=function(file){
       set('u-obs',d.comments||'');
       $('upload-form').style.display='block';
       $('parse-msg').innerHTML='';
+      loadClientCompanies().then(()=>{
+        // Pre-seleccionar empresa si viene en el JSON
+        const cname=$('u-cname');
+        const clientName=ri.client||ri.company||'';
+        if(clientName&&cname){
+          Array.from(cname.options).forEach(o=>{if(o.value.toLowerCase()===clientName.toLowerCase()){cname.value=o.value;window._clientCompanyId=o.dataset.id;}});
+        }
+      });
     }catch(ex){$('parse-msg').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>JSON inválido: ${ex.message}</div>`;}
   };
   r.readAsText(file);
@@ -1345,6 +1373,7 @@ window.submitReport=async function(){
     conn_bot:(ri.botConnType||'')+(ri.botConnConfig?' '+ri.botConnConfig:''),
     company_id:companyId||null,
     client_company_name:$('u-cname')?.value||'',
+    client_company_id:window._clientCompanyId||null,
     rig:$('u-rig')?.value||'',well:$('u-well')?.value||'',
     inspector:$('u-insp')?.value||'',cert_no:$('u-cert')?.value||'',
     category:$('u-cat')?.value||'3',result:$('u-result')?.value||'APROBADO',
