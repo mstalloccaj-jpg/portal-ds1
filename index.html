@@ -204,7 +204,7 @@ textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
 <div id="app"></div>
 
 <!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <!-- pdf-lib para marca de agua -->
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
@@ -222,6 +222,44 @@ const IS_OK = !SUPABASE_URL.includes('TU_PROYECTO');
 const sb = IS_OK ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
   auth: { persistSession: true, autoRefreshToken: true }
 }) : null;
+
+/* ── Helper fetch directo a Supabase (evita bug pending del SDK en GitHub Pages) ── */
+window._authToken = null;
+async function sfetch(table, opts={}){
+  const {select='*', filters=[], order=null, limit=null, insert=null, update=null, del=false, single=false, count=false} = opts;
+  const base = SUPABASE_URL+'/rest/v1/'+table;
+  const params = new URLSearchParams();
+  if(select) params.set('select', select);
+  if(order) params.set('order', order);
+  if(limit) params.set('limit', limit);
+  filters.forEach(([col,op,val])=>{
+    if(op==='eq') params.set(col, 'eq.'+val);
+    else if(op==='neq') params.set(col, 'neq.'+val);
+    else if(op==='in') params.set(col, 'in.('+val.join(',')+')');
+    else if(op==='is') params.set(col, 'is.'+val);
+  });
+  const url = base + (params.toString()?'?'+params.toString():'');
+  const headers = {
+    'apikey': SUPABASE_ANON,
+    'Authorization': 'Bearer '+(window._authToken||SUPABASE_ANON),
+    'Content-Type': 'application/json',
+    'Prefer': single?'return=representation':(insert||update)?'return=representation':'',
+  };
+  if(count) headers['Prefer'] = 'count=exact';
+  const method = del?'DELETE':insert?'POST':update?'PATCH':'GET';
+  const body = insert?JSON.stringify(insert):update?JSON.stringify(update):undefined;
+  try{
+    const res = await fetch(url, {method, headers, body});
+    const text = await res.text();
+    let data = null;
+    try{ data = JSON.parse(text); }catch(e){ data = text; }
+    if(!res.ok) return {data:null, error:{message:data?.message||data?.error||text}};
+    if(single && Array.isArray(data)) data = data[0]||null;
+    return {data, error:null};
+  }catch(e){
+    return {data:null, error:{message:e.message}};
+  }
+}
 
 /* ── State ── */
 let S = { user:null, profile:null, company:null, tab:'dashboard', sub:'', selected:null, toast:null, firstLogin:false };
@@ -270,14 +308,14 @@ function showToast(msg,type='ok'){
 async function logEvent(event,reportId=null,reportNo=null,meta={}){
   if(!sb||!S.profile)return;
   try{
-    await sb.from('audit_logs').insert({
+    await sfetch('audit_logs',{insert:{
       event,user_id:S.user.id,user_name:S.profile.full_name,
       user_company:S.company?.name||S.profile.company_id,
       user_role:S.profile.role,
       report_id:reportId,report_no:reportNo,
       company_id:S.profile.company_id,
       metadata:meta,
-    });
+    }});
   }catch(e){console.warn('audit',e);}
 }
 
@@ -626,7 +664,7 @@ async function doChangePassword(){
   if(p1!==p2){$('cp-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contraseñas no coinciden.</div>';return;}
   const{error}=await sb.auth.updateUser({password:p1});
   if(error){$('cp-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
-  await sb.from('profiles').update({must_change_password:false}).eq('id',S.user.id);
+  await sfetch('profiles',{update:{must_change_password:false},filters:[['id','eq',S.user.id]]});
   S.profile.must_change_password=false;
   await logEvent('cambio_contrasena');
   showToast('¡Contraseña actualizada! Bienvenido al portal.','ok');
@@ -932,7 +970,8 @@ function setTab(tab){S.tab=tab;S.selected=null;renderPortal($('app'));}
 
 async function doLogout(){
   await logEvent('logout');
-  await sb.auth.signOut();
+  try{await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+(window._authToken||'')}});}catch(e){}
+  window._authToken=null;
   S={user:null,profile:null,company:null,tab:'dashboard',sub:'',selected:null};
   render();
 }
@@ -956,8 +995,8 @@ async function loadTab(){
 async function renderDashboard(){
   const mc=$('mc');
   const[rptRes,usrRes]=await Promise.all([
-    sb.from('reports').select('result,published,created_at',{count:'exact'}),
-    sb.from('profiles').select('id,role',{count:'exact'}),
+    sfetch('reports',{select:'result,published,created_at'}),
+    sfetch('profiles',{select:'id,role'}),
   ]);
   const rpts=rptRes.data||[];
   const usrs=usrRes.data||[];
@@ -985,14 +1024,17 @@ async function renderDashboard(){
 /* ── Reports List ── */
 async function renderReports(){
   const mc=$('mc');
-  let q=sb.from('reports').select('*').order('created_at',{ascending:false});
+  let reports=[];
   if(!isInspector()){
-    const{data:assigned}=await sb.from('report_assignments').select('report_id').eq('profile_id',S.user.id);
+    const{data:assigned}=await sfetch('report_assignments',{select:'report_id',filters:[['profile_id','eq',S.user.id]]});
     const ids=(assigned||[]).map(a=>a.report_id);
     if(!ids.length){mc.innerHTML=`<div class="empty"><i class="ti ti-file-off"></i><p>No tenés informes asignados aún.</p><p style="font-size:11px;margin-top:6px">Tus informes aparecerán aquí cuando sean publicados.</p></div>`;return;}
-    q=q.in('id',ids);
+    const{data:rpts}=await sfetch('reports',{select:'*',filters:[['id','in',ids]],order:'created_at.desc'});
+    reports=rpts||[];
+  } else {
+    const{data:rpts}=await sfetch('reports',{select:'*',order:'created_at.desc'});
+    reports=rpts||[];
   }
-  const{data:reports}=await q;
 
   mc.innerHTML=`
   <div class="tbl-wrap">
@@ -1152,7 +1194,7 @@ async function renderUpload(){
 
   let companiesHtml='';
   if(isSuper()){
-    const{data:cos}=await sb.from('companies').select('id,name').eq('active',true).neq('id','00000000-0000-0000-0000-000000000001');
+    const{data:cos}=await sfetch('companies',{select:'id,name',filters:[['active','eq','true'],['id','neq','00000000-0000-0000-0000-000000000001']]});
     companiesHtml=`<div class="form-group">
       <label class="lbl">Empresa cliente *</label>
       <select class="inp" id="u-company-id">
@@ -1299,7 +1341,7 @@ window.submitReport=async function(){
     images:imgUrls,raw_data:d,uploaded_by:S.user.id,published:true,
   };
 
-  const{data:rpt,error}=await sb.from('reports').insert(rptData).select().single();
+  const{data:rpt,error}=await sfetch('reports',{insert:rptData,single:true});
   if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
 
   await logEvent('reporte_publicado',rpt.id,rpt.report_no,{images:imgUrls.length});
@@ -1310,7 +1352,7 @@ window.submitReport=async function(){
 /* ── Companies ── */
 async function renderCompanies(){
   const mc=$('mc');
-  const{data:cos}=await sb.from('companies').select('*').order('name');
+  const{data:cos}=await sfetch('companies',{select:'*',order:'name'});
   mc.innerHTML=`
   <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
     <button class="btn btn-primary" onclick="showAddCompany()"><i class="ti ti-plus"></i> Nueva empresa</button>
@@ -1350,14 +1392,14 @@ async function renderCompanies(){
 
 window.showAddCompany=()=>$('company-form').style.display='block';
 window.toggleCompany=async(id,active)=>{
-  await sb.from('companies').update({active}).eq('id',id);
+  await sfetch('companies',{update:{active},filters:[['id','eq',id]]});
   showToast(active?'Empresa activada.':'Empresa desactivada.','ok');
   renderCompanies();
 };
 window.saveCompany=async()=>{
   const name=$('co-name')?.value?.trim();
   if(!name){$('co-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>El nombre es obligatorio.</div>';return;}
-  const{error}=await sb.from('companies').insert({name,rut_cuit:$('co-cuit')?.value||null,city:$('co-city')?.value||null,phone:$('co-phone')?.value||null,email:$('co-email')?.value||null});
+  const{error}=await sfetch('companies',{insert:{name,rut_cuit:$('co-cuit')?.value||null,city:$('co-city')?.value||null,phone:$('co-phone')?.value||null,email:$('co-email')?.value||null}});
   if(error){$('co-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
   showToast('Empresa creada.','ok');renderCompanies();
 };
@@ -1365,9 +1407,11 @@ window.saveCompany=async()=>{
 /* ── Users ── */
 async function renderUsers(){
   const mc=$('mc');
-  let q=sb.from('profiles').select('*,companies(name)').order('created_at',{ascending:false});
-  if(!isSuper())q=q.eq('company_id',S.profile.company_id);
-  const[{data:users},{data:companies}]=await Promise.all([q,sb.from('companies').select('id,name').eq('active',true).order('name')]);
+  const usersFilters=isSuper()?[]:[['company_id','eq',S.profile.company_id]];
+  const[{data:users},{data:companies}]=await Promise.all([
+    sfetch('profiles',{select:'*,companies(name)',filters:usersFilters,order:'created_at.desc'}),
+    sfetch('companies',{select:'id,name',filters:[['active','eq','true']],order:'name'})
+  ]);
   mc.innerHTML=`
   <div class="tbl-wrap">
     <table class="tbl">
@@ -1399,15 +1443,15 @@ async function renderUsers(){
 }
 
 window.changeCompany=async(id,companyId)=>{
-  const{error}=await sb.from('profiles').update({company_id:companyId}).eq('id',id);
+  const{error}=await sfetch('profiles',{update:{company_id:companyId},filters:[['id','eq',id]]});
   if(error)showToast(error.message,'err');else showToast('Empresa actualizada.','ok');
 };
 window.changeRole=async(id,role)=>{
-  const{error}=await sb.from('profiles').update({role}).eq('id',id);
+  const{error}=await sfetch('profiles',{update:{role},filters:[['id','eq',id]]});
   if(error)showToast(error.message,'err');else showToast('Rol actualizado.','ok');
 };
 window.toggleUser=async(id,active)=>{
-  await sb.from('profiles').update({active}).eq('id',id);
+  await sfetch('profiles',{update:{active},filters:[['id','eq',id]]});
   showToast(active?'Usuario activado.':'Usuario desactivado.','ok');
   renderUsers();
 };
@@ -1416,8 +1460,8 @@ window.toggleUser=async(id,active)=>{
 async function renderInvitations(){
   const mc=$('mc');
   let cosData=[];
-  if(isSuper()){const{data}=await sb.from('companies').select('id,name').eq('active',true).neq('id','00000000-0000-0000-0000-000000000001');cosData=data||[];}
-  const{data:invites}=await sb.from('invitations').select('*,companies(name)').order('created_at',{ascending:false}).limit(50);
+  if(isSuper()){const{data}=await sfetch('companies',{select:'id,name',filters:[['active','eq','true'],['id','neq','00000000-0000-0000-0000-000000000001']],order:'name'});cosData=data||[];}
+  const{data:invites}=await sfetch('invitations',{select:'*,companies(name)',order:'created_at.desc',limit:50});
   mc.innerHTML=`
   <div class="card" style="margin-bottom:14px">
     <div class="card-title"><i class="ti ti-mail-plus"></i>Invitar nuevo usuario</div>
@@ -1490,9 +1534,7 @@ window.sendInvitation=async function(){
   tempPass+=specials[Math.floor(Math.random()*specials.length)];
   tempPass+=Math.floor(Math.random()*9)+1;
 
-  const{data:inv,error:invErr}=await sb.from('invitations').insert({
-    email,full_name:name,company_id:coId,role,invited_by:S.user.id
-  }).select().single();
+  const{data:inv,error:invErr}=await sfetch('invitations',{insert:{email,full_name:name,company_id:coId,role,invited_by:S.user.id},single:true});
   if(invErr&&!invErr.message.includes('duplicate')){
     $('inv-err').innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${invErr.message}</div>`;return;
   }
@@ -1528,9 +1570,8 @@ window.sendInvitation=async function(){
 /* ── Audit Log ── */
 async function renderAuditLog(){
   const mc=$('mc');
-  let q=sb.from('audit_logs').select('*').order('created_at',{ascending:false}).limit(200);
-  if(!isSuper())q=q.eq('company_id',S.profile.company_id);
-  const{data:logs}=await q;
+  const auditFilters=isSuper()?[]:[['company_id','eq',S.profile.company_id]];
+  const{data:logs}=await sfetch('audit_logs',{select:'*',filters:auditFilters,order:'created_at.desc',limit:200});
   mc.innerHTML=`
   <div class="tbl-wrap">
     <div class="tbl-toolbar">
@@ -1586,17 +1627,18 @@ window.doChangePass=async function(){
   const err=document.getElementById('cp-modal-err');
   if(!p1||p1.length<8){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Minimo 8 caracteres.</div>';return;}
   if(p1!==p2){err.innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>Las contrasenas no coinciden.</div>';return;}
-  const{error}=await sb.auth.updateUser({password:p1});
-  if(error){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${error.message}</div>`;return;}
+  const res2=await fetch(SUPABASE_URL+'/auth/v1/user',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+window._authToken,'apikey':SUPABASE_ANON},body:JSON.stringify({password:p1})});
+  const d2=await res2.json();
+  if(!res2.ok){err.innerHTML=`<div class="alert alert-err"><i class="ti ti-alert-circle"></i>${d2.message||d2.error||'Error'}</div>`;return;}
   document.getElementById('change-pass-modal').remove();
   showToast('Contrasena actualizada correctamente.','ok');
 };
 
 window.deleteReport=async function(id,reportNo){
   if(!confirm('Eliminar reporte '+reportNo+'? Esta accion no se puede deshacer.'))return;
-  await sb.from('audit_logs').delete().eq('report_id',id);
-  await sb.from('report_assignments').delete().eq('report_id',id);
-  const{error}=await sb.from('reports').delete().eq('id',id);
+  await sfetch('audit_logs',{del:true,filters:[['report_id','eq',id]]});
+  await sfetch('report_assignments',{del:true,filters:[['report_id','eq',id]]});
+  const{error}=await sfetch('reports',{del:true,filters:[['id','eq',id]]});
   if(error){showToast('Error: '+error.message,'err');return;}
   showToast('Reporte '+reportNo+' eliminado.','ok');
   renderReports();
@@ -1620,37 +1662,14 @@ window.exportCSV=function(){
 async function init(){
   if(!IS_OK){render();return;}
 
-  sb.auth.onAuthStateChange(async(event,session)=>{
-    if(event==='PASSWORD_RECOVERY'){
-      renderPasswordRecovery(document.getElementById('app'));
-      return;
-    }
-    if(session?.user){
-      S.user=session.user;
-      const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
-      S.profile=profile;
-      if(profile?.company_id){
-        const{data:co}=await sb.from('companies').select('*').eq('id',profile.company_id).single();
-        S.company=co;
-      }
-      if(event==='SIGNED_IN'){
-        const isFirst=!profile?.last_login;
-        await sb.from('profiles').update({last_login:new Date().toISOString()}).eq('id',session.user.id);
-        await logEvent('login');
-        if(isFirst){S.firstLogin=true;}
-      }
-      render();
-    }else{
-      S={user:null,profile:null,company:null,tab:'dashboard',sub:'',selected:null};
-      render();
-    }
-  });
-
+  // Detectar recovery desde URL hash
   if(window.location.hash.includes('type=recovery')){
     renderPasswordRecovery(document.getElementById('app'));
     return;
   }
 
+  // El SDK queda en pending en GitHub Pages - no usamos onAuthStateChange
+  // El login se maneja completamente via fetch en doLogin()
   render();
 }
 
