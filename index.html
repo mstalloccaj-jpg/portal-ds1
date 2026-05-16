@@ -1562,6 +1562,11 @@ async function init(){
     }
   });
 
+  if(window.location.hash.includes('type=recovery')){
+    renderPasswordRecovery(document.getElementById('app'));
+    return;
+  }
+
   render();
 }
 
