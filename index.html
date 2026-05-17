@@ -1724,9 +1724,30 @@ window.exportCSV=function(){
 async function init(){
   if(!IS_OK){render();return;}
 
-  // Detectar recovery desde URL hash
-  if(window.location.hash.includes('type=recovery')){
+  // Detectar recovery o invite desde URL hash
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const tokenType = hashParams.get('type');
+  if(tokenType === 'recovery' || tokenType === 'invite'){
     renderPasswordRecovery(document.getElementById('app'));
+    return;
+  }
+  // Detectar error de token vencido
+  if(window.location.hash.includes('error=access_denied')){
+    const errDesc = hashParams.get('error_description') || 'El link venció o es inválido.';
+    document.getElementById('app').innerHTML=`
+    <div class="login-page">
+      <div class="login-card">
+        <div style="text-align:center;margin-bottom:20px">
+          <img src="${LOGO_URL}" style="max-height:56px;margin-bottom:12px">
+          <h2 style="color:var(--red);font-size:18px">Link vencido</h2>
+        </div>
+        <div class="alert alert-err"><i class="ti ti-alert-circle"></i>${errDesc.replace(/\+/g,' ')}</div>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:16px">Solicitá al administrador que te envíe una nueva invitación, o usá la opción de recuperar contraseña si ya tenés cuenta.</p>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="window.location.href=window.location.origin+window.location.pathname">
+          <i class="ti ti-login"></i> Ir al login
+        </button>
+      </div>
+    </div>`;
     return;
   }
 
