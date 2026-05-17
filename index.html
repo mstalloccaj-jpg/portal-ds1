@@ -1575,7 +1575,7 @@ window.sendInvitation=async function(){
   try{
     // 1. Invitar usuario via Supabase Auth (envía email automáticamente)
     const redirectTo='https://mstalloccaj-jpg.github.io/portal-ds1/';
-    // Usar Edge Function para invitar (service key segura en el servidor)
+    // Usar Edge Function para crear usuario con contraseña temporal
     const invRes=await fetch(SUPABASE_URL+'/functions/v1/invite-user',{
       method:'POST',
       headers:{
@@ -1586,14 +1586,14 @@ window.sendInvitation=async function(){
     });
     const invData=await invRes.json();
 
-    if(!invRes.ok){
-      const msg=invData.error||invData.message||'Error al enviar invitación';
-      if(!msg.includes('already')){
-        $('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+msg+'</div>';
-        $('inv-ok').innerHTML='';
-        return;
-      }
+    if(!invRes.ok||invData.error){
+      const msg=invData.error||invData.message||'Error al crear usuario';
+      $('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+msg+'</div>';
+      $('inv-ok').innerHTML='';
+      return;
     }
+
+    const tempPass=invData.tempPassword||'';
 
     const roleLabel=role==='inspector'?'Inspector DS-1':role==='supervisor'?'Supervisor':role==='company_admin'?'Admin Empresa':'Visor';
     const portalUrl='https://mstalloccaj-jpg.github.io/portal-ds1/';
@@ -1607,8 +1607,8 @@ Rol asignado: ${roleLabel}`;
     window._lastInvMsg=msg;
     $('inv-ok').innerHTML=`
       <div class="alert alert-ok" style="flex-direction:column;gap:12px">
-        <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-circle-check" style="font-size:18px"></i><strong>Invitación enviada a ${name}</strong></div>
-        <div style="font-size:12px;color:var(--text2)">Se envió un email a <strong>${email}</strong> con el link para crear su contraseña. El link vence en 24 horas.</div>
+        <div style="display:flex;align-items:center;gap:8px"><i class="ti ti-circle-check" style="font-size:18px"></i><strong>Usuario creado: ${name}</strong></div>
+        <div style="font-size:12px;color:var(--text2)">Contraseña temporal: <strong style="color:var(--orange);font-size:14px">${tempPass}</strong> — Enviala al usuario por WhatsApp.</div>
         <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:12px">
           <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:8px">Mensaje para WhatsApp</div>
           <div style="font-size:12px;color:var(--text2);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;margin-bottom:8px;white-space:pre-wrap">${msg}</div>
