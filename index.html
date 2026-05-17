@@ -214,6 +214,8 @@ textarea.inp{resize:vertical;min-height:60px;line-height:1.5}
    ============================================================ */
 const SUPABASE_URL  = 'https://ysuwpuaucfvnqlfnczlu.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_CxmuobEx8KuXI5hbD8dfog_XP19xUW-';
+// Service key — solo super admins pueden usar invitaciones
+const SUPABASE_SERVICE = ''; // Completar solo si sos super admin
 const COMPANY_NAME  = 'GM Robótica';
 const LOGO_URL      = 'https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=300,fit=crop/d95gEJ0jJgfxbzwe/recurso-1-2x-1yBLDy8iVJ2EB3go.png';
 /* ============================================================ */
@@ -1573,12 +1575,14 @@ window.sendInvitation=async function(){
   try{
     // 1. Invitar usuario via Supabase Auth (envía email automáticamente)
     const redirectTo='https://mstalloccaj-jpg.github.io/portal-ds1/';
+    // Invite requiere service_role key
+    const serviceKey=window._serviceKey||SUPABASE_ANON;
     const invRes=await fetch(SUPABASE_URL+'/auth/v1/invite',{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'apikey':SUPABASE_ANON,
-        'Authorization':'Bearer '+window._authToken
+        'apikey':serviceKey,
+        'Authorization':'Bearer '+serviceKey
       },
       body:JSON.stringify({email,data:{full_name:name,role,company_id:coId},redirect_to:redirectTo})
     });
