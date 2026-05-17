@@ -1575,37 +1575,24 @@ window.sendInvitation=async function(){
   try{
     // 1. Invitar usuario via Supabase Auth (envía email automáticamente)
     const redirectTo='https://mstalloccaj-jpg.github.io/portal-ds1/';
-    // Invite requiere service_role key
-    const serviceKey=window._serviceKey||SUPABASE_ANON;
-    const invRes=await fetch(SUPABASE_URL+'/auth/v1/invite',{
+    // Usar Edge Function para invitar (service key segura en el servidor)
+    const invRes=await fetch(SUPABASE_URL+'/functions/v1/invite-user',{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
-        'apikey':serviceKey,
-        'Authorization':'Bearer '+serviceKey
+        'Authorization':'Bearer '+window._authToken
       },
-      body:JSON.stringify({email,data:{full_name:name,role,company_id:coId},redirect_to:redirectTo})
+      body:JSON.stringify({email,full_name:name,role,company_id:coId})
     });
     const invData=await invRes.json();
 
-    if(!invRes.ok&&!invData.id){
-      // Si ya existe el usuario, igual guardamos la invitación
-      if(!invData.msg?.includes('already')){
-        $('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+(invData.msg||invData.error_description||'Error al enviar invitación')+'</div>';
+    if(!invRes.ok){
+      const msg=invData.error||invData.message||'Error al enviar invitación';
+      if(!msg.includes('already')){
+        $('inv-err').innerHTML='<div class="alert alert-err"><i class="ti ti-alert-circle"></i>'+msg+'</div>';
         $('inv-ok').innerHTML='';
         return;
       }
-    }
-
-    // 2. Guardar en tabla invitations
-    await sfetch('invitations',{insert:{email,full_name:name,company_id:coId,role,invited_by:S.user.id}});
-
-    // 3. Si el usuario ya fue creado, actualizar su perfil
-    if(invData.id){
-      await sfetch('profiles',{
-        update:{full_name:name,role,company_id:coId},
-        filters:[['id','eq',invData.id]]
-      });
     }
 
     const roleLabel=role==='inspector'?'Inspector DS-1':role==='supervisor'?'Supervisor':role==='company_admin'?'Admin Empresa':'Visor';
